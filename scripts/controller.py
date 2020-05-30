@@ -3,12 +3,15 @@
 import rospy
 import numpy as np
 import numpy.linalg as npl
+import warnings
+warnings.filterwarnings("error")
 
+from ar_commander.msg import Trajectory
 from sensor_msgs.msg import JointState
 from gazebo_msgs.msg import ModelStates
-from std_msgs.msg import Float64
-from geometry_msgs.msg import Pose, Twist, Vector3
-# from tf.transformations import euler_from_quaternion
+from std_msgs.msg import Float64, Float64MultiArray
+from geometry_msgs.msg import Pose2D, Twist, Vector3
+from tf.transformations import euler_from_quaternion
 
 # Global variables:
 h = [0.35, 0.125, 0.35, 0.125]                  # wheel distances along arms (from end) [ L1 L2 R1 R2 ]
@@ -16,52 +19,104 @@ N = len(h)                                      # number drive motors
 d = np.sqrt(2*(0.475**2))                       # diagonal distance between two arms of robot
 
 
-def pointController(self, p_des, p_cur, v_cur, theta_des, theta_cur):
+def pointController(self):
     kp_1 = 10
     kd_1 = 0
     kp_2 = 3
     ki_2 = 0.03
     kd_2 = 5*(10**-8)
-    p_delta = p_des-p_cur
-    theta_delta = theta_des-theta_cur
+
+    p_des = np.array([self.pos_des.x,self.pos_des.y])
+    p_delta = p_des-self.pos
+    theta_delta = self.theta_des-self.theta
     self.theta_error_sum += theta_delta
 
     if npl.norm(p_delta) > 0.01:
         v_cmd = kp_1*p_delta + kd_1*(p_delta-self.p_delta_prev)
     else:
         v_cmd = np.array([10**-15,10**-15])
-    self.theta_dot_cmd = kp_2*theta_delta + ki_2*self.theta_error_sum
-    + kd_2*(theta_delta-self.theta_delta_prev)
+    theta_dot_cmd = kp_2*theta_delta + ki_2*self.theta_error_sum \
+                    + kd_2*(theta_delta-self.theta_delta_prev)
 
     self.theta_delta_prev = theta_delta
     self.p_delta_prev = p_delta
 
     # Convert to motor inputs
+    V_cmd, phi_cmd = convert2motorInputs(v_cmd, theta_dot_cmd)
+
+    return V_cmd, phi_cmd, v_cmd
+
+def convert2motorInputs(v_cmd, theta_dot_cmd):
+
     phi_cmd = np.arctan2(v_cmd[1], v_cmd[0]) + np.pi/2
 
     l = d*np.sin((np.pi/2)+phi_cmd)
-    delta_v = self.theta_dot_cmd*l
-
-    v_1 =  npl.norm(v_cmd)-delta_v/2
-    v_end =   npl.norm(v_cmd)+delta_v/2
+    delta_v = theta_dot_cmd*l
+    v_1 = npl.norm(v_cmd)-delta_v/2
+    v_end = npl.norm(v_cmd)+delta_v/2
     V_cmd = np.array([v_1,v_1,v_end,v_end]) # [ L1 L2 R1 R2 ]
 
-    print("v_cmd: ",v_cmd,", theta_dot_cmd: ", self.theta_dot_cmd," delta_v: ", delta_v)
-    print("V: ", V_cmd, "phi_cmd: ", phi_cmd)
     return V_cmd, phi_cmd
+
+def trajectoryController(self):
+    kp_e_p = 12
+    kp_e_th = 0.75
+    kp_v = 0.5
+    V_mag = 6
+
+    # init
+    if self.traj_init == True:
+        self.pt_num = 0
+        self.pt_prev = self.pos
+        self.pt_next = self.solution_path[0,0:2]
+        self.traj_init = False
+
+    # advance waypoints
+    if npl.norm(self.pt_next-self.pos) < 0.25:
+        if self.pt_num+1 < self.solution_path.shape[0]:
+            self.pt_prev = self.pt_next
+            self.pt_num += 1
+            self.pt_next = self.solution_path[self.pt_num,0:2]
+        else:
+            print("Path completed")
+            self.pos_des = Vector3()
+            self.pos_des.x = self.pt_next[0]
+            self.pos_des.y = self.pt_next[1]
+            self.theta_des = 0
+            return pointController(self) #np.zeros(N), 0
+
+    # fit line/poly and get derivative
+    x = np.array([self.pt_prev[0], self.pt_next[0]])
+    y = np.array([self.pt_prev[1], self.pt_next[1]])
+    try:
+        p_y = np.poly1d(np.polyfit(x, y, 1)) # desired y
+    except np.RankWarning:
+        p_y = lambda y: self.pt_next[1]
+    try:
+        p_x = np.poly1d(np.polyfit(y, x, 1)) # desired x
+    except np.RankWarning:
+        p_x = lambda x: self.pt_next[0]
+    v_des = np.array([self.pt_next[0]-self.pt_prev[0], self.pt_next[1]-self.pt_prev[1]])
+
+    v_cmd = kp_v*v_des + kp_e_p*(np.array([p_x(self.pos[1])-self.pos[0], p_y(self.pos[0])-self.pos[1]]))
+    v_cmd = V_mag*v_cmd/npl.norm(v_cmd)
+    self.theta_des = np.arctan2(v_cmd[1], v_cmd[0]) - np.pi/2
+    theta_delta = self.theta_des-self.theta
+    theta_dot_cmd = kp_e_th*(theta_delta)
+
+    # Convert to motor inputs
+    V_cmd, phi_cmd = convert2motorInputs(v_cmd, theta_dot_cmd)
+
+    return V_cmd, phi_cmd, v_cmd
 
 
 class Controller():
     def __init__(self):
         rospy.init_node('controller', anonymous=True)
 
-        self.pos = None
-        self.q = None # quaternion
+        self.pos = np.array([None, None])
         self.theta = None
-        self.vel = None
-        self.motor_pos_arr = None
-        self.motor_vel_arr = None
-        self.motor_names = None
+        self.vel = np.zeros(2)
         self.phi_cmd = None
         self.V_cmd = None
         self.theta_dot_cmd = 0
@@ -69,61 +124,57 @@ class Controller():
         self.theta_delta_prev = 0
         self.p_delta_prev = 0
 
-        self.pos_des = Vector3()
-        self.pos_des.x = 0
-        self.pos_des.y = 6
-        self.pos_des.z = 0
-        self.theta_des = 1
+        # pointController desired x_f
+        self.pos_des = None
+
+        # trajetory desired path - init
+        self.solution_path = np.array([[None,None]]) #np.array([[1,1],[2,3],[3,5],[2,6],[0,4],[0.5,2],[1,0]])
+        self.traj_init = True
 
         # publishers
-        self.cmdP1_pub = rospy.Publisher("/robot_0/joint1_position_controller/command",Float64, queue_size=10)
-        self.cmdP2_pub = rospy.Publisher("/robot_0/joint2_position_controller/command",Float64, queue_size=10)
-        self.cmdP3_pub = rospy.Publisher("/robot_0/joint3_position_controller/command",Float64, queue_size=10)
-        self.cmdP4_pub = rospy.Publisher("/robot_0/joint4_position_controller/command",Float64, queue_size=10)
-        self.cmdV5_pub = rospy.Publisher("/robot_0/joint5_velocity_controller/command",Float64, queue_size=10)
-        self.cmdV6_pub = rospy.Publisher("/robot_0/joint6_velocity_controller/command",Float64, queue_size=10)
-        self.cmdV7_pub = rospy.Publisher("/robot_0/joint7_velocity_controller/command",Float64, queue_size=10)
-        self.cmdV8_pub = rospy.Publisher("/robot_0/joint8_velocity_controller/command",Float64, queue_size=10)
+        self.pub_cmds = rospy.Publisher('/controller_cmds', Float64MultiArray, queue_size=10)
 
         # subscribers
-        rospy.Subscriber('/robot_0/joint_states', JointState, self.joint_statesCallback)
-        rospy.Subscriber('/gazebo/model_states', ModelStates, self.model_statesCallback)
+        rospy.Subscriber('/pose', Pose2D, self.poseCallback)
+        rospy.Subscriber('/cmd_waypoint', Pose2D, self.waypointCallback)
+        rospy.Subscriber('/cmd_trajectory', Trajectory, self.trajectoryCallback)
 
-    def model_statesCallback(self, msg):
-        self.pos = msg.pose[1].position
-        self.q = msg.pose[1].orientation
-        # _, _, self.theta = euler_from_quaternion([self.q.x, self.q.y, self.q.z, self.q.w])
-        self.vel = msg.twist[1].linear
-        self.ang_vel = msg.twist[1].angular
+    def waypointCallback(self, msg):
+        print("Received waypoint")
+        self.pos_des = Vector3()
+        self.pos_des.x = msg.x
+        self.pos_des.y = msg.y
+        self.theta_des = msg.theta
 
-    def joint_statesCallback(self, msg):
-        self.motor_names = msg.name
-        self.motor_pos_arr = msg.position
-        self.motor_vel_arr = msg.velocity
+    def trajectoryCallback(self, msg):
+        print("Received trajectory")
+        self.solution_path = np.concatenate((np.array(msg.x.data).reshape(-1,1), \
+                                             np.array(msg.y.data).reshape(-1,1), \
+                                             np.array(msg.theta.data).reshape(-1,1)), axis=1)
+
+    def poseCallback(self, msg):
+        self.pos[0] = msg.x
+        self.pos[1] = msg.y
+        self.theta = msg.theta
 
     def controlLoop(self):
         # default behavior (0 = Vx Vy theta_dot)
         self.V_cmd = np.zeros(N)
         self.phi_cmd = 0 # rads
 
-        if self.pos != None:
-            p_des = np.array([self.pos_des.x,self.pos_des.y])
-            p_cur = np.array([self.pos.x,self.pos.y])
-            v_cur = np.array([self.vel.x,self.vel.y])
-
-            self.V_cmd, self.phi_cmd = pointController(self, p_des, p_cur, v_cur, self.theta_des, self.theta)
-            print("p_d: ", p_des,", p_cur: ", p_cur,", theta: ",self.theta, " theta_d: ", self.theta_des)
+        if self.pos[0] != None:
+            # Point controller
+            if self.pos_des != None:
+                self.V_cmd, self.phi_cmd, self.vel = pointController(self)
+            # Trajectory controller
+            if self.solution_path[0][0] != None:
+                self.V_cmd, self.phi_cmd, self.vel = trajectoryController(self)
 
     def publish(self):
         """ publish cmd messages """
-        self.cmdP1_pub.publish(self.phi_cmd)    # yaw_joint_l1
-        self.cmdP2_pub.publish(self.phi_cmd)    # yaw_joint_l2
-        self.cmdP3_pub.publish(self.phi_cmd)    # yaw_joint_r1
-        self.cmdP4_pub.publish(self.phi_cmd)    # yaw_joint_r2
-        self.cmdV5_pub.publish(self.V_cmd[0])   # drive_joint_l1
-        self.cmdV6_pub.publish(self.V_cmd[1])   # drive_joint_l2
-        self.cmdV7_pub.publish(self.V_cmd[2])   # drive_joint_r1
-        self.cmdV8_pub.publish(self.V_cmd[3])   # drive_joint_r2
+        self.cmds = Float64MultiArray()
+        self.cmds.data = np.concatenate((self.V_cmd, np.array([self.phi_cmd, self.phi_cmd]))) #space for phi1 and phi2
+        self.pub_cmds.publish(self.cmds)
 
     def run(self):
         rate = rospy.Rate(10) # 10 Hz
