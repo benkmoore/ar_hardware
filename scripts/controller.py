@@ -173,8 +173,8 @@ class Controller():
     def publish(self):
         """ publish cmd messages """
         self.cmds = ControllerCmd()
-        self.cmds.velocities.data = self.V_cmd
-        self.cmds.phis.data = np.array([self.phi_cmd, self.phi_cmd]) #space for phi1 and phi2
+        self.cmds.velocity_arr.data = self.V_cmd
+        self.cmds.phi_arr.data = np.array([self.phi_cmd, self.phi_cmd]) #space for phi1 and phi2
         self.pub_cmds.publish(self.cmds)
 
     def run(self):
