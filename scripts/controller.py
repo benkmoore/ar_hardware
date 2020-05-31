@@ -6,7 +6,7 @@ import numpy.linalg as npl
 import warnings
 warnings.filterwarnings("error")
 
-from ar_commander.msg import Trajectory
+from ar_commander.msg import Trajectory, ControllerCmd
 from sensor_msgs.msg import JointState
 from gazebo_msgs.msg import ModelStates
 from std_msgs.msg import Float64, Float64MultiArray
@@ -132,7 +132,7 @@ class Controller():
         self.traj_init = True
 
         # publishers
-        self.pub_cmds = rospy.Publisher('/controller_cmds', Float64MultiArray, queue_size=10)
+        self.pub_cmds = rospy.Publisher('/controller_cmds', ControllerCmd, queue_size=10)
 
         # subscribers
         rospy.Subscriber('/pose', Pose2D, self.poseCallback)
@@ -172,8 +172,9 @@ class Controller():
 
     def publish(self):
         """ publish cmd messages """
-        self.cmds = Float64MultiArray()
-        self.cmds.data = np.concatenate((self.V_cmd, np.array([self.phi_cmd, self.phi_cmd]))) #space for phi1 and phi2
+        self.cmds = ControllerCmd()
+        self.cmds.velocity_arr.data = self.V_cmd
+        self.cmds.phi_arr.data = np.array([self.phi_cmd, self.phi_cmd]) #space for phi1 and phi2
         self.pub_cmds.publish(self.cmds)
 
     def run(self):
