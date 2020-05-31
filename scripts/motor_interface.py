@@ -3,7 +3,7 @@
 import rospy
 import RPi.GPIO as GPIO
 
-from cmdStepperMotor import *
+from stepperMotor import *
 
 # lists of dc and stepper motor pins
 dc_pins = [[]] #[[1,2,3],[4,5,6]]					# 3 pins [in1, in2, enable]
@@ -17,6 +17,7 @@ class MotorInterface():
 
 		self.V_cmd = None
 		self.phi_cmd = None
+		self.phi_curr = 0
 
 		# Setup GPIO pins
 		GPIO.setmode(GPIO.BOARD) # Use pin numbers: https://circuitdigest.com/microcontroller-projects/controlling-stepper-motor-with-raspberry-pi
@@ -53,8 +54,19 @@ class MotorInterface():
 
 	def cmdStepperMotor(self, motor_pins):
 		if self.phi_cmd != None:
-			pass
+			delta_phi = self.phi_cmd-self.phi_curr
+			if abs(delta_phi) < 10**-3:
+				pass
+			elif delta_phi > 0:
+				for i in range(0,len(stepper_pins)):
+					forward(delay, stepper_pins[i], delta_phi)
+			elif delta_phi < 0:
+				for i in range(0,len(stepper_pins)):
+					backward(delay, stepper_pins[i], delta_phi)
+
 			# TODO: Need to encode current phi to tell steppers to turn desired amount
+			self.phi_cur = self.phi_cmd
+
 
 	def cmdDCMotor(self, motor_pins, i):
 		if self.V_cmd != None:
