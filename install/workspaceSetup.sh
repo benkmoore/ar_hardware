@@ -1,5 +1,8 @@
 #!/bin/bash
 
+if [ -z "$1" ]; then echo Must specify a target. Options are ./test.sh [computer,robot]; exit 1; fi
+if [ $1 != "computer" ] && [ $1 != "robot" ]; then echo Options are ./test.sh [computer,robot]; exit 1; fi
+
 # setup catkin
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/
@@ -11,7 +14,7 @@ git config --global credential.helper store
 # clone repository
 cd ~/catkin_ws/src/
 git clone https://github.com/zprihoda/ar_commander.git
-# git clone https://github.com/zprihoda/ar_sim.git   # for desktops only
+if [ $1 == "computer" ] then git clone https://github.com/zprihoda/ar_sim.git; fi
 
 # remake ws
 cd ~/catkin_ws/
