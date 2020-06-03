@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
 import rospy
-import RPi.GPIO as GPIO
+import Jetson.GPIO as GPIO
+import signal
 
-from stepperMotor import *
+from ar_commander.msg import ControllerCmd
+#from stepperMotor import *
 
 # lists of dc and stepper motor pins
-dc_pins = [[]] #[[1,2,3],[4,5,6]]					# 3 pins [in1, in2, enable]
+dc_pins = [[35,37,33]] #[[1,2,3],[4,5,6]]		# 3 pins [in1, in2, enable]
 stepper_pins = [[]] #[[5,6,7,8],[9,10,11,12]]		# 5 pins [A1, A2, B1, B2, enable]
-OP_LIMIT = 90 								# Operation limit of motor, 0 - 100 %
+OP_LIMIT = 90 						# Operation limit of motor, 0 - 100 %
 
 class MotorInterface():
 	def __init__(self):
@@ -21,23 +23,23 @@ class MotorInterface():
 
 		# Setup GPIO pins
 		GPIO.setmode(GPIO.BOARD) # Use pin numbers: https://circuitdigest.com/microcontroller-projects/controlling-stepper-motor-with-raspberry-pi
-		v_cmders = [] # list of vel commanders for each motor
+		self.v_cmders = [] # list of vel commanders for each motor
 		for i, motor_pins in enumerate(dc_pins, start=0):
 			# Setup
 			GPIO.setup(motor_pins[0], GPIO.OUT)
 			GPIO.setup(motor_pins[1], GPIO.OUT)
 			GPIO.setup(motor_pins[2], GPIO.OUT)
-			v_cmders.append(GPIO.PWM(motor_pins[2],1000))
+			self.v_cmders.append(GPIO.PWM(motor_pins[2],1000))
 			# Init output - 0
 			GPIO.output(motor_pins[0],GPIO.LOW)
 			GPIO.output(motor_pins[1],GPIO.LOW)
-			v_cmders[i].start(0)
+			self.v_cmders[i].start(0)
 
-		for motor_pins in stepper_pins:
-			GPIO.setup(motor_pins[0], GPIO.OUT)
-			GPIO.setup(motor_pins[1], GPIO.OUT)
-			GPIO.setup(motor_pins[2], GPIO.OUT)
-			GPIO.setup(motor_pins[3], GPIO.OUT)
+		#for motor_pins in stepper_pins:
+		#	GPIO.setup(motor_pins[0], GPIO.OUT)
+		#	GPIO.setup(motor_pins[1], GPIO.OUT)
+		#	GPIO.setup(motor_pins[2], GPIO.OUT)
+		#	GPIO.setup(motor_pins[3], GPIO.OUT)
 
 
 	def control_cmdsCallback(self, msg):
@@ -76,23 +78,27 @@ class MotorInterface():
 			elif self.V_cmd[i] > 0: # pos vels -> fwd
 				GPIO.output(motor_pins[0],GPIO.HIGH)
 				GPIO.output(motor_pins[1],GPIO.LOW)
-				v_cmders[i].ChangeDutyCycle(max(OP_LIMIT,abs(self.V_cmd[i])))
+				self.v_cmders[i].ChangeDutyCycle(max(OP_LIMIT,abs(self.V_cmd[i])))
 			elif self.V_cmd[i] < 0: # neg vels -> bwd
-				GPIO.output(in1,GPIO.LOW)
-				GPIO.output(in2,GPIO.HIGH)
-				v_cmders[i].ChangeDutyCycle(max(OP_LIMIT,abs(self.V_cmd[i])))
+				GPIO.output(motor_pins[0],GPIO.LOW)
+				GPIO.output(motor_pins[1],GPIO.HIGH)
+				self.v_cmders[i].ChangeDutyCycle(max(OP_LIMIT,abs(self.V_cmd[i])))
 
 	def run(self):
 		rate = rospy.Rate(10) # 10 Hz
-		try:
-			while not rospy.is_shutdown():
-				interface.cmdMotors()
-				rate.sleep()
-		except:
-			for i in range(0,len(v_cmders)):
-				v_cmders[i].stop()
-			GPIO.cleanup()
+		while not rospy.is_shutdown():
+			interface.cmdMotors()
+			rate.sleep()
+
+
+def keyboardInterruptHandler(signal, frame):
+	print("\nGPIO cleaning...")
+	GPIO.cleanup()
+
 
 if __name__ == '__main__':
+	signal.signal(signal.SIGINT, keyboardInterruptHandler)
 	interface = MotorInterface()
 	interface.run()
+
+
