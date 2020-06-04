@@ -3,14 +3,26 @@
 import rospy
 import Jetson.GPIO as GPIO
 import signal
+import time
 
 from ar_commander.msg import ControllerCmd
-#from stepperMotor import *
 
 # lists of dc and stepper motor pins
-dc_pins = [[35,37,33]] #[[1,2,3],[4,5,6]]		# 3 pins [in1, in2, enable]
-stepper_pins = [[]] #[[5,6,7,8],[9,10,11,12]]		# 5 pins [A1, A2, B1, B2, enable]
-OP_LIMIT = 90 						# Operation limit of motor, 0 - 100 %
+dc_pins = [[35,37,33]]			# 3 pins [in1, in2, enable]
+stepper_pins = [[23,21,26,19]]		# 4 pins [A1, A2, B1, B2]
+OP_LIMIT = 90 				# Operation limit of motor, 0 - 100 %
+STEP_DELAY = 0.001			# Delay between steps
+
+StepCount = 8				# Encode motor step sequence
+Seq = range(0, StepCount)
+Seq[0] = [1,0,0,0]
+Seq[1] = [1,1,0,0]
+Seq[2] = [0,1,0,0]
+Seq[3] = [0,1,1,0]
+Seq[4] = [0,0,1,0]
+Seq[5] = [0,0,1,1]
+Seq[6] = [0,0,0,1]
+Seq[7] = [1,0,0,1]
 
 class MotorInterface():
 	def __init__(self):
@@ -19,7 +31,7 @@ class MotorInterface():
 
 		self.V_cmd = None
 		self.phi_cmd = None
-		self.phi_curr = 0
+		self.phi_cur = 0
 
 		# Setup GPIO pins
 		GPIO.setmode(GPIO.BOARD) # Use pin numbers: https://circuitdigest.com/microcontroller-projects/controlling-stepper-motor-with-raspberry-pi
@@ -35,16 +47,34 @@ class MotorInterface():
 			GPIO.output(motor_pins[1],GPIO.LOW)
 			self.v_cmders[i].start(0)
 
-		#for motor_pins in stepper_pins:
-		#	GPIO.setup(motor_pins[0], GPIO.OUT)
-		#	GPIO.setup(motor_pins[1], GPIO.OUT)
-		#	GPIO.setup(motor_pins[2], GPIO.OUT)
-		#	GPIO.setup(motor_pins[3], GPIO.OUT)
+		for motor_pins in stepper_pins:
+			GPIO.setup(motor_pins[0], GPIO.OUT)
+			GPIO.setup(motor_pins[1], GPIO.OUT)
+			GPIO.setup(motor_pins[2], GPIO.OUT)
+			GPIO.setup(motor_pins[3], GPIO.OUT)
 
 
 	def control_cmdsCallback(self, msg):
 		self.V_cmd = msg.velocity_arr.data
 		self.phi_cmd = msg.phi_arr.data[0] #[phi1, phi2]
+
+	def step(self, pins, cmd):
+		GPIO.output(pins[0], cmd[0])
+		GPIO.output(pins[1], cmd[1])
+		GPIO.output(pins[2], cmd[2])
+		GPIO.output(pins[3], cmd[3])
+
+	def step_forward(self, delay, steps, pins):
+		for i in range(steps):
+			for j in range(StepCount):
+				self.step(pins, Seq[j][:])
+				time.sleep(delay)
+
+	def step_backward(self, delay, steps, pins):
+		for i in range(steps):
+			for j in reversed(range(StepCount)):
+				self.step(pins, Seq[j][:])
+				time.sleep(delay)
 
 	def cmdMotors(self):
 		# do we want to use a mutex lock here so we get the cmds out without delay?
@@ -56,18 +86,18 @@ class MotorInterface():
 
 	def cmdStepperMotor(self, motor_pins):
 		if self.phi_cmd != None:
-			delta_phi = self.phi_cmd-self.phi_curr
+			delta_phi = int(self.phi_cmd-self.phi_cur) # must be int num of steps
 			if abs(delta_phi) < 10**-3:
 				pass
 			elif delta_phi > 0:
 				for i in range(0,len(stepper_pins)):
-					forward(delay, stepper_pins[i], delta_phi)
+					self.step_forward(STEP_DELAY, delta_phi, stepper_pins[i])
 			elif delta_phi < 0:
 				for i in range(0,len(stepper_pins)):
-					backward(delay, stepper_pins[i], delta_phi)
+					self.step_backward(STEP_DELAY, abs(delta_phi), stepper_pins[i])
 
 			# TODO: Need to encode current phi to tell steppers to turn desired amount
-			self.phi_cur = self.phi_cmd
+			self.phi_cur = self.phi_cur + delta_phi
 
 
 	def cmdDCMotor(self, motor_pins, i):
