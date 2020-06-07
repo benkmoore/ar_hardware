@@ -87,7 +87,7 @@ class MotorInterface():
 	def cmdStepperMotor(self, motor_pins):
 		if self.phi_cmd != None:
 			delta_phi = self.phi_cmd-self.phi_cur
-			num_steps = int(delta_phi/PHI_2_STEP)# must be int num of steps
+			num_steps = int(delta_phi/PHI_STEP)# must be int num of steps
 			if num_steps == 0:
 				pass
 			elif num_steps > 0:
