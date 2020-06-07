@@ -12,7 +12,7 @@ dc_pins = [[35,37,33]]			# 3 pins [in1, in2, enable]
 stepper_pins = [[23,21,26,19]]		# 4 pins [A1, A2, B1, B2]
 OP_LIMIT = 90 				# Operation limit of motor, 0 - 100 %
 STEP_DELAY = 0.001			# Delay between steps
-PHI_STEP = 1.8				# Resolution of stepper motor, 1 step = 1.8 degrees
+PHI_STEP = 360/405				# Resolution of stepper motor, 360 degrees = 405 steps
 
 StepCount = 8				# Encode motor step sequence
 Seq = range(0, StepCount)
@@ -86,15 +86,16 @@ class MotorInterface():
 
 	def cmdStepperMotor(self, motor_pins):
 		if self.phi_cmd != None:
-			delta_phi = int((self.phi_cmd-self.phi_cur)/PHI_STEP) # must be int num of steps
-			if delta_phi == 0:
+			delta_phi = self.phi_cmd-self.phi_cur
+			num_steps = int(delta_phi/PHI_2_STEP)# must be int num of steps
+			if num_steps == 0:
 				pass
-			elif delta_phi > 0:
+			elif num_steps > 0:
 				for i in range(0,len(stepper_pins)):
-					self.step_forward(STEP_DELAY, delta_phi, stepper_pins[i])
-			elif delta_phi < 0:
+					self.step_forward(STEP_DELAY, num_steps, stepper_pins[i])
+			elif num_steps < 0:
 				for i in range(0,len(stepper_pins)):
-					self.step_backward(STEP_DELAY, abs(delta_phi), stepper_pins[i])
+					self.step_backward(STEP_DELAY, abs(num_steps), stepper_pins[i])
 
 			# TODO: Need to encode current phi to tell steppers to turn desired amount
 			self.phi_cur = self.phi_cur + delta_phi
