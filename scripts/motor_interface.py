@@ -12,6 +12,7 @@ dc_pins = [[35,37,33]]			# 3 pins [in1, in2, enable]
 stepper_pins = [[23,21,26,19]]		# 4 pins [A1, A2, B1, B2]
 OP_LIMIT = 90 				# Operation limit of motor, 0 - 100 %
 STEP_DELAY = 0.001			# Delay between steps
+PHI_STEP = 1.8				# Resolution of stepper motor, 1 step = 1.8 degrees
 
 StepCount = 8				# Encode motor step sequence
 Seq = range(0, StepCount)
@@ -77,7 +78,6 @@ class MotorInterface():
 				time.sleep(delay)
 
 	def cmdMotors(self):
-		# do we want to use a mutex lock here so we get the cmds out without delay?
 		for i, motor_pins in enumerate(dc_pins, start=0):
 			self.cmdDCMotor(motor_pins, i)
 
@@ -86,8 +86,8 @@ class MotorInterface():
 
 	def cmdStepperMotor(self, motor_pins):
 		if self.phi_cmd != None:
-			delta_phi = int(self.phi_cmd-self.phi_cur) # must be int num of steps
-			if abs(delta_phi) < 10**-3:
+			delta_phi = int((self.phi_cmd-self.phi_cur)/PHI_STEP) # must be int num of steps
+			if delta_phi == 0:
 				pass
 			elif delta_phi > 0:
 				for i in range(0,len(stepper_pins)):
