@@ -1,0 +1,13 @@
+# Teensy setup notes
+
+1. Test functioning Teensy: https://www.pjrc.com/teensy/first_use.html
+
+2. Download Teensyduino, Version 1.52 to jetson from: https://www.pjrc.com/teensy/td_download.html
+Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We need to determine which libraries are needed so we don't install them all for production)
+
+3. Extract arduino dowloaded files. Install Arduino IDE by running ./installArduinoIDE.sh 
+
+4. Check Teensey Board is visalbe in Arduino IDE -> Tools -> Board and select Teensy 4.0 
+
+5. Install Teensy loader for command line from source. Follow instructions: https://www.pjrc.com/teensy/loader_cli.html
+
