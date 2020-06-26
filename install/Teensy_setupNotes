@@ -7,11 +7,11 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 
 3. Extract arduino dowloaded files. Install Arduino IDE by running ./installArduinoIDE.sh 
 
-4. Check Teensey Board is visalbe in Arduino IDE -> Tools -> Board and select Teensy 4.0 
+4. Check Teensey Board is visable in Arduino IDE -> Tools -> Board and select Teensy 4.0 
 
 5. Install Teensy loader for command line from source. Follow instructions: https://www.pjrc.com/teensy/loader_cli.html
 
-6. Compile test_stepperMotor.ino in ArduinoIDE using Sketch -> Compile. Press load button on teensy (need to use command line for this later using teensy_loader_cli)
+6. Compile test_stepperMotor.ino in ArduinoIDE using Sketch -> Compile. Load onto teesny: Press load button on teensy (need to use command line for this later using teensy_loader_cli).
 
 7. Setup port for teensy in ArudinoIDE Tools -> Port, select Teensy. Tools -> Serial Monitor, outputs console of teensy programs. Good way to check program is running correctly on teensy.
 
