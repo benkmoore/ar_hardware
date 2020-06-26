@@ -11,3 +11,8 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 
 5. Install Teensy loader for command line from source. Follow instructions: https://www.pjrc.com/teensy/loader_cli.html
 
+6. Compile test_stepperMotor.ino in ArduinoIDE using Sketch -> Compile. Press load button on teensy (need to use command line for this later using teensy_loader_cli)
+
+7. Setup port for teensy in ArudinoIDE Tools -> Port, select Teensy. Tools -> Serial Monitor, outputs console of teensy programs. Good way to check program is running correctly on teensy.
+
+8. NOTE: For stepper motors adjust voltage across motor driver, DRV8825: see video at this link: https://youtu.be/89BHS9hfSUk, more info on DRV8825: https://www.pololu.com/product/2133. Aim for 0.5V or less (rotation appears smoothest at 0.35V)
