@@ -16,3 +16,24 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 7. Setup port for teensy in ArudinoIDE Tools -> Port, select Teensy. Tools -> Serial Monitor, outputs console of teensy programs. Good way to check program is running correctly on teensy.
 
 8. NOTE: For stepper motors adjust voltage across motor driver, DRV8825: see video at this link: https://youtu.be/89BHS9hfSUk, more info on DRV8825: https://www.pololu.com/product/2133. Aim for 0.5V or less (rotation appears smoothest at 0.35V)
+
+
+-----------------------------------------------------------------------------------------------------
+
+# Sending ROS msgs over Teensy
+
+1. Install ROS serial communication package for arduino. For more details o the isntall commands below see: http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup
+
+To install ROS serial pkgs run the following commands:
+sudo apt-get install ros-melodic-rosserial-arduino
+
+sudo apt-get install ros-melodic-rosserial
+
+To install necccesarry ros libarires in the arduino environment run the following commands:
+cd Arduino/libraries
+rosrun rosserial_arduino make_libraries.py .
+
+To check install:
+Restart ArduinoIDE -> File -> Examples -> ros_lib -> Hello_world
+
+2.
