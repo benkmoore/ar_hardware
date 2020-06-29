@@ -20,7 +20,7 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 
 -----------------------------------------------------------------------------------------------------
 
-# Sending ROS msgs over Teensy
+# Setup for ROS msgs over Teensy
 
 1. Install ROS serial communication package for arduino. For more details o the isntall commands below see: http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup
 
@@ -46,6 +46,32 @@ Line 44 should now look like:
 3. Add custom AR messages to arduino ros_lib: http://wiki.ros.org/rosserial_arduino/Tutorials/Adding%20Custom%20Messages, using this command
 
 rosrun rosserial_client make_library.py /home/ben/Arduino/ /home/ben/catkin_ws/src/ar_commander/msg
+
+
+------------------------------------------------------------------------------------------------
+
+# Creating conncetion over usb between teensy node and roscore on jetson
+
+1. Check baud rate on teensy - default is 9600. If baud rate is too high can cause comms issues. Start with 9600 can go higher later and test. Load script onto teensy with teens_loader. 
+
+2. Check teensy port on AarduinoIDe -> Tools -> Port. Check that the port exists: ls /dev/ttyACM0
+
+3. After launching ros master run: rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=9600
+
+make sure the correct port and baud rate is used. If connection succesful will see this:
+[INFO] [1593459264.359302]: ROS Serial Python Node
+[INFO] [1593459264.368955]: Connecting to /dev/ttyACM0 at 9600 baud
+[INFO] [1593459266.475355]: Requesting topics...
+[INFO] [1593459269.612953]: Note: subscribe buffer size is 2048 bytes
+[INFO] [1593459269.616665]: Setup subscriber on controller_cmds [ar_commander/ControllerCmd]
+
+4. Make sure you have serial monitor closed and no serial print lines in your code. Cant use both the serial usb and serial monitor at the same time. If you do you'll get this error: "Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino"
+
+5. Make sure the buffer size is big enough for a backlog of your msgs:
+
+ros::NodeHandle_<HardwareType, MAX_PUBLISHERS=25, MAX_SUBSCRIBERS=25, IN_BUFFER_SIZE=512, OUT_BUFFER_SIZE=512> nh;
+
+More info: http://wiki.ros.org/rosserial/Overview/Initialization
 
 
 
