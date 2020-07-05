@@ -1,16 +1,13 @@
 #include <ros.h>
 #include <ar_commander/ControllerCmd.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseArray.h>
 #include <AccelStepper.h>
-#include <MultiStepper.h>
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
 
 // Max outputs, step to degrees
-#define MAX_SPEED 200
+#define MAX_SPEED 2000
 #define PHI_STEP 1.8
 #define BAUD_RATE 9600
 #define RAD_2_DEG 57.295779513082320876798154814105
@@ -30,7 +27,6 @@ byte InterfaceType = 1;
 
 // Define steppers
 AccelStepper stepper1(InterfaceType, StepperPins[0][0], StepperPins[0][1]);
-MultiStepper steppers;
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -52,7 +48,8 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   while(stepper1.currentPosition() != (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP )) {
-    stepper1.setSpeed(300);
+    stepper1.setAcceleration(1400); //Set this low to overcome inertia from stationary start
+    stepper1.setSpeed(1400);
     stepper1.runSpeed();
   }
 }
@@ -62,6 +59,11 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 /*
  * ------------- SUPPORT FUNCTIONS ------------------
  */
+
+// Note may need to add in speed ramp as to overcome motor bearing inertia
+// eg : for (int i = 80; i < 250; i++) {
+//     Forward(i);
+//  }
 
 // Define forward rotation - DC Motor
 void Forward_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
@@ -91,7 +93,6 @@ void setup() {
   }
   // Define stepper motors max speeds (otherwise won't rotate)
   stepper1.setMaxSpeed(MAX_SPEED);
-  steppers.addStepper(stepper1);
   
   // Init node and Subscribe to /controller_cmds
   motor_interface.getHardware()->setBaud(BAUD_RATE);
