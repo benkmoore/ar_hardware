@@ -20,15 +20,13 @@
 const int N_DCMotors = 1;
 const int N_StepperMotors = 4;
 
-// Num of steppers steps for 360 degree rotation
-const int oneRotationInSteps = 200;
-
 // Step Motor pins [ [StepPin, DirPin], ... ]
 int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 
-//DC Motor pins [ [in1, in2, en], ... ]
+// DC Motor pins [ [in1, in2, en], ... ]
 int DCMotorPins[N_DCMotors][3] = {{17, 16, 15}};
 
+// Motor interface type for stppers
 byte motorInterfaceType = 1;
 
 // Define steppers
