@@ -1,14 +1,17 @@
 #define USE_USBCON
 #include <ros.h>
 #include <ar_commander/ControllerCmd.h>
-#include <Stepper.h>
+#include <AccelStepper.h>
+#include <MultiStepper.h>
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
 
 // Max outputs, step to degrees
-#define STEPPER_VEL 50
+#define STEPPER_VEL 40
+#define MAX_STEPPER_VEL 100
+#define STEPPER_ACCEL 30
 #define PHI_STEP 1.8
 #define BAUD_RATE 57600
 #define RAD_2_DEG 57.295779513082320876798154814105
@@ -26,11 +29,14 @@ int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 //DC Motor pins [ [in1, in2, en], ... ]
 int DCMotorPins[N_DCMotors][3] = {{17, 16, 15}};
 
+byte motorInterfaceType = 1;
+
 // Define steppers
-Stepper stepper1(oneRotationInSteps, StepperPins[0][0], StepperPins[0][1]);
-Stepper stepper2(oneRotationInSteps, StepperPins[1][0], StepperPins[1][1]);
-Stepper stepper3(oneRotationInSteps, StepperPins[2][0], StepperPins[2][1]);
-Stepper stepper4(oneRotationInSteps, StepperPins[3][0], StepperPins[3][1]);
+AccelStepper stepper1(motorInterfaceType, StepperPins[0][0], StepperPins[0][1]);
+AccelStepper stepper2(motorInterfaceType, StepperPins[1][0], StepperPins[1][1]);
+AccelStepper stepper3(motorInterfaceType, StepperPins[2][0], StepperPins[2][1]);
+AccelStepper stepper4(motorInterfaceType, StepperPins[3][0], StepperPins[3][1]);
+MultiStepper steppers;
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -38,11 +44,6 @@ Stepper stepper4(oneRotationInSteps, StepperPins[3][0], StepperPins[3][1]);
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, 1, 1, 2048, 2048> motor_interface;
-
-int stepper1_pos = 0;
-int stepper2_pos = 0;
-int stepper3_pos = 0;
-int stepper4_pos = 0;
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -54,22 +55,20 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 //      Reverse_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
 //    }
 //  }
-//
+
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
   int numSteps2 = (int) ( (msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
   int numSteps3 = (int) ( (msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
   int numSteps4 = (int) ( (msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-  
-//  if (stepper1_pos != numSteps1) {
-//    stepper1.step(numSteps1);
-//    stepper1_pos += stepper1_pos + numSteps1;
-//  }
 
-  stepStepper(stepper1, numSteps1, stepper1_pos);
-  stepStepper(stepper2, numSteps2, stepper2_pos);
-  stepStepper(stepper3, numSteps3, stepper3_pos);
-  stepStepper(stepper4, numSteps4, stepper4_pos);
+  long pos[4];
+  pos[0] = numSteps1;
+  pos[1] = numSteps2;
+  pos[2] = numSteps3;
+  pos[3] = numSteps4;
+  steppers.moveTo(pos);
+  steppers.run();
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
@@ -77,13 +76,6 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 /*
  * ------------- SUPPORT FUNCTIONS ------------------
  */
-
-void stepStepper(Stepper stepper, int numSteps, int &stepper_pos) {
-  if (stepper_pos != numSteps) {
-    stepper.step(numSteps);
-    stepper_pos += stepper_pos + numSteps;
-  }
-}
 
 // Note may need to add in speed ramp as to overcome motor bearing inertia
 // eg : for (int i = 80; i < 250; i++) {
@@ -118,10 +110,30 @@ void setup() {
 //  }
 
   // Set stepper velocity
+  stepper1.setMaxSpeed(MAX_STEPPER_VEL);
+  stepper2.setMaxSpeed(MAX_STEPPER_VEL);
+  stepper3.setMaxSpeed(MAX_STEPPER_VEL);
+  stepper4.setMaxSpeed(MAX_STEPPER_VEL);
+  
   stepper1.setSpeed(STEPPER_VEL);
   stepper2.setSpeed(STEPPER_VEL);
   stepper3.setSpeed(STEPPER_VEL);
   stepper4.setSpeed(STEPPER_VEL);
+
+  stepper1.setCurrentPosition(0);
+  stepper2.setCurrentPosition(0);
+  stepper3.setCurrentPosition(0);
+  stepper4.setCurrentPosition(0);
+
+  stepper1.setAcceleration(STEPPER_ACCEL);
+  stepper2.setAcceleration(STEPPER_ACCEL);
+  stepper3.setAcceleration(STEPPER_ACCEL);
+  stepper4.setAcceleration(STEPPER_ACCEL);
+
+  steppers.addStepper(stepper1);
+  steppers.addStepper(stepper2);
+  steppers.addStepper(stepper3);
+  steppers.addStepper(stepper4);
   
   // Init node and Subscribe to /controller_cmds
   motor_interface.getHardware()->setBaud(BAUD_RATE);
