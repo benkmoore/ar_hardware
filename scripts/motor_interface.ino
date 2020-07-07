@@ -1,27 +1,24 @@
 #define USE_USBCON
 #include <ros.h>
 #include <ar_commander/ControllerCmd.h>
-#include <AccelStepper.h>
-
-#include <std_msgs/String.h>
-#include <std_msgs/Empty.h>
-#include <std_msgs/Float64.h>
+#include <Stepper.h>
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
 
 // Max outputs, step to degrees
-#define MAX_STEPPER_VEL 2000
-#define STEPPER_VEL 1200
-#define STEPPER_ACCEL 10
+#define STEPPER_VEL 50
 #define PHI_STEP 1.8
 #define BAUD_RATE 57600
 #define RAD_2_DEG 57.295779513082320876798154814105
  
-// Input number of DC motors and stepper motors in use
+// Input number of DC motors, stepper motors in use
 const int N_DCMotors = 1;
 const int N_StepperMotors = 4;
+
+// Num of steppers steps for 360 degree rotation
+const int oneRotationInSteps = 200;
 
 // Step Motor pins [ [StepPin, DirPin], ... ]
 int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
@@ -29,14 +26,11 @@ int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 //DC Motor pins [ [in1, in2, en], ... ]
 int DCMotorPins[N_DCMotors][3] = {{17, 16, 15}};
 
-// Interface type for stepper motors
-byte InterfaceType = 1;
-
 // Define steppers
-AccelStepper stepper1(InterfaceType, StepperPins[0][0], StepperPins[0][1]);
-AccelStepper stepper2(InterfaceType, StepperPins[1][0], StepperPins[1][1]);
-AccelStepper stepper3(InterfaceType, StepperPins[2][0], StepperPins[2][1]);
-AccelStepper stepper4(InterfaceType, StepperPins[3][0], StepperPins[3][1]);
+Stepper stepper1(oneRotationInSteps, StepperPins[0][0], StepperPins[0][1]);
+Stepper stepper2(oneRotationInSteps, StepperPins[1][0], StepperPins[1][1]);
+Stepper stepper3(oneRotationInSteps, StepperPins[2][0], StepperPins[2][1]);
+Stepper stepper4(oneRotationInSteps, StepperPins[3][0], StepperPins[3][1]);
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -45,11 +39,10 @@ AccelStepper stepper4(InterfaceType, StepperPins[3][0], StepperPins[3][1]);
 // ROS node
 ros::NodeHandle_<ArduinoHardware, 1, 1, 2048, 2048> motor_interface;
 
-std_msgs::Float64 float_msg;
-ros::Publisher chatter("chatter", &float_msg);
-
-char hello[13] = "hello world!";
-float step_pos = 0.0;
+int stepper1_pos = 0;
+int stepper2_pos = 0;
+int stepper3_pos = 0;
+int stepper4_pos = 0;
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -63,25 +56,20 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 //  }
 //
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  //
-//  stepper1.setCurrentPosition(1);
-//  while(stepper1.currentPosition() != 400) { //(int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP )
-//    stepper1.runSpeed();
-//    stepper1.setCurrentPosition(-1);
-//    float_msg.data = stepper1.currentPosition();
-//    chatter.publish( &float_msg );
-//    //t += 1;
+  int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+  int numSteps2 = (int) ( (msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+  int numSteps3 = (int) ( (msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+  int numSteps4 = (int) ( (msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+  
+//  if (stepper1_pos != numSteps1) {
+//    stepper1.step(numSteps1);
+//    stepper1_pos += stepper1_pos + numSteps1;
 //  }
 
-//  int t = 0;
-//  while( t<100000 ){
-//    stepper1.runSpeed();
-////    float_msg.data = stepper1.currentPosition();
-////    chatter.publish( &float_msg );
-//    t += 1;
-//  }
-  stepper1.move(500);
-  stepper1.runSpeedToPosition();
+  stepStepper(stepper1, numSteps1, stepper1_pos);
+  stepStepper(stepper2, numSteps2, stepper2_pos);
+  stepStepper(stepper3, numSteps3, stepper3_pos);
+  stepStepper(stepper4, numSteps4, stepper4_pos);
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
@@ -89,6 +77,13 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 /*
  * ------------- SUPPORT FUNCTIONS ------------------
  */
+
+void stepStepper(Stepper stepper, int numSteps, int &stepper_pos) {
+  if (stepper_pos != numSteps) {
+    stepper.step(numSteps);
+    stepper_pos += stepper_pos + numSteps;
+  }
+}
 
 // Note may need to add in speed ramp as to overcome motor bearing inertia
 // eg : for (int i = 80; i < 250; i++) {
@@ -121,27 +116,17 @@ void setup() {
 //    pinMode(DCMotorPins[i][1], OUTPUT);
 //    pinMode(DCMotorPins[i][2], OUTPUT); 
 //  }
-  // Define stepper motors max speeds (otherwise won't rotate)
-  stepper1.setMaxSpeed(MAX_STEPPER_VEL);
-//  stepper2.setMaxSpeed(MAX_STEPPER_VEL);
-//  stepper3.setMaxSpeed(MAX_STEPPER_VEL);
-//  stepper4.setMaxSpeed(MAX_STEPPER_VEL);
 
-  stepper1.setCurrentPosition(0);
-//  stepper2.setCurrentPosition(0);
-//  stepper3.setCurrentPosition(0);
-//  stepper4.setCurrentPosition(0);
-
-  stepper1.setSpeed(STEPPER_VEL); //Set speed before acceleration NB!!
-  
-  stepper1.setAcceleration(STEPPER_ACCEL); //Set this low to overcome inertia from stationary start
-  
+  // Set stepper velocity
+  stepper1.setSpeed(STEPPER_VEL);
+  stepper2.setSpeed(STEPPER_VEL);
+  stepper3.setSpeed(STEPPER_VEL);
+  stepper4.setSpeed(STEPPER_VEL);
   
   // Init node and Subscribe to /controller_cmds
   motor_interface.getHardware()->setBaud(BAUD_RATE);
   motor_interface.initNode();
   motor_interface.subscribe(controller_cmds_sub);
-  motor_interface.advertise(chatter);
 }
 
 /*
@@ -149,8 +134,5 @@ void setup() {
  */
 
 void loop() {
-  float_msg.data = stepper1.currentPosition();
-  chatter.publish( &float_msg );
   motor_interface.spinOnce();
-  delay(0.1);
 }
