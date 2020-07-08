@@ -11,8 +11,8 @@
 #define motorInterfaceType 1
 
 #define accel 1400
-#define vel 2000
-#define max_vel 1400
+#define vel 1400
+#define max_vel 2000
 
 // Define some steppers and the pins the will use
 AccelStepper stepper1(motorInterfaceType, stepPin1, dirPin1);
@@ -39,8 +39,8 @@ void setup()
 void loop()
 {  
    
-//   stepper1.runSpeed();
-//   stepper2.runSpeed();
-//   stepper3.runSpeed();
-//   stepper4.runSpeed();
+   stepper1.runSpeed();
+   stepper2.runSpeed();
+   stepper3.runSpeed();
+   stepper4.runSpeed();
 }
