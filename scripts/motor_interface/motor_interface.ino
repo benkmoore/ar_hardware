@@ -17,14 +17,14 @@
 #define RAD_2_DEG 57.295779513082320876798154814105
  
 // Input number of DC motors, stepper motors in use
-const int N_DCMotors = 1;
+const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
 // Step Motor pins [ [StepPin, DirPin], ... ]
 int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 
 // DC Motor pins [ [in1, in2, en], ... ]
-int DCMotorPins[N_DCMotors][3] = {{17, 16, 15}};
+int DCMotorPins[N_DCMotors][3] = {{15, 14, 13}, {17, 16, 18}, {20, 21, 19}, {22, 23, 12}};
 
 // Motor interface type for stppers
 byte motorInterfaceType = 1;
@@ -45,14 +45,17 @@ ros::NodeHandle_<ArduinoHardware, 1, 1, 2048, 2048> motor_interface;
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-//  for(int i = 0; i < N_DCMotors; i++) {
-//    if (msg.velocity_arr.data[i] > 0) {
-//      Forward_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-//    }
-//    else if (msg.velocity_arr.data[i] < 0) {
-//      Reverse_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-//    }
-//  }
+  for(int i = 0; i < N_DCMotors; i++) {
+    if (msg.velocity_arr.data[i] > 0) { 
+      Forward_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+    }
+    else if (msg.velocity_arr.data[i] < 0) { 
+      Reverse_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+    }
+    else {
+      Forward_DCMotor(0, DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+    }
+  }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
@@ -101,11 +104,11 @@ void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
 void setup() {
   //Serial.begin(BAUD_RATE);
   // Set pins to Output for DC motors
-//  for(int i = 0; i < N_DCMotors; i++) {
-//    pinMode(DCMotorPins[i][0], OUTPUT);   
-//    pinMode(DCMotorPins[i][1], OUTPUT);
-//    pinMode(DCMotorPins[i][2], OUTPUT); 
-//  }
+  for(int i = 0; i < N_DCMotors; i++) {
+    pinMode(DCMotorPins[i][0], OUTPUT);   
+    pinMode(DCMotorPins[i][1], OUTPUT);
+    pinMode(DCMotorPins[i][2], OUTPUT); 
+  }
 
   // Set stepper velocity
   stepper1.setMaxSpeed(MAX_STEPPER_VEL);
