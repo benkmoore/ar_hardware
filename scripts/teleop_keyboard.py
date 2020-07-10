@@ -15,8 +15,13 @@ import sys, select, termios, tty
 msg = """
 Reading from the keyboard and publishing to controller_cmds!
 ---------------------------
-Forward: f
-Backward: b
+
+Keys -> direction of movement
+
+q w e
+a s d
+z x c
+
 Stop: s
 
 CTRL-C to stop motors and quit
@@ -130,6 +135,8 @@ if __name__=="__main__":
         key_timeout = None
 
     pub_thread = PublishThread(repeat)
+	
+    vel = 130;	
 
     V_cmd = np.zeros(N);
     phi_cmd = np.zeros(N);
@@ -142,14 +149,37 @@ if __name__=="__main__":
 	print(cmds(V_cmd, phi_cmd))
         while(1):
             key = getKey(key_timeout)
-            if key == 'f':
+            if key == 'q':
+		print("Forward left...")
+		v_cmd = np.array([vel,vel])
+		omega_cmd = 0
+            elif key == 'w':
 		print("Forward...")
-		v_cmd = np.array([10,10])
+		v_cmd = np.array([0,-vel])
 		omega_cmd = 0
-            elif key == 'b':
+            elif key == 'e':
+		print("Forward right...")
+		v_cmd = np.array([-vel,vel])
+		omega_cmd = 0
+            elif key == 'a':
+		print("Left...")
+		v_cmd = np.array([vel,0])
+		omega_cmd = 0
+            elif key == 'd':
+		print("Right...")
+		v_cmd = np.array([-vel,0])
+		omega_cmd = 0
+            elif key == 'x':
 		print("Backward...")
-		v_cmd = np.array([-10,-10])
+		v_cmd = np.array([0,vel])
 		omega_cmd = 0
+            elif key == 'c':
+		print("Backward right...")
+		v_cmd = np.array([vel,-vel])
+		omega_cmd = 0
+            elif key == 'z':
+		print("Backward left...")
+		v_cmd = np.array([-vel,-vel])
             elif key == 's':
 		print("Stopping...")
 		v_cmd = np.array([0,0])
