@@ -11,7 +11,7 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 
 5. Install Teensy loader for command line from source. Follow instructions: https://www.pjrc.com/teensy/loader_cli.html
 
-6. Compile test_stepperMotor.ino in ArduinoIDE using Sketch -> Compile. Load onto teesny: Press load button on teensy (need to use command line for this later using teensy_loader_cli).
+6. Compile test_stepperMotor.ino in ArduinoIDE using Sketch -> Compile. Load onto teesny: Press load button on teensy (need to use command line for this later using teensy_loader_cli). When uploading via the command line make sure the programming symbol adn then the reboot symbol appear on the teensy gui. If you find that upload is stalling check the usb connection to the usb and replug/reset if needed. Pressing the manual upload button on the teensy is a workaround but try to fix the usb conenction as this can cause serial communication problems when you launch the ROS. 
 
 7. Setup port for teensy in ArudinoIDE Tools -> Port, select Teensy. Tools -> Serial Monitor, outputs console of teensy programs. Good way to check program is running correctly on teensy.
 
@@ -80,6 +80,9 @@ make sure the correct port and baud rate is used. If connection succesful will s
 
 
 4. Test with controller msg: rostopic pub -r 10 /controller_cmds ar_commander/ControllerCmd "{velocity_arr:ta: [0,0,0,0]}, phi_arr: {data:[1.5, 1.5, 1.5, 1.5]}}"
+
+
+5. Check that the teensy is receiving the messages by monitorin the /chatter topic which is published within the controller_cmds callback from the teensy.
 
 DEBUG NOTES:
 
