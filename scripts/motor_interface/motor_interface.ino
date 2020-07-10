@@ -4,6 +4,8 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
+#include <std_msgs/Float64.h>
+
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
@@ -43,6 +45,9 @@ MultiStepper steppers;
 // ROS node
 ros::NodeHandle_<ArduinoHardware, 1, 1, 2048, 2048> motor_interface;
 
+std_msgs::Float64 fl_msg;
+ros::Publisher chatter("chatter", &fl_msg);
+
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for(int i = 0; i < N_DCMotors; i++) {
@@ -56,7 +61,9 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       Forward_DCMotor(0, DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
   }
-
+  fl_msg.data = msg.phi_arr.data[0];
+  chatter.publish(&fl_msg);
+  
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
   int numSteps2 = (int) ( (msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
@@ -140,6 +147,8 @@ void setup() {
   motor_interface.getHardware()->setBaud(BAUD_RATE);
   motor_interface.initNode();
   motor_interface.subscribe(controller_cmds_sub);
+
+  motor_interface.advertise(chatter);
 }
 
 /*
