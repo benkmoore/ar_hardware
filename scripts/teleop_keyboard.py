@@ -128,7 +128,7 @@ if __name__=="__main__":
 
     rospy.init_node('teleop_keyboard')
 
-    repeat = rospy.get_param("~repeat_rate", 10.0)
+    repeat = rospy.get_param("~repeat_rate", 50.0)
     print("Repeat rate cmds: %d Hz" % repeat)
     key_timeout = rospy.get_param("~key_timeout", 0.0)
     if key_timeout == 0.0:
@@ -136,7 +136,7 @@ if __name__=="__main__":
 
     pub_thread = PublishThread(repeat)
 	
-    vel = 130;	
+    vel = 170;	
 
     V_cmd = np.zeros(N);
     phi_cmd = np.zeros(N);
