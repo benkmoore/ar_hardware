@@ -89,7 +89,7 @@ make sure the correct port and baud rate is used. If connection succesful will s
 
 5. Check that the teensy is receiving the messages by monitorin the /chatter topic which is published within the controller_cmds callback from the teensy. See Teensy Setup Notes for more debug info on this.
 
-DEBUG NOTES:
+#### Debugging notes:
 
 A. Make sure you have serial monitor closed and no serial print lines in your code. Cant use both the serial usb and serial monitor at the same time. If you do you'll get this error: "Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino"
 
