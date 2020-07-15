@@ -1,0 +1,7 @@
+<launch>
+    <!-- launch ar_commander autonomy stack -->  
+    <include file="$(find ar_commander)/launch/autonomy_stack.launch" />
+
+    <!-- launch ROS usb serial connection -->
+    <node pkg="rosserial_python" type="serial_node.py" name="rosserial_usb" args="_port:=/dev/ttyACM0 _baud:=57600" output="screen"/>
+</launch>
