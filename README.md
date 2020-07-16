@@ -104,3 +104,13 @@ D. Compile code and reboot teensy
 
 E. Increase time out if error is  `"lost sync..."` see: [https://github.com/zprihoda/ar_commander/issues/16]
 
+---------------------------------------------------------------------------------------------------
+
+## Setup Time-Of-Flight (TOF) sensors - VL53L0X
+
+1. Setup wiring of multiple TOFs as in wiring digram (here)[/home/ben/Arduino/test_TOF]. Note use 3.3V source, some articles suggest 5V but that didnt work.
+
+2. Install VL53L0X arduino package: ArduinoIDE -> Sketch -> Include Libraries -> Manage Libraries -> VL53L0X
+
+3. Upload the `catkin_ws/src/ar_hardware/scripts/tof_tests/test_TOF3` script to the teensy: `./load_arduino_file.sh test_TOF3.ino` and view serial monitor to check outputted distances. 
+
