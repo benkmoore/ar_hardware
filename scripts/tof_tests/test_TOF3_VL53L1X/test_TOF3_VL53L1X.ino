@@ -21,10 +21,9 @@ void setup()
   digitalWrite(out3, LOW);
   delay(500);
   
-  Serial.begin(115200);
+  Serial.begin(57600);
   Wire.begin();
   Wire.setClock(400000); // use 400 kHz I2C
-  Wire.beginTransmission(0x29);
   delay(2000);
 
   digitalWrite(out1, HIGH);

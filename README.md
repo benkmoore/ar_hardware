@@ -58,7 +58,9 @@ Line 44 should now look like:
 
 3. Add custom AR messages to arduino ros_lib: [http://wiki.ros.org/rosserial_arduino/Tutorials/Adding%20Custom%20Messages], using this command
 
-`rosrun rosserial_client make_library.py /home/ben/Arduino/ /home/ben/catkin_ws/src/ar_commander/msg`
+`rosrun rosserial_arduino make_libraries.py /home/ben/Arduino/libraries /home/ben/catkin_ws/src/ar_commander/msg`
+
+NOTE: Always delete the existing ros_lib folder in '~/Arduino' before rebuilding headers for msgs otherwise no updates will be made. 
 
 
 ------------------------------------------------------------------------------------------------
