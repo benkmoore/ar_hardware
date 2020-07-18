@@ -9,12 +9,16 @@ int MEASUREMENT_TIME = 50;
 
 void setup()
 {
-  pinMode(15, OUTPUT);
-  pinMode(14, OUTPUT);
-  pinMode(13, OUTPUT);
-  digitalWrite(15, LOW);
-  digitalWrite(14, LOW);
-  digitalWrite(13, LOW);
+  // Note Teensy 4.0 and Teensy 4.1 pin numbers are different
+  int out1 = 35;
+  int out2 = 34;
+  int out3 = 33;
+  pinMode(out1, OUTPUT);
+  pinMode(out2, OUTPUT);
+  pinMode(out3, OUTPUT);
+  digitalWrite(out1, LOW);
+  digitalWrite(out2, LOW);
+  digitalWrite(out3, LOW);
   delay(500);
   
   Serial.begin(115200);
@@ -23,21 +27,21 @@ void setup()
   Wire.beginTransmission(0x29);
   delay(2000);
 
-  digitalWrite(15, HIGH);
+  digitalWrite(out1, HIGH);
   delay(150);
   tof1.init();
   delay(100);
   tof1.setAddress((uint8_t)0x33);
   Serial.println("setup 1");
 
-  digitalWrite(14, HIGH);
+  digitalWrite(out2, HIGH);
   delay(150);
   tof2.init();
   delay(100);
   tof2.setAddress((uint8_t)0x35);
   Serial.println("setup 2");
 
-  digitalWrite(13, HIGH);
+  digitalWrite(out3, HIGH);
   delay(150);
   tof3.init();
   delay(100);
