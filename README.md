@@ -106,11 +106,13 @@ E. Increase time out if error is  `"lost sync..."` see: [https://github.com/zpri
 
 ---------------------------------------------------------------------------------------------------
 
-## Setup Time-Of-Flight (TOF) sensors - VL53L0X
+## Setup Time-Of-Flight (TOF) sensors - VL53L1X
 
 1. Setup wiring of multiple TOFs as in wiring digram (here)[/home/ben/Arduino/test_TOF]. Note use 3.3V source, some articles suggest 5V but that didnt work.
 
-2. Install VL53L0X arduino package: ArduinoIDE -> Sketch -> Include Libraries -> Manage Libraries -> VL53L0X
+2. Install VL53L1X arduino package: ArduinoIDE -> Sketch -> Include Libraries -> Manage Libraries -> VL53L1X.
 
-3. Upload the `catkin_ws/src/ar_hardware/scripts/tof_tests/test_TOF3` script to the teensy: `./load_arduino_file.sh test_TOF3.ino` and view serial monitor to check outputted distances. 
+3. Upload the `catkin_ws/src/ar_hardware/scripts/tof_tests/test_TOF3` script to the teensy: `./load_arduino_file.sh test_TOF3_VL53L1X.ino` and view serial monitor to check outputted distances. 
+
+NOTE: VL53L1X (docs)[https://github.com/pololu/vl53l1x-arduino] and (library)[https://www.pololu.com/product/3415].
 
