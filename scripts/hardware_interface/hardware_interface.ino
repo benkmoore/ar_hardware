@@ -1,7 +1,6 @@
 #define USE_USBCON
 #include <ros.h>
 #include <ar_commander/TOF.h>
-#include <std_msgs/Float64.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 #include <Wire.h>
@@ -35,7 +34,7 @@ int tofOut3 = 33;
  */
 
 // ROS node
-ros::NodeHandle_<ArduinoHardware, 1, 1, 2048, 2048> hardware_interface;
+ros::NodeHandle_<ArduinoHardware, 1, 1, 512, 512> hardware_interface;
 
 ar_commander::TOF tof_msg;
 ros::Publisher tof_publisher("tof_data", &tof_msg);
@@ -107,17 +106,11 @@ void setup() {
  */
 
 void loop() {
-  hardware_interface.spinOnce();
-
-  int dist1 = tof1.readRangeContinuousMillimeters() + 0.0;
-  if (tof1.timeoutOccurred()) { Serial.print(" TIMEOUT - TOF1"); }
-  int dist2 = tof2.readRangeContinuousMillimeters();
-  if (tof2.timeoutOccurred()) { Serial.print(" TIMEOUT - TOF2"); }
-  int dist3 = tof3.readRangeContinuousMillimeters();
-  if (tof3.timeoutOccurred()) { Serial.print(" TIMEOUT - TOF3"); }
-
-  tof_msg.tof1 = dist1;
-  tof_msg.tof2 = dist2;
-  tof_msg.tof3 = dist3;
+  
+  tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
+  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
+  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
   tof_publisher.publish(&tof_msg);
+  hardware_interface.spinOnce();
+  
 }
