@@ -7,6 +7,11 @@ VL53L1X tof3;
 
 int MEASUREMENT_TIME = 50;
 
+// TOF I2C addresses
+uint8_t tofAddress1 = 0x33;
+uint8_t tofAddress2 = 0x35;
+uint8_t tofAddress3 = 0x37;
+
 void setup()
 {
   // Note Teensy 4.0 and Teensy 4.1 pin numbers are different
@@ -19,32 +24,24 @@ void setup()
   digitalWrite(out1, LOW);
   digitalWrite(out2, LOW);
   digitalWrite(out3, LOW);
-  delay(500);
   
   Serial.begin(57600);
   Wire.begin();
   Wire.setClock(400000); // use 400 kHz I2C
-  delay(2000);
 
   digitalWrite(out1, HIGH);
-  delay(150);
   tof1.init();
-  delay(100);
-  tof1.setAddress((uint8_t)0x33);
+  tof1.setAddress(tofAddress1);
   Serial.println("setup 1");
 
   digitalWrite(out2, HIGH);
-  delay(150);
   tof2.init();
-  delay(100);
-  tof2.setAddress((uint8_t)0x35);
+  tof2.setAddress(tofAddress2);
   Serial.println("setup 2");
 
   digitalWrite(out3, HIGH);
-  delay(150);
   tof3.init();
-  delay(100);
-  tof3.setAddress((uint8_t)0x37);
+  tof3.setAddress(tofAddress3);
   Serial.println("setup 3");
 
   tof1.setDistanceMode(VL53L1X::Long);

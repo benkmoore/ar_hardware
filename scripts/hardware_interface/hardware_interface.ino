@@ -13,14 +13,25 @@
  * ------------- FILE DEFINITION & SETUP ------------------
  */
 
-// Max outputs, step to degrees
-#define STEPPER_VEL 40
-#define MAX_STEPPER_VEL 100
-#define STEPPER_ACCEL 30
-#define PHI_STEP 1.8
-#define BAUD_RATE 57600
+// ROS Serial constants
+#define NUM_PUBS 2
+#define NUM_SUBS 1
+#define BAUD_RATE 57600                               // bits/s
+#define IN_BUFFER_SIZE 512                            // bytes 
+#define OUT_BUFFER_SIZE 512                           // bytes
+
+// Stepper motor constants
+#define STEPPER_VEL 40                                // step/s
+#define MAX_STEPPER_VEL 100                           // step/s
+#define STEPPER_ACCEL 30                              // step/s^2
+#define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
-#define MEASUREMENT_TIME 50
+
+// TOF constants
+#define MEASUREMENT_TIME_MS 50                        // ms
+#define MEASUREMENT_TIME_US 50000                     // us
+#define I2C_HZ 400000                                 // 400 kHz I2C
+#define TIMEOUT 100                                   // ms
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
@@ -47,16 +58,22 @@ VL53L1X tof1;
 VL53L1X tof2;
 VL53L1X tof3;
 
+// TOF pin outs
 int tofOut1 = 35;
 int tofOut2 = 34;
 int tofOut3 = 33;
+
+// TOF I2C addresses
+uint8_t tofAddress1 = 0x33;
+uint8_t tofAddress2 = 0x35;
+uint8_t tofAddress3 = 0x37;
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
  */
 
 // ROS node
-ros::NodeHandle_<ArduinoHardware, 2, 2, 512, 512> hardware_interface;
+ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
 ar_commander::TOF tof_msg;
 ros::Publisher tof_publisher("tof_data", &tof_msg);
@@ -135,44 +152,36 @@ void setup() {
   digitalWrite(tofOut1, LOW);
   digitalWrite(tofOut2, LOW);
   digitalWrite(tofOut3, LOW);
-  delay(500);
 
   Wire.begin();
-  Wire.setClock(400000); // use 400 kHz I2C
-  delay(2000);
+  Wire.setClock(I2C_HZ); 
 
   digitalWrite(tofOut1, HIGH);
-  delay(150);
   tof1.init();
-  delay(100);
-  tof1.setAddress((uint8_t)0x33);
+  tof1.setAddress(tofAddress1);
 
   digitalWrite(tofOut2, HIGH);
-  delay(150);
   tof2.init();
-  delay(100);
-  tof2.setAddress((uint8_t)0x35);
+  tof2.setAddress(tofAddress2);
 
   digitalWrite(tofOut3, HIGH);
-  delay(150);
   tof3.init();
-  delay(100);
-  tof3.setAddress((uint8_t)0x37);
+  tof3.setAddress(tofAddress3);
 
   tof1.setDistanceMode(VL53L1X::Long);
-  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME*1000);
-  tof1.startContinuous(MEASUREMENT_TIME); //ms
-  tof1.setTimeout(100);
+  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof1.startContinuous(MEASUREMENT_TIME_MS); 
+  tof1.setTimeout(TIMEOUT);
 
   tof2.setDistanceMode(VL53L1X::Long);
-  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME*1000);
-  tof2.startContinuous(MEASUREMENT_TIME); //ms
-  tof2.setTimeout(100);
+  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof2.startContinuous(MEASUREMENT_TIME_MS);
+  tof2.setTimeout(TIMEOUT);
 
   tof3.setDistanceMode(VL53L1X::Long);
-  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME*1000);
-  tof3.startContinuous(MEASUREMENT_TIME); //ms
-  tof3.setTimeout(100);
+  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof3.startContinuous(MEASUREMENT_TIME_MS);
+  tof3.setTimeout(TIMEOUT);
 
   // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
