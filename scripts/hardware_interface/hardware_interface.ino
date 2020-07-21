@@ -1,23 +1,38 @@
 #define USE_USBCON
 #include <ros.h>
+#include <ar_commander/TOF.h>
 #include <ar_commander/ControllerCmd.h>
+#include <std_msgs/Float64.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
+#include <Wire.h>
+#include <VL53L1X.h>
 
-#include <std_msgs/Float64.h>
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
 
-// Max outputs, step to degrees
-#define STEPPER_VEL 40
-#define MAX_STEPPER_VEL 100
-#define STEPPER_ACCEL 30
-#define PHI_STEP 1.8
-#define BAUD_RATE 57600
+// ROS Serial constants
+#define NUM_PUBS 2
+#define NUM_SUBS 1
+#define BAUD_RATE 57600                               // bits/s
+#define IN_BUFFER_SIZE 512                            // bytes 
+#define OUT_BUFFER_SIZE 512                           // bytes
+
+// Stepper motor constants
+#define STEPPER_VEL 40                                // step/s
+#define MAX_STEPPER_VEL 100                           // step/s
+#define STEPPER_ACCEL 30                              // step/s^2
+#define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
- 
+
+// TOF constants
+#define MEASUREMENT_TIME_MS 50                        // ms
+#define MEASUREMENT_TIME_US 50000                     // us
+#define I2C_HZ 400000                                 // 400 kHz I2C
+#define TIMEOUT 100                                   // ms
+
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
@@ -38,12 +53,30 @@ AccelStepper stepper3(motorInterfaceType, StepperPins[2][0], StepperPins[2][1]);
 AccelStepper stepper4(motorInterfaceType, StepperPins[3][0], StepperPins[3][1]);
 MultiStepper steppers;
 
+// TOF sensors
+VL53L1X tof1;
+VL53L1X tof2;
+VL53L1X tof3;
+
+// TOF pin outs
+int tofOut1 = 35;
+int tofOut2 = 34;
+int tofOut3 = 33;
+
+// TOF I2C addresses
+uint8_t tofAddress1 = 0x33;
+uint8_t tofAddress2 = 0x35;
+uint8_t tofAddress3 = 0x37;
+
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
  */
 
 // ROS node
-ros::NodeHandle_<ArduinoHardware, 1, 1, 2048, 2048> motor_interface;
+ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
+
+ar_commander::TOF tof_msg;
+ros::Publisher tof_publisher("tof_data", &tof_msg);
 
 std_msgs::Float64 fl_msg;
 ros::Publisher chatter("chatter", &fl_msg);
@@ -81,14 +114,10 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
 
+
 /*
  * ------------- SUPPORT FUNCTIONS ------------------
  */
-
-// Note may need to add in speed ramp as to overcome motor bearing inertia
-// eg : for (int i = 80; i < 250; i++) {
-//     Forward(i);
-//  }
 
 // Define forward rotation - DC Motor
 void Forward_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
@@ -109,15 +138,58 @@ void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
  */
 
 void setup() {
-  //Serial.begin(BAUD_RATE);
-  // Set pins to Output for DC motors
+  // Init node and Subscribe to /controller_cmds
+  hardware_interface.getHardware()->setBaud(BAUD_RATE);
+  hardware_interface.initNode();
+  hardware_interface.subscribe(controller_cmds_sub);
+  hardware_interface.advertise(tof_publisher);
+  hardware_interface.advertise(chatter);
+
+  // Setup TOF sensors
+  pinMode(tofOut1, OUTPUT);
+  pinMode(tofOut2, OUTPUT);
+  pinMode(tofOut3, OUTPUT);
+  digitalWrite(tofOut1, LOW);
+  digitalWrite(tofOut2, LOW);
+  digitalWrite(tofOut3, LOW);
+
+  Wire.begin();
+  Wire.setClock(I2C_HZ); 
+
+  digitalWrite(tofOut1, HIGH);
+  tof1.init();
+  tof1.setAddress(tofAddress1);
+
+  digitalWrite(tofOut2, HIGH);
+  tof2.init();
+  tof2.setAddress(tofAddress2);
+
+  digitalWrite(tofOut3, HIGH);
+  tof3.init();
+  tof3.setAddress(tofAddress3);
+
+  tof1.setDistanceMode(VL53L1X::Long);
+  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof1.startContinuous(MEASUREMENT_TIME_MS); 
+  tof1.setTimeout(TIMEOUT);
+
+  tof2.setDistanceMode(VL53L1X::Long);
+  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof2.startContinuous(MEASUREMENT_TIME_MS);
+  tof2.setTimeout(TIMEOUT);
+
+  tof3.setDistanceMode(VL53L1X::Long);
+  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof3.startContinuous(MEASUREMENT_TIME_MS);
+  tof3.setTimeout(TIMEOUT);
+
+  // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DCMotorPins[i][0], OUTPUT);   
     pinMode(DCMotorPins[i][1], OUTPUT);
     pinMode(DCMotorPins[i][2], OUTPUT); 
   }
 
-  // Set stepper velocity
   stepper1.setMaxSpeed(MAX_STEPPER_VEL);
   stepper2.setMaxSpeed(MAX_STEPPER_VEL);
   stepper3.setMaxSpeed(MAX_STEPPER_VEL);
@@ -142,13 +214,6 @@ void setup() {
   steppers.addStepper(stepper2);
   steppers.addStepper(stepper3);
   steppers.addStepper(stepper4);
-  
-  // Init node and Subscribe to /controller_cmds
-  motor_interface.getHardware()->setBaud(BAUD_RATE);
-  motor_interface.initNode();
-  motor_interface.subscribe(controller_cmds_sub);
-
-  motor_interface.advertise(chatter);
 }
 
 /*
@@ -156,5 +221,10 @@ void setup() {
  */
 
 void loop() {
-  motor_interface.spinOnce();
+  tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
+  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
+  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
+  tof_publisher.publish(&tof_msg);
+  hardware_interface.spinOnce();
+  
 }
