@@ -12,8 +12,8 @@
 #define stepPin4 6
 #define motorInterfaceType 1
 
-#define accel 10000 //0.0025
-#define vel 15
+#define accel 0 //0.0025, 10000
+#define vel 20
 #define max_vel 100
 
 #define PHI_STEP 1.8 

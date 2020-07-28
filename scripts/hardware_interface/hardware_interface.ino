@@ -23,9 +23,9 @@
 #define OUT_BUFFER_SIZE 512                           // bytes
 
 // Stepper motor constants
-#define STEPPER_VEL 40                                // step/s
+#define STEPPER_VEL 20  //40                              // step/s
 #define MAX_STEPPER_VEL 100                           // step/s
-#define STEPPER_ACCEL 10                              // step/s^2
+#define STEPPER_ACCEL 0 //10                             // step/s^2
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
 
@@ -37,6 +37,7 @@
 
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
+#define DEADBAND 20
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
@@ -240,7 +241,7 @@ void setup() {
 /*
  * ------------- MAIN ------------------
  */
-
+int i = 0;
 void loop() {
 //  tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
 //  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
@@ -248,24 +249,26 @@ void loop() {
 //  tof_publisher.publish(&tof_msg);
   hardware_interface.spinOnce();
   
+  i = i + 1;
+  if ( i % 10000000  == 0 ) {
+    //Serial.println(millis());
+    // counts * (degs/count) * (step/deg) = steps
+    int enc1_pos = int( (enc1.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+    int enc2_pos = int( (enc2.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+    int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+    int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+    if (abs(-enc1_pos-stepper1.currentPosition()) > DEADBAND) {
+      stepper1.setCurrentPosition(-enc1_pos);
+    }
+    if (abs(-enc2_pos-stepper2.currentPosition()) > DEADBAND) {
+      stepper2.setCurrentPosition(-enc2_pos);
+    }
+    if (abs(-enc3_pos-stepper3.currentPosition()) > DEADBAND) {
+      stepper3.setCurrentPosition(-enc3_pos);
+    }
+    if (abs(-enc4_pos-stepper4.currentPosition()) > DEADBAND) {
+      stepper4.setCurrentPosition(-enc4_pos);
+    }
+  }
 
-  // counts * (degs/count) * (step/deg) = steps
-  int enc1_pos = int( (enc1.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  int enc2_pos = int( (enc2.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  stepper1.setCurrentPosition(-enc1_pos);
-  stepper2.setCurrentPosition(-enc2_pos);
-  stepper3.setCurrentPosition(-enc3_pos);
-  stepper4.setCurrentPosition(-enc4_pos);
-  
-//  Serial.print("enc1: ");
-//  Serial.print(enc1_pos);
-//  Serial.print("; enc2: ");
-//  Serial.print(enc2_pos);
-//  Serial.print("; enc3: ");
-//  Serial.print(enc3_pos);
-//  Serial.print("; enc4: ");
-//  Serial.print(enc4_pos);
-//  Serial.println(" - ");
 }
