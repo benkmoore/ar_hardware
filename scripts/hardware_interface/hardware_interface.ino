@@ -37,7 +37,7 @@
 
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
-#define DEADBAND 20
+#define DEADBAND 1
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
