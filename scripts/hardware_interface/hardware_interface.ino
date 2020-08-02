@@ -80,9 +80,9 @@ VL53L1X tof2;
 VL53L1X tof3;
 
 // TOF pin outs
-int tofOut1 = 35;
-int tofOut2 = 34;
-int tofOut3 = 33;
+int tofOut1 = 39;
+int tofOut2 = 41;
+int tofOut3 = 40;
 
 // TOF I2C addresses
 uint8_t tofAddress1 = 0x33;
@@ -99,8 +99,8 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 //ar_commander::TOF tof_msg;
 //ros::Publisher tof_publisher("tof_data", &tof_msg);
 
-std_msgs::Float64 fl_msg;
-ros::Publisher chatter("chatter", &fl_msg);
+//std_msgs::Float64 fl_msg;
+//ros::Publisher chatter("chatter", &fl_msg);
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -122,8 +122,8 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   int numSteps3 = (int) ( (msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
   int numSteps4 = (int) ( (msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
 
-  fl_msg.data = numSteps1 + 0.0;
-  chatter.publish(&fl_msg);
+  //fl_msg.data = numSteps1 + 0.0;
+  //chatter.publish(&fl_msg);
 
   long pos[4];
   pos[0] = numSteps1;
@@ -165,46 +165,46 @@ void setup() {
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
   //hardware_interface.advertise(tof_publisher);
-  hardware_interface.advertise(chatter);
+  //hardware_interface.advertise(chatter);
 
   // Setup TOF sensors
-//  pinMode(tofOut1, OUTPUT);
-//  pinMode(tofOut2, OUTPUT);
-//  pinMode(tofOut3, OUTPUT);
-//  digitalWrite(tofOut1, LOW);
-//  digitalWrite(tofOut2, LOW);
-//  digitalWrite(tofOut3, LOW);
-//
-//  Wire.begin();
-//  Wire.setClock(I2C_HZ); 
-//
-//  digitalWrite(tofOut1, HIGH);
-//  tof1.init();
-//  tof1.setAddress(tofAddress1);
-//
-//  digitalWrite(tofOut2, HIGH);
-//  tof2.init();
-//  tof2.setAddress(tofAddress2);
-//
-//  digitalWrite(tofOut3, HIGH);
-//  tof3.init();
-//  tof3.setAddress(tofAddress3);
-//
-//  tof1.setDistanceMode(VL53L1X::Long);
-//  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
-//  tof1.startContinuous(MEASUREMENT_TIME_MS); 
-//  tof1.setTimeout(TIMEOUT);
-//
-//  tof2.setDistanceMode(VL53L1X::Long);
-//  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
-//  tof2.startContinuous(MEASUREMENT_TIME_MS);
-//  tof2.setTimeout(TIMEOUT);
-//
-//  tof3.setDistanceMode(VL53L1X::Long);
-//  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
-//  tof3.startContinuous(MEASUREMENT_TIME_MS);
-//  tof3.setTimeout(TIMEOUT);
+  /*pinMode(tofOut1, OUTPUT);
+  pinMode(tofOut2, OUTPUT);
+  pinMode(tofOut3, OUTPUT);
+  digitalWrite(tofOut1, LOW);
+  digitalWrite(tofOut2, LOW);
+  digitalWrite(tofOut3, LOW);
 
+  Wire.begin();
+  Wire.setClock(I2C_HZ); 
+
+  digitalWrite(tofOut1, HIGH);
+  tof1.init();
+  tof1.setAddress(tofAddress1);
+
+  digitalWrite(tofOut2, HIGH);
+  tof2.init();
+  tof2.setAddress(tofAddress2);
+
+  digitalWrite(tofOut3, HIGH);
+  tof3.init();
+  tof3.setAddress(tofAddress3);
+
+  tof1.setDistanceMode(VL53L1X::Long);
+  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof1.startContinuous(MEASUREMENT_TIME_MS); 
+  tof1.setTimeout(TIMEOUT);
+
+  tof2.setDistanceMode(VL53L1X::Long);
+  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof2.startContinuous(MEASUREMENT_TIME_MS);
+  tof2.setTimeout(TIMEOUT);
+
+  tof3.setDistanceMode(VL53L1X::Long);
+  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof3.startContinuous(MEASUREMENT_TIME_MS);
+  tof3.setTimeout(TIMEOUT);
+	*/
   // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DCMotorPins[i][0], OUTPUT);   
@@ -243,10 +243,10 @@ void setup() {
  */
 int i = 0;
 void loop() {
-//  tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
-//  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
-//  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
-//  tof_publisher.publish(&tof_msg);
+  /*tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
+  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
+  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
+  tof_publisher.publish(&tof_msg); */
   hardware_interface.spinOnce();
   
   i = i + 1;
@@ -258,7 +258,7 @@ void loop() {
     int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
     int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
 
-    if (abs(enc1_pos) > 100) {
+   /* if (abs(enc1_pos) > 100) {
         if ((enc1_pos/abs(enc1_pos)) == 1) {
           enc1_pos = enc1_pos - 200;
         } else {
@@ -288,7 +288,7 @@ void loop() {
 	} else {
 	  enc4_pos = enc4_pos + 200;
         }
-    }
+    }*/
 
 
     if (abs(-enc1_pos-stepper1.currentPosition()) > DEADBAND) {
