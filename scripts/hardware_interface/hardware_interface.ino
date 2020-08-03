@@ -258,39 +258,6 @@ void loop() {
     int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
     int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
 
-   /* if (abs(enc1_pos) > 100) {
-        if ((enc1_pos/abs(enc1_pos)) == 1) {
-          enc1_pos = enc1_pos - 200;
-        } else {
-          enc1_pos = enc1_pos + 200;
-        }
-
-    }
-    if (abs(enc2_pos) > 100) {
-        if ((enc2_pos/abs(enc2_pos)) == 1) {
-          enc2_pos = enc2_pos - 200;
-        } else {
-          enc2_pos = enc2_pos + 200;
-        }
-
-    }
-    if (abs(enc3_pos) > 100) {
-        if ((enc3_pos/abs(enc3_pos)) == 1) {
-          enc3_pos = enc3_pos - 200;
-        } else {
-          enc3_pos = enc3_pos + 200;
-        }
-
-    }
-    if (abs(enc4_pos) > 100) {
-	if ((enc4_pos/abs(enc4_pos)) == 1) {
-          enc4_pos = enc4_pos - 200;
-	} else {
-	  enc4_pos = enc4_pos + 200;
-        }
-    }*/
-
-
     if (abs(-enc1_pos-stepper1.currentPosition()) > DEADBAND) {
       stepper1.setCurrentPosition(-enc1_pos);
     }
