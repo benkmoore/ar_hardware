@@ -18,12 +18,12 @@
 #define NUM_PUBS 5
 #define NUM_SUBS 1
 #define BAUD_RATE 57600                               // bits/s
-#define IN_BUFFER_SIZE 512                            // bytes 
+#define IN_BUFFER_SIZE 512                            // bytes
 #define OUT_BUFFER_SIZE 512                           // bytes
 
 // Stepper motor constants
-#define STEPPER_VEL 40  //40                              // step/s
-#define MAX_STEPPER_VEL 4000                           // step/s
+#define STEPPER_VEL 40                                // step/s
+#define MAX_STEPPER_VEL 4000                          // step/s
 #define STEPPER_ACCEL 400                             // step/s^2
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
@@ -36,7 +36,7 @@
 
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
-#define DEADBAND 2
+#define DEADBAND 2                                    // steps
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
@@ -96,40 +96,31 @@ uint8_t tofAddress3 = 0x37;
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-//ar_commander::TOF tof_msg;
-//ros::Publisher tof_publisher("tof_data", &tof_msg);
-
-//std_msgs::Float64 fl_msg;
-//ros::Publisher chatter("chatter", &fl_msg);
-
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for(int i = 0; i < N_DCMotors; i++) {
-    if (msg.velocity_arr.data[i] > 0) { 
+    if (msg.velocity_arr.data[i] > 0) {
       Forward_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
-    else if (msg.velocity_arr.data[i] < 0) { 
+    else if (msg.velocity_arr.data[i] < 0) {
       Reverse_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
     else {
       Forward_DCMotor(0, DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
   }
-  
+
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
   int numSteps2 = (int) ( (msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
   int numSteps3 = (int) ( (msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
   int numSteps4 = (int) ( (msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
 
-  //fl_msg.data = numSteps1 + 0.0;
-  //chatter.publish(&fl_msg);
-
   long pos[4];
   pos[0] = numSteps1;
   pos[1] = numSteps2;
   pos[2] = numSteps3;
-  pos[3] = numSteps4; 
+  pos[3] = numSteps4;
   steppers.moveTo(pos);
   steppers.run();
 }
@@ -143,16 +134,16 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 
 // Define forward rotation - DC Motor
 void Forward_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
-  digitalWrite(in1, LOW); 
-  digitalWrite(in2, HIGH); 
-  analogWrite(en, PWMspeed); 
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  analogWrite(en, PWMspeed);
 }
 
 // Define reverse rotation - DC Motor
 void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
-  digitalWrite(in1, HIGH); 
-  digitalWrite(in2, LOW); 
-  analogWrite(en, PWMspeed);  
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  analogWrite(en, PWMspeed);
 }
 
 /*
@@ -164,59 +155,19 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
-  //hardware_interface.advertise(tof_publisher);
-  //hardware_interface.advertise(chatter);
 
-  // Setup TOF sensors
-  /*pinMode(tofOut1, OUTPUT);
-  pinMode(tofOut2, OUTPUT);
-  pinMode(tofOut3, OUTPUT);
-  digitalWrite(tofOut1, LOW);
-  digitalWrite(tofOut2, LOW);
-  digitalWrite(tofOut3, LOW);
-
-  Wire.begin();
-  Wire.setClock(I2C_HZ); 
-
-  digitalWrite(tofOut1, HIGH);
-  tof1.init();
-  tof1.setAddress(tofAddress1);
-
-  digitalWrite(tofOut2, HIGH);
-  tof2.init();
-  tof2.setAddress(tofAddress2);
-
-  digitalWrite(tofOut3, HIGH);
-  tof3.init();
-  tof3.setAddress(tofAddress3);
-
-  tof1.setDistanceMode(VL53L1X::Long);
-  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
-  tof1.startContinuous(MEASUREMENT_TIME_MS); 
-  tof1.setTimeout(TIMEOUT);
-
-  tof2.setDistanceMode(VL53L1X::Long);
-  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
-  tof2.startContinuous(MEASUREMENT_TIME_MS);
-  tof2.setTimeout(TIMEOUT);
-
-  tof3.setDistanceMode(VL53L1X::Long);
-  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
-  tof3.startContinuous(MEASUREMENT_TIME_MS);
-  tof3.setTimeout(TIMEOUT);
-	*/
   // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
-    pinMode(DCMotorPins[i][0], OUTPUT);   
+    pinMode(DCMotorPins[i][0], OUTPUT);
     pinMode(DCMotorPins[i][1], OUTPUT);
-    pinMode(DCMotorPins[i][2], OUTPUT); 
+    pinMode(DCMotorPins[i][2], OUTPUT);
   }
 
   stepper1.setMaxSpeed(MAX_STEPPER_VEL);
   stepper2.setMaxSpeed(MAX_STEPPER_VEL);
   stepper3.setMaxSpeed(MAX_STEPPER_VEL);
   stepper4.setMaxSpeed(MAX_STEPPER_VEL);
-  
+
   stepper1.setSpeed(STEPPER_VEL);
   stepper2.setSpeed(STEPPER_VEL);
   stepper3.setSpeed(STEPPER_VEL);
@@ -226,12 +177,12 @@ void setup() {
   stepper2.setCurrentPosition(0);
   stepper3.setCurrentPosition(0);
   stepper4.setCurrentPosition(0);
- 
+
   stepper1.setAcceleration(STEPPER_ACCEL);
   stepper2.setAcceleration(STEPPER_ACCEL);
   stepper3.setAcceleration(STEPPER_ACCEL);
   stepper4.setAcceleration(STEPPER_ACCEL);
- 
+
   steppers.addStepper(stepper1);
   steppers.addStepper(stepper2);
   steppers.addStepper(stepper3);
@@ -241,35 +192,28 @@ void setup() {
 /*
  * ------------- MAIN ------------------
  */
-int i = 0;
-void loop() {
-  /*tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
-  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
-  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
-  tof_publisher.publish(&tof_msg); */
-  hardware_interface.spinOnce();
-  
-  i = i + 1;
-  if ( i % 1  == 0 ) {
-    //Serial.println(millis());
-    // counts * (degs/count) * (step/deg) = steps
-    int enc1_pos = int( (enc1.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-    int enc2_pos = int( (enc2.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-    int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-    int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
 
-    if (abs(-enc1_pos-stepper1.currentPosition()) > DEADBAND) {
-      stepper1.setCurrentPosition(-enc1_pos);
-    }
-    if (abs(-enc2_pos-stepper2.currentPosition()) > DEADBAND) {
-      stepper2.setCurrentPosition(-enc2_pos);
-    }
-    if (abs(-enc3_pos-stepper3.currentPosition()) > DEADBAND) {
-      stepper3.setCurrentPosition(-enc3_pos);
-    }
-    if (abs(-enc4_pos-stepper4.currentPosition()) > DEADBAND) {
-      stepper4.setCurrentPosition(-enc4_pos);
-    }
- 
+void loop() {
+  hardware_interface.spinOnce();
+
+  // Feedback encoder data
+  // counts * (degs/count) * (step/deg) = steps
+  int enc1_pos = int( (enc1.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+  int enc2_pos = int( (enc2.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+  int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+  int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+
+  if (abs(-enc1_pos-stepper1.currentPosition()) > DEADBAND) {
+    stepper1.setCurrentPosition(-enc1_pos);
   }
+  if (abs(-enc2_pos-stepper2.currentPosition()) > DEADBAND) {
+    stepper2.setCurrentPosition(-enc2_pos);
+  }
+  if (abs(-enc3_pos-stepper3.currentPosition()) > DEADBAND) {
+    stepper3.setCurrentPosition(-enc3_pos);
+  }
+  if (abs(-enc4_pos-stepper4.currentPosition()) > DEADBAND) {
+    stepper4.setCurrentPosition(-enc4_pos);
+  }
+
 }
