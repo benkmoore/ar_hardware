@@ -136,7 +136,7 @@ if __name__=="__main__":
 
     pub_thread = PublishThread(repeat)
 	
-    vel = 170;	
+    vel = 185;	
 
     V_cmd = np.zeros(N);
     phi_cmd = np.zeros(N);
