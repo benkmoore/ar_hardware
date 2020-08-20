@@ -58,7 +58,7 @@ Line 44 should now look like:
 
 `rosrun rosserial_arduino make_libraries.py /home/ben/Arduino/libraries /home/ben/catkin_ws/src/ar_commander/msg`
 
-NOTE: Always delete the existing ros_lib folder in `~/Arduino` before rebuilding headers for msgs otherwise no updates will be made.
+NOTE: Always delete the existing ros_lib folder in `~/Arduino/libraries` before rebuilding headers for msgs otherwise no updates will be made.
 
 
 ------------------------------------------------------------------------------------------------
@@ -86,11 +86,11 @@ make sure the correct port and baud rate is used. If connection succesful will s
 4. Test with controller msg: `rostopic pub -r 10 /controller_cmds ar_commander/ControllerCmd "{velocity_arr:ta: [0,0,0,0]}, phi_arr: {data:[1.5, 1.5, 1.5, 1.5]}}"`
 
 
-5. Check that the teensy is receiving the messages by monitorin the /chatter topic which is published within the controller_cmds callback from the teensy. See Teensy Setup Notes for more debug info on this.
+5. Check that the teensy is receiving the messages by monitoring the `/chatter` (may need to add this manually to `hardware_interface.ino`) topic which is published within the controller_cmds callback from the teensy. See Teensy Setup Notes for more debug info on this.
 
 #### Debugging notes:
 
-A. Make sure you have serial monitor closed and no serial print lines in your code. Cant use both the serial usb and serial monitor at the same time. If you do you'll get this error: "Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino"
+A. Make sure you have serial monitor closed and no serial print lines in your code. Cant use both the serial usb and serial monitor at the same time. If you do you'll get this error: `"Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino"`
 
 B. Make sure the buffer size is big enough for a backlog of your msgs:
 
@@ -104,9 +104,9 @@ D. Compile code and reboot teensy
 
 E. Increase time out if error is  `"lost sync..."` see: https://analyticalrobotics.atlassian.net/browse/AR1-39
 
-F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#Localization notes).
+F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#localization-notes).
 
-G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [here](#Setup for ROS msgs over Teensy) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
+G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [teensy msg setup](#setup-for-ros-msgs-over-teensy) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
 
 
 ---------------------------------------------------------------------------------------------------
