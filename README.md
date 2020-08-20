@@ -86,7 +86,7 @@ make sure the correct port and baud rate is used. If connection succesful will s
 4. Test with controller msg: `rostopic pub -r 10 /controller_cmds ar_commander/ControllerCmd "{velocity_arr:ta: [0,0,0,0]}, phi_arr: {data:[1.5, 1.5, 1.5, 1.5]}}"`
 
 
-5. Check that the teensy is receiving the messages by monitoring the `/chatter` (may need to add this manually to `hardware_interface.ino`) topic which is published within the controller_cmds callback from the teensy. See Teensy Setup Notes for more debug info on this.
+5. Check that the teensy is receiving the messages by monitoring the `/chatter` (may need to add this manually to `hardware_interface.ino`) topic which is published within the controller_cmds callback from the teensy. See [Teensy Setup Notes](#setup-for-ros-msgs-over-teensy) for more debug info on this.
 
 #### Debugging notes:
 
