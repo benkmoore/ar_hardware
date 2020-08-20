@@ -96,7 +96,7 @@ B. Make sure the buffer size is big enough for a backlog of your msgs:
 
 `ros::NodeHandle_<HardwareType, MAX_PUBLISHERS=25, MAX_SUBSCRIBERS=25, IN_BUFFER_SIZE=512, OUT_BUFFER_SIZE=512> nh;`
 
-More info: [http://wiki.ros.org/rosserial/Overview/Initialization]
+More info: http://wiki.ros.org/rosserial/Overview/Initialization
 
 C. Unplug and replug teensy to clear port if needed (last resort)
 
@@ -104,9 +104,9 @@ D. Compile code and reboot teensy
 
 E. Increase time out if error is  `"lost sync..."` see: https://analyticalrobotics.atlassian.net/browse/AR1-39
 
-F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#Localizationnotes).
+F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#Localization notes).
 
-G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [here](#SetupforROSmsgsoverTeensy) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
+G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [here](#Setup for ROS msgs over Teensy) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
 
 
 ---------------------------------------------------------------------------------------------------
