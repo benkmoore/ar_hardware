@@ -54,7 +54,7 @@ Code to append: `defined(__IMXRT1062__)`
 Line 44 should now look like:
 `#if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__MKL26Z64__) || defined(__IMXRT1062__)`
 
-3. <a name="remake_msg_roslib"></a> Add custom AR messages to arduino ros_lib: http://wiki.ros.org/rosserial_arduino/Tutorials/Adding%20Custom%20Messages, using this command
+3. Add custom AR messages to arduino ros_lib: http://wiki.ros.org/rosserial_arduino/Tutorials/Adding%20Custom%20Messages, using this command
 
 `rosrun rosserial_arduino make_libraries.py /home/ben/Arduino/libraries /home/ben/catkin_ws/src/ar_commander/msg`
 
@@ -69,7 +69,7 @@ NOTE: Always delete the existing ros_lib folder in `~/Arduino` before rebuilding
 
 2. Check teensy port on AarduinoIDe -> Tools -> Port. Check that the port exists: `ls /dev/ttyACM0`. Check port has read and write permissions: `sudo chmod 777 /dev/ttyACM0`
 
-3. (a) Make changes to SerialClient.py as per issue at: [https://github.com/zprihoda/ar_commander/issues/16]
+3. (a) Make changes to SerialClient.py as per issue at: https://analyticalrobotics.atlassian.net/browse/AR1-40
 
 3. (b) Compile arduino file using load script: `./load_arduino_file.sh motor_interface.ino`
 
@@ -102,16 +102,16 @@ C. Unplug and replug teensy to clear port if needed (last resort)
 
 D. Compile code and reboot teensy
 
-E. Increase time out if error is  `"lost sync..."` see: [https://github.com/zprihoda/ar_commander/issues/16]
+E. Increase time out if error is  `"lost sync..."` see: https://analyticalrobotics.atlassian.net/browse/AR1-39
 
-F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#loc_notes).
+F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#Localizationnotes).
 
-G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [here](#remake_msg_roslib) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
+G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [here](#SetupforROSmsgsoverTeensy) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
 
 
 ---------------------------------------------------------------------------------------------------
 
-### Localization notes <a name="loc_notes"></a>
+### Localization notes
 
 #### Debugging notes:
 
