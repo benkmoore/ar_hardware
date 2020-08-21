@@ -86,10 +86,10 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-  int numSteps2 = (int) ( (msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-  int numSteps3 = (int) ( (msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-  int numSteps4 = (int) ( (msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+  int numSteps1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+  int numSteps2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+  int numSteps3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+  int numSteps4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
 
   long pos[4];
   pos[0] = numSteps1;
