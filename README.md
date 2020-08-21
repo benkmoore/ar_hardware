@@ -60,7 +60,7 @@ Line 44 should now look like:
 
 `rosrun rosserial_arduino make_libraries.py /home/ben/Arduino/libraries /home/ben/catkin_ws/src/ar_commander/msg`
 
-NOTE: Always delete the existing ros_lib folder in '~/Arduino' before rebuilding headers for msgs otherwise no updates will be made. 
+NOTE: Always delete the existing ros_lib folder in '~/Arduino' before rebuilding headers for msgs otherwise no updates will be made.
 
 
 ------------------------------------------------------------------------------------------------
@@ -114,7 +114,21 @@ E. Increase time out if error is  `"lost sync..."` see: [https://github.com/zpri
 
 2. Install VL53L1X arduino package: ArduinoIDE -> Sketch -> Include Libraries -> Manage Libraries -> VL53L1X.
 
-3. Upload the `catkin_ws/src/ar_hardware/scripts/tof_tests/test_TOF3` script to the teensy: `./load_arduino_file.sh test_TOF3_VL53L1X.ino` and view serial monitor to check outputted distances. 
+3. Upload the `catkin_ws/src/ar_hardware/scripts/tof_tests/test_TOF3` script to the teensy: `./load_arduino_file.sh test_TOF3_VL53L1X.ino` and view serial monitor to check outputted distances.
 
 NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](https://www.pololu.com/product/3415).
+
+---------------------------------------------------------------------------------------------------
+
+## Setup Decawave DWM1001-Dev boards
+
+
+1. Download J-Link Software and Documentation pack [here](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
+
+2. Download the firmware image and all the documentation and install android app [here](https://www.decawave.com/product/dwm1001-development-board/)
+
+3. Flash the boards with the firmware image from above using j-flash lite and following the instructions on page 14 of the DWM1001 Firmware User Guide -Version 1.0 from 2017. Note: this is different to the firmware API guide. Anytme you connect to the board via USB make sure you use a good, reliable data cable or you will have a bad time.
+
+4. Connect to boards using android app & follow instructions to configure as anchor or tag.
+
 
