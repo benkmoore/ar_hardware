@@ -58,9 +58,7 @@ Line 44 should now look like:
 
 `rosrun rosserial_arduino make_libraries.py /home/ben/Arduino/libraries /home/ben/catkin_ws/src/ar_commander/msg`
 
-<<<<<<< HEAD
-NOTE: Always delete the existing ros_lib folder in '~/Arduino' before rebuilding headers for msgs otherwise no updates will be made.
-=======
+
 NOTE: Always delete the existing ros_lib folder in `~/Arduino/libraries` before rebuilding headers for msgs otherwise no updates will be made.
 
 
