@@ -1,38 +1,27 @@
 #define USE_USBCON
 #include <ros.h>
-#include <ar_commander/TOF.h>
 #include <ar_commander/ControllerCmd.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <Encoder.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
-#include <Wire.h>
-#include <VL53L1X.h>
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
 
 // ROS Serial constants
-#define NUM_PUBS 5
+#define NUM_PUBS 2
 #define NUM_SUBS 1
 #define BAUD_RATE 57600                               // bits/s
 #define IN_BUFFER_SIZE 512                            // bytes
 #define OUT_BUFFER_SIZE 512                           // bytes
 
 // Stepper motor constants
-#define STEPPER_VEL 40                                // step/s
-#define MAX_STEPPER_VEL 4000                          // step/s
-#define STEPPER_ACCEL 400                             // step/s^2
+#define MAX_STEPPER_VEL 50                            // step/s
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
-
-// TOF constants
-#define MEASUREMENT_TIME_MS 50                        // ms
-#define MEASUREMENT_TIME_US 50000                     // us
-#define I2C_HZ 400000                                 // 400 kHz I2C
-#define TIMEOUT 100                                   // ms
 
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
@@ -74,20 +63,6 @@ Encoder enc2(encPinA_2, encPinB_2);
 Encoder enc3(encPinA_3, encPinB_3);
 Encoder enc4(encPinA_4, encPinB_4);
 
-// TOF sensors
-VL53L1X tof1;
-VL53L1X tof2;
-VL53L1X tof3;
-
-// TOF pin outs
-int tofOut1 = 39;
-int tofOut2 = 41;
-int tofOut3 = 40;
-
-// TOF I2C addresses
-uint8_t tofAddress1 = 0x33;
-uint8_t tofAddress2 = 0x35;
-uint8_t tofAddress3 = 0x37;
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -111,10 +86,10 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  int numSteps1 = (int) ( (msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-  int numSteps2 = (int) ( (msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-  int numSteps3 = (int) ( (msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-  int numSteps4 = (int) ( (msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+  int numSteps1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+  int numSteps2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+  int numSteps3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+  int numSteps4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
 
   long pos[4];
   pos[0] = numSteps1;
@@ -168,20 +143,10 @@ void setup() {
   stepper3.setMaxSpeed(MAX_STEPPER_VEL);
   stepper4.setMaxSpeed(MAX_STEPPER_VEL);
 
-  stepper1.setSpeed(STEPPER_VEL);
-  stepper2.setSpeed(STEPPER_VEL);
-  stepper3.setSpeed(STEPPER_VEL);
-  stepper4.setSpeed(STEPPER_VEL);
-
   stepper1.setCurrentPosition(0);
   stepper2.setCurrentPosition(0);
   stepper3.setCurrentPosition(0);
   stepper4.setCurrentPosition(0);
-
-  stepper1.setAcceleration(STEPPER_ACCEL);
-  stepper2.setAcceleration(STEPPER_ACCEL);
-  stepper3.setAcceleration(STEPPER_ACCEL);
-  stepper4.setAcceleration(STEPPER_ACCEL);
 
   steppers.addStepper(stepper1);
   steppers.addStepper(stepper2);
