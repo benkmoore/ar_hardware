@@ -112,20 +112,36 @@ G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and bui
 
 ---------------------------------------------------------------------------------------------------
 
-### Localization notes
+### Decawave dev board setup:
 
 1. Download J-Link Software and Documentation pack [here](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
 
 2. Download the firmware image and all the documentation and install android app [here](https://www.decawave.com/product/dwm1001-development-board/)
 
-3. Flash the boards with the firmware image from above using j-flash lite and following the instructions on page 14 of the DWM1001 Firmware User Guide -Version 1.0 from 2017. Note: this is different to the firmware API guide. Anytme you connect to the board via USB make sure you use a good, reliable data cable or you will have a bad time.
+3. Flash the boards with the firmware image from above using j-flash lite and following the instructions on page 14 of the DWM1001 Firmware User Guide -Version 1.0 from 2017. Note: this is different to the firmware API guide.
 
 4. Connect to boards using android app & follow instructions to configure as anchor or tag.
+
+5. Download minicom using `sudo apt-get install minicom`.
+
+6. To connect to a tag over USB, make sure that the correct port is being opened. To check this, before plugging the board in, use `dmesg | grep tty`. Then plug in the board and use `dmesg | grep tty` again. There should be a new entry that looks something like `ttyACM0`, where the last number may be different.
+
+7. Use `sudo minicom -D /dev/ttyACM0` using the correct port found above in place of `ttyACM0`. `Welcome to minicom` screen show up.
+
+8. Press enter/return on the keyboard twice within 1 second to enter shell mode. If the port is correct and the USB cable is good and the firmware is good, you should see `DWM1001 TWR Real Time Location System`, and `dwm>`. Type `apg` and hit enter to get current tag pose.
+
 
 
 #### Debugging notes:
 
 A. Check port numbers are correct for each usb connection - NB. Decawave/teensy will appear to hang but is trying to send signals acorrs the wrong port or a decawave port. Decawaves may also be trying to send signals to a "teensy" port. Check the ports using `dmesg | grep tty` while removing/plugging in usbs. It appears that port numbering is selected at startup and once first inserted and doesnt change if you unplug after that.
+
+B. Anytime you connect to the board via USB make sure you use a good, reliable data cable or you will have a bad time.
+
+C. The boards should all be perpendicular to the ground, the antenna should be the furthest point from the ground. If the boards are horizontal they won't be able to communicate properly.
+
+
+
 
 
 
