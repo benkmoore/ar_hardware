@@ -62,7 +62,6 @@ Line 44 should now look like:
 NOTE: Always delete the existing ros_lib folder in '~/Arduino' before rebuilding headers for msgs otherwise no updates will be made.
 =======
 NOTE: Always delete the existing ros_lib folder in `~/Arduino/libraries` before rebuilding headers for msgs otherwise no updates will be made.
->>>>>>> 3dd2c3e97853bc38b474f16f8ad69d0aa4a0ba8a
 
 
 ------------------------------------------------------------------------------------------------
