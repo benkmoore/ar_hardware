@@ -120,7 +120,7 @@ G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and bui
 
 3. Flash the boards with the firmware image from above using j-flash lite and following the instructions on page 14 of the DWM1001 Firmware User Guide -Version 1.0 from 2017. Note: this is different to the firmware API guide.
 
-4. Connect to boards using android app & follow instructions to configure as anchor or tag. NB: This step isn't necessary, it can all be done through minicom or python but the app has a simple gui and is the fastest method especially if you're not sure what you're doing.
+4. Connect to boards using android app & follow instructions to configure as anchor or tag. NB: This step isn't necessary, it can all be done through minicom or python but the app has a simple gui and is the fastest method especially if you're not sure what you're doing. Make sure to increase the update rate for the tags to 10Hz (also in app).
 
 5. Download minicom using `sudo apt-get install minicom`.
 
@@ -140,7 +140,7 @@ B. Anytime you connect to the board via USB make sure you use a good, reliable d
 
 C. The boards should all be perpendicular to the ground, ie. the antenna should be the furthest point from the ground. If the boards are horizontal they won't be able to communicate properly.
 
-
+D. If the update rate of the tag isn't at 10Hz (highest) there will be issues with delayed info.
 
 
 
