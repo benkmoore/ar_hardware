@@ -229,17 +229,18 @@ void setup() {
  * ------------- MAIN ------------------
  */
 // period = 0.001 //seconds
-rate = 100 //Hz
+//rate = 100 //Hz
 void loop() {
 
-  time_now = millis();
 
-  while (millis() < time_now + 1/rate) {
-    tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
-    tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
-    tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
-    tof_publisher.publish(&tof_msg);
-  }
+
+  tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
+  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
+  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
+  tof_publisher.publish(&tof_msg);
+
+
+  ros::Timer timerPublishTOF = hardware_interface.createTimer(ros::Duration(1.0 / 10.0), tof_publisher.publish(&tof_msg););
   hardware_interface.spinOnce();
 
   // Feedback encoder data
