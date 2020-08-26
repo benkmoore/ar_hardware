@@ -80,8 +80,8 @@ VL53L1X tof3;
 
 // TOF pin outs
 int tofOut1 = 39;
-int tofOut2 = 41;
-int tofOut3 = 40;
+int tofOut2 = 40;
+int tofOut3 = 41;
 
 // TOF I2C addresses
 uint8_t tofAddress1 = 0x33;
@@ -103,11 +103,11 @@ ros::Publisher tof_publisher("tof_data", &tof_msg);
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for(int i = 0; i < N_DCMotors; i++) {
-    if (msg.velocity_arr.data[i] > 0) {
-      Forward_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+    if (msg.omega_arr.data[i] > 0) {
+      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
-    else if (msg.velocity_arr.data[i] < 0) {
-      Reverse_DCMotor(msg.velocity_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+    else if (msg.omega_arr.data[i] < 0) {
+      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
     else {
       Forward_DCMotor(0, DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
