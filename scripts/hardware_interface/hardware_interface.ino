@@ -247,7 +247,7 @@ void loop() {
   // tof_publisher.publish(&tof_msg);
 
 
-  ros::Timer timerPublishTOF = hardware_interface.createTimer(ros::Duration(0.1), pubCallback);
+  ros::Timer timerPublishTOF = hardware_interface.createTimer(ros::Duration(0.05), pubCallback);
 
   hardware_interface.spinOnce();
 
