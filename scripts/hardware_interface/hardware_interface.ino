@@ -6,6 +6,10 @@
 #include <Encoder.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
+#include <Wire.h>
+#include <VL53L1X.h>
+#include <ar_commander/TOF.h>
+
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
@@ -22,6 +26,12 @@
 #define MAX_STEPPER_VEL 50                            // step/s
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
+
+// TOF constants
+#define MEASUREMENT_TIME_MS 50                        // ms
+#define MEASUREMENT_TIME_US 50000                     // us
+#define I2C_HZ 400000                                 // 400 kHz I2C
+#define TIMEOUT 100
 
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
@@ -63,6 +73,21 @@ Encoder enc2(encPinA_2, encPinB_2);
 Encoder enc3(encPinA_3, encPinB_3);
 Encoder enc4(encPinA_4, encPinB_4);
 
+// TOF sensors
+VL53L1X tof1;
+VL53L1X tof2;
+VL53L1X tof3;
+
+// TOF pin outs
+int tofOut1 = 39;
+int tofOut2 = 41;
+int tofOut3 = 40;
+
+// TOF I2C addresses
+uint8_t tofAddress1 = 0x33;
+uint8_t tofAddress2 = 0x35;
+uint8_t tofAddress3 = 0x37;
+
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -70,6 +95,10 @@ Encoder enc4(encPinA_4, encPinB_4);
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
+
+
+ar_commander::TOF tof_msg;
+ros::Publisher tof_publisher("tof_data", &tof_msg);
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -98,6 +127,11 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   pos[3] = numSteps4;
   steppers.moveTo(pos);
   steppers.run();
+
+  tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
+  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
+  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
+  tof_publisher.publish(&tof_msg);
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
@@ -130,6 +164,47 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
+  hardware_interface.advertise(tof_publisher);
+  //hardware_interface.advertise(chatter);
+
+  // Setup TOF sensors
+  pinMode(tofOut1, OUTPUT);
+  pinMode(tofOut2, OUTPUT);
+  pinMode(tofOut3, OUTPUT);
+  digitalWrite(tofOut1, LOW);
+  digitalWrite(tofOut2, LOW);
+  digitalWrite(tofOut3, LOW);
+
+  Wire.begin();
+  Wire.setClock(I2C_HZ);
+
+  digitalWrite(tofOut1, HIGH);
+  tof1.init();
+  tof1.setAddress(tofAddress1);
+
+  digitalWrite(tofOut2, HIGH);
+  tof2.init();
+  tof2.setAddress(tofAddress2);
+
+  digitalWrite(tofOut3, HIGH);
+  tof3.init();
+  tof3.setAddress(tofAddress3);
+
+  tof1.setDistanceMode(VL53L1X::Long);
+  tof1.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof1.startContinuous(MEASUREMENT_TIME_MS);
+  tof1.setTimeout(TIMEOUT);
+
+  tof2.setDistanceMode(VL53L1X::Long);
+  tof2.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof2.startContinuous(MEASUREMENT_TIME_MS);
+  tof2.setTimeout(TIMEOUT);
+
+  tof3.setDistanceMode(VL53L1X::Long);
+  tof3.setMeasurementTimingBudget(MEASUREMENT_TIME_US);
+  tof3.startContinuous(MEASUREMENT_TIME_MS);
+  tof3.setTimeout(TIMEOUT);
+
 
   // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
@@ -159,6 +234,10 @@ void setup() {
  */
 
 void loop() {
+   /*tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
+  tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
+  tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
+  tof_publisher.publish(&tof_msg); */
   hardware_interface.spinOnce();
 
   // Feedback encoder data
