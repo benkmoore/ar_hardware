@@ -131,7 +131,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
-
+ros::Timer timerPublishTOF = hardware_interface.createTimer(ros::Duration(0.05), pubCallback);
 
 /*
  * ------------- SUPPORT FUNCTIONS ------------------
@@ -150,6 +150,15 @@ void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
   digitalWrite(in2, LOW);
   analogWrite(en, PWMspeed);
 }
+
+// period = 0.001 //seconds
+//rate = 100 //Hz
+
+void pubCallback(const ar_commander::TOF &tof_msg){
+  tof_publisher.publish(&tof_msg);
+
+}
+
 
 /*
  * ------------- SETUP INTERFACE ------------------
@@ -228,17 +237,9 @@ void setup() {
 /*
  * ------------- MAIN ------------------
  */
-// period = 0.001 //seconds
-//rate = 100 //Hz
-
-void pubCallback(const ros::TimerEvent&, &tof_msg){
-  tof_publisher.publish(&tof_msg)
-
-}
 
 
 void loop() {
-
 
 
   tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
@@ -247,8 +248,7 @@ void loop() {
   // tof_publisher.publish(&tof_msg);
 
 
-  ros::Timer timerPublishTOF = hardware_interface.createTimer(ros::Duration(0.05), pubCallback);
-
+  
   hardware_interface.spinOnce();
 
   // Feedback encoder data
