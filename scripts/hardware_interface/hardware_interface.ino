@@ -4,8 +4,7 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <Encoder.h>
-#include <AccelStepper.h>
-#include <MultiStepper.h>
+#include <Stepper.h>
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
@@ -86,16 +85,16 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  int numSteps1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-  int numSteps2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-  int numSteps3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-  int numSteps4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+  int phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+  int phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+  int phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+  int phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
 
   long pos[4];
-  pos[0] = numSteps1;
-  pos[1] = numSteps2;
-  pos[2] = numSteps3;
-  pos[3] = numSteps4;
+  pos[0] = phi_des1;
+  pos[1] = phi_des2;
+  pos[2] = phi_des3;
+  pos[3] = phi_des4;
   steppers.moveTo(pos);
   steppers.run();
 }
@@ -163,10 +162,10 @@ void loop() {
 
   // Feedback encoder data
   // counts * (degs/count) * (step/deg) = steps
-  int enc1_pos = int( (enc1.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  int enc2_pos = int( (enc2.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
+  int enc1_pos = int( (enc1.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 180.0/PHI_STEP );
+  int enc2_pos = int( (enc2.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 180.0/PHI_STEP );
+  int enc3_pos = int( (enc3.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 180.0/PHI_STEP );
+  int enc4_pos = int( (enc4.read())*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 180.0/PHI_STEP );
 
   if (abs(-enc1_pos-stepper1.currentPosition()) > DEADBAND) {
     stepper1.setCurrentPosition(-enc1_pos);
