@@ -18,7 +18,7 @@
 #define OUT_BUFFER_SIZE 512                           // bytes
 
 // Stepper motor constants
-#define MAX_STEPPER_VEL 50                            // step/s
+#define MAX_STEPPER_VEL 80                            // step/s
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
 
@@ -66,13 +66,15 @@ Encoder enc2(encPinA_2, encPinB_2);
 Encoder enc3(encPinA_3, encPinB_3);
 Encoder enc4(encPinA_4, encPinB_4);
 
-
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
  */
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
+
+std_msgs::Float64 fl_msg;
+ros::Publisher chatter("chatter", &fl_msg);
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -137,12 +139,36 @@ int calculateSteps(int encoder_data, int phi_des) {
   return steps;
 }
 
+// Set stepper speed
+void setStepperSpeed(Stepper& stepper, int steps) {
+  if (abs(steps) > 15) {
+    stepper.setSpeed(MAX_STEPPER_VEL);
+  } else {
+    stepper.setSpeed(max(30,5*abs(steps)));
+  }
+}
+
 // Command number of steps (cw/ccw) for each stepper
-void commandSteppers(int enc1_pos, int enc2_pos, int enc3_pos, int enc4_pos) {
-  stepper1.step(calculateSteps(enc1_pos, phi_des1));
-  stepper2.step(calculateSteps(enc2_pos, phi_des2));
-  stepper3.step(calculateSteps(enc3_pos, phi_des3));
-  stepper4.step(calculateSteps(enc4_pos, phi_des4));
+void commandSteppers(int enc1_pos, int enc2_pos, int enc3_pos, int enc4_pos, int i) {
+  if (i % 10000 == 0) {
+    fl_msg.data = float(calculateSteps(enc1_pos, phi_des1));
+    chatter.publish(&fl_msg);
+  }
+  int steps1 = -1*calculateSteps(enc1_pos, phi_des1); // -1 - fix stepper cw/cww mappings
+  int steps2 = -1*calculateSteps(enc2_pos, phi_des2);
+  int steps3 = -1*calculateSteps(enc3_pos, phi_des3); 
+  int steps4 = -1*calculateSteps(enc4_pos, phi_des4);
+  setStepperSpeed(stepper1, steps1);
+  setStepperSpeed(stepper2, steps2);
+  setStepperSpeed(stepper3, steps3);
+  setStepperSpeed(stepper4, steps4);
+  
+  stepper1.step(steps1);
+  stepper2.step(steps2);
+  stepper3.step(steps3);
+  stepper4.step(steps4);
+
+
 }
 
 // wrap encoder output to [-100, 100] steps = [-pi, pi] rads
@@ -164,6 +190,7 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
+  hardware_interface.advertise(chatter);
 
   // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
@@ -182,7 +209,7 @@ void setup() {
 /*
  * ------------- MAIN ------------------
  */
-
+int i = 0; 
 void loop() {
   hardware_interface.spinOnce();
 
@@ -191,7 +218,10 @@ void loop() {
   int enc2_pos = wrapToPi(enc2.read());
   int enc3_pos = wrapToPi(enc3.read());
   int enc4_pos = wrapToPi(enc4.read());
+
+  i = i +1;
+
   
-  commandSteppers(enc1_pos, enc2_pos, enc3_pos, enc4_pos);
+  commandSteppers(enc1_pos, enc2_pos, enc3_pos, enc4_pos, i);
 
 }
