@@ -1,7 +1,6 @@
 #define USE_USBCON
 #include <ros.h>
 #include <ar_commander/ControllerCmd.h>
-#include <std_msgs/Float64.h>
 #include <Encoder.h>
 #include "src/ar_stepper.h"
 
@@ -36,7 +35,7 @@ int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {35, 34, 33}, {38, 37, 36}};
-                                 
+
 // Motor interface type for stppers
 byte motorInterfaceType = 1;
 
@@ -74,9 +73,6 @@ Encoder enc4(encPinA_4, encPinB_4);
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-std_msgs::Float64 fl_msg;
-ros::Publisher chatter("chatter", &fl_msg);
-
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for(int i = 0; i < N_DCMotors; i++) {
@@ -96,7 +92,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
   phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
   phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-  
+
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
@@ -120,11 +116,11 @@ void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
   analogWrite(en, PWMspeed);
 }
 
-// wrap encoder output to [-100, 100] steps = [-pi, pi] rads
+// wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToPi(float encoder_data) {
   // counts * (degs/count) * (step/deg) = steps
   int encoder_pos = int( (encoder_data)*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  if (encoder_pos > int( 180.0/PHI_STEP )) { encoder_pos = encoder_pos - int( 360.0/PHI_STEP ); }
+  if (encoder_pos >= int( 180.0/PHI_STEP )) { encoder_pos = encoder_pos - int( 360.0/PHI_STEP ); }
   else if (encoder_pos < int( -180.0/PHI_STEP )) { encoder_pos = encoder_pos + int( 360.0/PHI_STEP ); }
 
   return encoder_pos;
@@ -139,7 +135,6 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
-  hardware_interface.advertise(chatter);
 
   // Setup motors
   for(int i = 0; i < N_DCMotors; i++) {
@@ -147,7 +142,7 @@ void setup() {
     pinMode(DCMotorPins[i][1], OUTPUT);
     pinMode(DCMotorPins[i][2], OUTPUT);
   }
-  
+
 }
 
 /*
@@ -156,7 +151,7 @@ void setup() {
 void loop() {
   hardware_interface.spinOnce();
 
-  // Feedback encoder data & wrap to [-pi, pi] = [-100, 100] steps
+  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   stepper1.commandStepper(wrapToPi(enc1.read()), phi_des1);
   stepper2.commandStepper(wrapToPi(enc2.read()), phi_des2);
   stepper3.commandStepper(wrapToPi(enc3.read()), phi_des3);
