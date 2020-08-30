@@ -2,9 +2,8 @@
 #include <ros.h>
 #include <ar_commander/ControllerCmd.h>
 #include <std_msgs/Float64.h>
-#include <std_msgs/Float64MultiArray.h>
 #include <Encoder.h>
-#include <Stepper.h>
+#include "src/ar_stepper.h"
 
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
@@ -19,6 +18,8 @@
 
 // Stepper motor constants
 #define MAX_STEPPER_VEL 80                            // step/s
+#define MIN_STEPPER_VEL 25                            // step/s
+#define STEPS_THRESHOLD 20                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
 
@@ -40,10 +41,10 @@ int DCMotorPins[N_DCMotors][3] = {{38, 37, 36}, {35, 34, 33}, {22, 21, 23}, {13,
 byte motorInterfaceType = 1;
 
 // Define steppers
-Stepper stepper1(int(360.0/PHI_STEP), StepperPins[0][0], StepperPins[0][1]);
-Stepper stepper2(int(360.0/PHI_STEP), StepperPins[1][0], StepperPins[1][1]);
-Stepper stepper3(int(360.0/PHI_STEP), StepperPins[2][0], StepperPins[2][1]);
-Stepper stepper4(int(360.0/PHI_STEP), StepperPins[3][0], StepperPins[3][1]);
+Stepper stepper1(int(360.0/PHI_STEP), StepperPins[0][0], StepperPins[0][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
+Stepper stepper2(int(360.0/PHI_STEP), StepperPins[1][0], StepperPins[1][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
+Stepper stepper3(int(360.0/PHI_STEP), StepperPins[2][0], StepperPins[2][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
+Stepper stepper4(int(360.0/PHI_STEP), StepperPins[3][0], StepperPins[3][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
 
 int phi_des1 = 0;
 int phi_des2 = 0;
@@ -95,14 +96,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
   phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
   phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-
-//  long pos[4];
-//  pos[0] = phi_des1;
-//  pos[1] = phi_des2;
-//  pos[2] = phi_des3;
-//  pos[3] = phi_des4;
-//  steppers.moveTo(pos);
-//  steppers.run();
+  
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
@@ -124,51 +118,6 @@ void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   analogWrite(en, PWMspeed);
-}
-
-// Calculate steps from encoder data pos to desired phi
-int calculateSteps(int encoder_data, int phi_des) {
-  int steps = phi_des - encoder_data;
-  if (abs(steps) > int(180.0/PHI_STEP)) {
-    if (steps > 0) {
-      steps = steps - int(360.0/PHI_STEP);
-    } else if (steps < 0) {
-      steps = steps + int(360.0/PHI_STEP);
-    }
-  }
-  return steps;
-}
-
-// Set stepper speed
-void setStepperSpeed(Stepper& stepper, int steps) {
-  if (abs(steps) > 15) {
-    stepper.setSpeed(MAX_STEPPER_VEL);
-  } else {
-    stepper.setSpeed(max(30,5*abs(steps)));
-  }
-}
-
-// Command number of steps (cw/ccw) for each stepper
-void commandSteppers(int enc1_pos, int enc2_pos, int enc3_pos, int enc4_pos, int i) {
-  if (i % 10000 == 0) {
-    fl_msg.data = float(calculateSteps(enc1_pos, phi_des1));
-    chatter.publish(&fl_msg);
-  }
-  int steps1 = -1*calculateSteps(enc1_pos, phi_des1); // -1 - fix stepper cw/cww mappings
-  int steps2 = -1*calculateSteps(enc2_pos, phi_des2);
-  int steps3 = -1*calculateSteps(enc3_pos, phi_des3); 
-  int steps4 = -1*calculateSteps(enc4_pos, phi_des4);
-  setStepperSpeed(stepper1, steps1);
-  setStepperSpeed(stepper2, steps2);
-  setStepperSpeed(stepper3, steps3);
-  setStepperSpeed(stepper4, steps4);
-  
-  stepper1.step(steps1);
-  stepper2.step(steps2);
-  stepper3.step(steps3);
-  stepper4.step(steps4);
-
-
 }
 
 // wrap encoder output to [-100, 100] steps = [-pi, pi] rads
@@ -198,18 +147,12 @@ void setup() {
     pinMode(DCMotorPins[i][1], OUTPUT);
     pinMode(DCMotorPins[i][2], OUTPUT);
   }
-
-  stepper1.setSpeed(MAX_STEPPER_VEL);
-  stepper2.setSpeed(MAX_STEPPER_VEL);
-  stepper3.setSpeed(MAX_STEPPER_VEL);
-  stepper4.setSpeed(MAX_STEPPER_VEL);
   
 }
 
 /*
  * ------------- MAIN ------------------
  */
-int i = 0; 
 void loop() {
   hardware_interface.spinOnce();
 
@@ -218,10 +161,10 @@ void loop() {
   int enc2_pos = wrapToPi(enc2.read());
   int enc3_pos = wrapToPi(enc3.read());
   int enc4_pos = wrapToPi(enc4.read());
-
-  i = i +1;
-
   
-  commandSteppers(enc1_pos, enc2_pos, enc3_pos, enc4_pos, i);
+  stepper1.commandStepper(enc1_pos, phi_des1);
+  stepper2.commandStepper(enc2_pos, phi_des2);
+  stepper3.commandStepper(enc3_pos, phi_des3);
+  stepper4.commandStepper(enc4_pos, phi_des4);
 
 }
