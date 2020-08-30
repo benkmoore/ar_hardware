@@ -157,14 +157,9 @@ void loop() {
   hardware_interface.spinOnce();
 
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 100] steps
-  int enc1_pos = wrapToPi(enc1.read());
-  int enc2_pos = wrapToPi(enc2.read());
-  int enc3_pos = wrapToPi(enc3.read());
-  int enc4_pos = wrapToPi(enc4.read());
-  
-  stepper1.commandStepper(enc1_pos, phi_des1);
-  stepper2.commandStepper(enc2_pos, phi_des2);
-  stepper3.commandStepper(enc3_pos, phi_des3);
-  stepper4.commandStepper(enc4_pos, phi_des4);
+  stepper1.commandStepper(wrapToPi(enc1.read()), phi_des1);
+  stepper2.commandStepper(wrapToPi(enc2.read()), phi_des2);
+  stepper3.commandStepper(wrapToPi(enc3.read()), phi_des3);
+  stepper4.commandStepper(wrapToPi(enc4.read()), phi_des4);
 
 }
