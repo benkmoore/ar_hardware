@@ -18,8 +18,8 @@
 
 // Stepper motor constants
 #define MAX_STEPPER_VEL 80                            // step/s
-#define MIN_STEPPER_VEL 25                            // step/s
-#define STEPS_THRESHOLD 20                            // step
+#define MIN_STEPPER_VEL 35                            // step/s
+#define STEPS_THRESHOLD 25                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.295779513082320876798154814105
 
@@ -31,12 +31,12 @@
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
-// Step Motor pins [ [StepPin, DirPin], ... ]
+// Step Motor pins [ [StepPin, DirPin], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 
-// DC Motor pins [ [in1, in2, en], ... ]
-int DCMotorPins[N_DCMotors][3] = {{38, 37, 36}, {35, 34, 33}, {22, 21, 23}, {13, 14, 15}};
-
+// DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
+int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {35, 34, 33}, {38, 37, 36}};
+                                 
 // Motor interface type for stppers
 byte motorInterfaceType = 1;
 
