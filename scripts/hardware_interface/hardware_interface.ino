@@ -76,14 +76,13 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for(int i = 0; i < N_DCMotors; i++) {
-    if (msg.omega_arr.data[i] > 0) {
+    if (msg.omega_arr.data[i] >= 0) {
       Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
     else if (msg.omega_arr.data[i] < 0) {
+      //msg data for reverse comes as a negative value, this is changed to positive below
+      msg.omega_arr.data[i] *= -1;
       Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-    }
-    else {
-      Forward_DCMotor(0, DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
     }
   }
 
