@@ -34,7 +34,7 @@ const int N_StepperMotors = 4;
 int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {35, 34, 33}, {38, 37, 36}};
+int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
 
 // Motor interface type for stppers
 byte motorInterfaceType = 1;
