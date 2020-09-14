@@ -1,47 +1,95 @@
 
+#include "SPI.h"
 #include "Arduino.h"
 #include "ar_stepper.h"
+
+/// Addresses of control and status registers.
+enum class StepperRegAddr : uint8_t
+{
+  CTRL   = 0x00,
+  TORQUE = 0x01,
+  OFF    = 0x02,
+  BLANK  = 0x03,
+  DECAY  = 0x04,
+  STALL  = 0x05,
+  DRIVE  = 0x06,
+  STATUS = 0x07,
+};
+
+// Possible arguments to set decay mode.
+enum class StepperDecayMode : uint8_t
+{
+  Slow                = 0b000,
+  SlowIncMixedDec     = 0b001,
+  Fast                = 0b010,
+  Mixed               = 0b011,
+  SlowIncAutoMixedDec = 0b100,
+  AutoMixed           = 0b101,
+};
+
+/// Possible arguments to set micro-stepping.
+enum class StepperStepMode : uint16_t
+{
+  MicroStep256 = 256,
+  MicroStep128 = 128,
+  MicroStep64  =  64,
+  MicroStep32  =  32,
+  MicroStep16  =  16,
+  MicroStep8   =   8,
+  MicroStep4   =   4,
+  MicroStep2   =   2,
+  MicroStep1   =   1,
+};
 
 /*
  * two-wire constructor.
  * Sets which wires should control the motor.
  */
-Stepper::Stepper(int number_of_steps, int motor_pin_1, int motor_pin_2, float phi_step, int steps_threshold, int max_vel, int min_vel)
-{	
+Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_vel,
+                int min_vel, int max_milliamps)
+{
   // set constants
   this->phi_step = phi_step;
   this->max_vel = max_vel;
   this->min_vel = min_vel;
   this->steps_threshold = steps_threshold;
+  this->max_milliamps = max_milliamps;
 
   this->step_number = 0;    // which step the motor is on
   this->direction = 0;      // motor direction
   this->last_step_time = 0; // time stamp in us of the last step taken
-  this->number_of_steps = number_of_steps; // total number of steps for this motor
+  this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
 
-  // Arduino pins for the motor control connection:
-  this->motor_pin_1 = motor_pin_1;
-  this->motor_pin_2 = motor_pin_2;
+  // setup
+  this->setChipSelectPin(cs_pin);
+  delay(1);                 // allow driver time to power up
+  this->resetSettings();
+  this->clearStatus();
+  this->setDecayMode(HPSDDecayMode::AutoMixed);
+  this->setMaxCurrent(max_milliamps);
+  this->setStepMode(HPSDStepMode::MicroStep32);
+  this->enableDriver();
+}
 
-  // setup the pins on the microcontroller:
-  pinMode(this->motor_pin_1, OUTPUT);
-  pinMode(this->motor_pin_2, OUTPUT);
-
-  // When there are only 2 pins, set the others to 0:
-  this->motor_pin_3 = 0;
-  this->motor_pin_4 = 0;
-  this->motor_pin_5 = 0;
-
-  // pin_count is used by the stepMotor() method:
-  this->pin_count = 2;
+/*
+ * Control stepper speed to decelerate to stop. Adjusts
+ * velocity based on number of steps remaining and never drops
+ * below MIN_VEL.
+ */
+void Stepper::controlSpeed(int steps) {
+  if (abs(steps) > this->steps_threshold) {
+    this->setSpeedRPM(this->max_vel);
+  } else {
+    this->setSpeedRPM(max(this->min_vel,int(this->max_vel/this->steps_threshold)*abs(steps)));
+  }
 }
 
 /*
  * Sets the speed in revs per minute
  */
-void Stepper::setSpeed(long whatSpeed)
+void Stepper::setSpeedRPM(long whatSpeed)
 {
-  this->step_delay = 60L * 1000L * 1000L / this->number_of_steps / whatSpeed;
+  this->step_delay = 60L * 1000L * 1000L / this->stepsIn2pi / whatSpeed;
 }
 
 /*
@@ -71,14 +119,14 @@ void Stepper::step(int steps_to_move)
       if (this->direction == 1)
       {
         this->step_number++;
-        if (this->step_number == this->number_of_steps) {
+        if (this->step_number == this->stepsIn2pi) {
           this->step_number = 0;
         }
       }
       else
       {
         if (this->step_number == 0) {
-          this->step_number = this->number_of_steps;
+          this->step_number = this->stepsIn2pi;
         }
         this->step_number--;
       }
@@ -94,20 +142,7 @@ void Stepper::step(int steps_to_move)
 }
 
 /*
- * Set stepper speed  to decelerate to stop. Adjusts 
- * velocity based on number of steps remaining and never drops
- * below MIN_VEL.
- */
-void Stepper::setStepperSpeed(int steps) {
-  if (abs(steps) > this->steps_threshold) {
-    this->setSpeed(this->max_vel);
-  } else {
-    this->setSpeed(max(this->min_vel,int(this->max_vel/this->steps_threshold)*abs(steps)));
-  }
-}
-
-/*
- * Command number of steps (cw/ccw) for each stepper
+ * Command number of steps (cw/ccw) for stepper
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
   int steps = -1*(this->calculateSteps(enc_pos, phi_des)); // -1, fix stepper cw/ccw mappings
@@ -115,10 +150,10 @@ void Stepper::commandStepper(int enc_pos, int phi_des) {
   this->step(steps);
 }
 
-/* 
+/*
  * Calculate steps from encoder data pos to desired phi.
  * wraps the number of steps to [-100, 100] = [-pi, pi]
- * commands the shortest numbers of steps and direction 
+ * commands the shortest numbers of steps and direction
  * between the encoder data and phi desired.
  */
 int Stepper::calculateSteps(int encoder_data, int phi_des) {
@@ -138,135 +173,72 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
  */
 void Stepper::stepMotor(int thisStep)
 {
-  if (this->pin_count == 2) {
-    switch (thisStep) {
-      case 0:  // 01
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-      break;
-      case 1:  // 11
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, HIGH);
-      break;
-      case 2:  // 10
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-      break;
-      case 3:  // 00
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, LOW);
-      break;
-    }
-  }
-  if (this->pin_count == 4) {
-    switch (thisStep) {
-      case 0:  // 1010
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
-      break;
-      case 1:  // 0110
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
-      break;
-      case 2:  //0101
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
-      break;
-      case 3:  //1001
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
-      break;
-    }
-  }
-
-  if (this->pin_count == 5) {
-    switch (thisStep) {
-      case 0:  // 01101
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
-        digitalWrite(motor_pin_5, HIGH);
-        break;
-      case 1:  // 01001
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, LOW);
-        digitalWrite(motor_pin_5, HIGH);
-        break;
-      case 2:  // 01011
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
-        digitalWrite(motor_pin_5, HIGH);
-        break;
-      case 3:  // 01010
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
-        digitalWrite(motor_pin_5, LOW);
-        break;
-      case 4:  // 11010
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, HIGH);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
-        digitalWrite(motor_pin_5, LOW);
-        break;
-      case 5:  // 10010
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, LOW);
-        digitalWrite(motor_pin_4, HIGH);
-        digitalWrite(motor_pin_5, LOW);
-        break;
-      case 6:  // 10110
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, HIGH);
-        digitalWrite(motor_pin_5, LOW);
-        break;
-      case 7:  // 10100
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
-        digitalWrite(motor_pin_5, LOW);
-        break;
-      case 8:  // 10101
-        digitalWrite(motor_pin_1, HIGH);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
-        digitalWrite(motor_pin_5, HIGH);
-        break;
-      case 9:  // 00101
-        digitalWrite(motor_pin_1, LOW);
-        digitalWrite(motor_pin_2, LOW);
-        digitalWrite(motor_pin_3, HIGH);
-        digitalWrite(motor_pin_4, LOW);
-        digitalWrite(motor_pin_5, HIGH);
-        break;
-    }
-  }
 }
 
 /*
-  version() returns the version of the library:
-*/
-int Stepper::version(void)
+ * Enables the driver (ENBL = 1).
+ */
+void Stepper::enableDriver(Driver driver)
 {
-  return 5;
+  ctrl |= (1 << 0);
+  driver.writeReg(StepperRegAddr::CTRL, ctrl);
+}
+
+
+// ---------- DRIVER FUNCTIONS -----------
+
+/*
+ * Select CS pin for stepper, handles address/id of stepper.
+ */
+void Driver::setCSPin(uint8_t cs_pin)
+{
+  digitalWrite(cs_pin, LOW);
+  pinMode(cs_pin, OUTPUT);
+}
+
+/*
+ * Reset driver setttings.
+ */
+void Driver::resetSettings()
+{
+  ctrl   = 0xC10;
+  torque = 0x1FF;
+  off    = 0x030;
+  blank  = 0x080;
+  decay  = 0x110;
+  stall  = 0x040;
+  drive  = 0xA59;
+  this->writeReg(StepperRegAddr::CTRL, ctrl);
+  this->writeReg(StepperRegAddr::TORQUE, torque);
+  this->writeReg(StepperRegAddr::OFF, off);
+  this->writeReg(StepperRegAddr::BLANK, blank);
+  this->writeReg(StepperRegAddr::DECAY, decay);
+  this->writeReg(StepperRegAddr::STALL, stall);
+  this->writeReg(StepperRegAddr::DRIVE, drive);
+}
+
+// Writes the specified value to a register.
+void Driver::writeReg(uint8_t address, uint16_t value)
+{
+  // Read/write bit and register address are the first 4 bits of the first
+  // byte; data is in the remaining 4 bits of the first byte combined with
+  // the second byte (12 bits total).
+
+  selectChip();
+  transfer(((address & 0b111) << 12) | (value & 0xFFF));
+
+  // The CS line must go low after writing for the value to actually take
+  // effect.
+  deselectChip();
+}
+
+// Writes the specified value to a register.
+void Driver::writeReg(HPSDRegAddr address, uint16_t value)
+{
+  writeReg((uint8_t)address, value);
+}
+
+uint16_t Driver::transferToSPI(uint16_t value)
+{
+  return SPI.transfer16(value);
 }
