@@ -50,6 +50,8 @@ class Stepper {
     void step();
     void setStepMode(StepperStepMode mode, Driver driver);
     void setStepMode(uint16_t mode);
+    void setDecayMode(StepperDecayMode::decay_mode);
+    void setMaxCurrent(uint16_t current);
     void enableDriver(Driver driver);
     void setDirection(bool value);
 

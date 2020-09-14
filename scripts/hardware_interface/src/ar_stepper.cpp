@@ -60,11 +60,10 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ve
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
 
-  // setup
-  this->setChipSelectPin(cs_pin);
+  // setup driver and stepper modes
+  driver.setCSPin(cs_pin);
   delay(1);                 // allow driver time to power up
-  this->resetSettings();
-  this->clearStatus();
+  driver.resetSettings();
   this->setDecayMode(StepperDecayMode::decay_mode);
   this->setMaxCurrent(max_milliamps);
   this->setStepMode(StepperStepMode::micro_step_size);
@@ -180,24 +179,30 @@ void Stepper::setStepMode(uint16_t mode)
   setStepMode((StepperStepMode)mode);
 }
 
-void Stepper::setCurrentMilliamps36v4(uint16_t current)
+void Stepper::setMaxCurrent(uint16_t current)
+{
+  if (current > 8000) { current = 8000; }
+
+  uint8_t isgainBits = 0b11;
+  uint16_t torqueBits = ((uint32_t)768  * current) / 6875;
+
+  while (torqueBits > 0xFF)
   {
-    if (current > 8000) { current = 8000; }
-
-    uint8_t isgainBits = 0b11;
-    uint16_t torqueBits = ((uint32_t)768  * current) / 6875;
-
-    while (torqueBits > 0xFF)
-    {
-      isgainBits--;
-      torqueBits >>= 1;
-    }
-
-    ctrl = (ctrl & 0b110011111111) | (isgainBits << 8);
-    driver.writeReg(StepperRegAddr::CTRL, ctrl);
-    torque = (torque & 0b111100000000) | torqueBits;
-    driver.writeReg(StepperRegAddr::TORQUE, torque);
+    isgainBits--;
+    torqueBits >>= 1;
   }
+
+  ctrl = (ctrl & 0b110011111111) | (isgainBits << 8);
+  driver.writeReg(StepperRegAddr::CTRL, ctrl);
+  torque = (torque & 0b111100000000) | torqueBits;
+  driver.writeReg(StepperRegAddr::TORQUE, torque);
+}
+
+void Stepper::setDecayMode(StepperDecayMode mode)
+{
+  decay = (decay & 0b00011111111) | (((uint8_t)mode & 0b111) << 8);
+  driver.writeReg(StepperRegAddr::DECAY, decay);
+}
 
 // ---------- DRIVER FUNCTIONS -----------
 
@@ -229,6 +234,9 @@ void Driver::resetSettings()
   this->writeReg(StepperRegAddr::DECAY, decay);
   this->writeReg(StepperRegAddr::STALL, stall);
   this->writeReg(StepperRegAddr::DRIVE, drive);
+
+  // clear status of motor on driver
+  driver.writeReg(HPSDRegAddr::STATUS, 0);
 }
 
 // Writes the specified value to a register.
