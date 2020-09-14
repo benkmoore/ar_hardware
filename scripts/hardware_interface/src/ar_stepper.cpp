@@ -46,7 +46,7 @@ enum class StepperStepMode : uint16_t
  * Sets which wires should control the motor.
  */
 Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_vel,
-                int min_vel, int max_milliamps)
+                int min_vel, int max_milliamps, string micro_step_size, string decay_mode)
 {
   // set constants
   this->phi_step = phi_step;
@@ -65,10 +65,11 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ve
   delay(1);                 // allow driver time to power up
   this->resetSettings();
   this->clearStatus();
-  this->setDecayMode(HPSDDecayMode::AutoMixed);
+  this->setDecayMode(StepperDecayMode::decay_mode);
   this->setMaxCurrent(max_milliamps);
-  this->setStepMode(HPSDStepMode::MicroStep32);
+  this->setStepMode(StepperStepMode::micro_step_size);
   this->enableDriver();
+
 }
 
 /*
@@ -96,49 +97,9 @@ void Stepper::setSpeedRPM(long whatSpeed)
  * Moves the motor steps_to_move steps.  If the number is negative,
  * the motor moves in the reverse direction.
  */
-void Stepper::step(int steps_to_move)
+void Stepper::step(Driver driver)
 {
-  int steps_left = abs(steps_to_move);  // how many steps to take
-
-  // determine direction based on whether steps_to_mode is + or -:
-  if (steps_to_move > 0) { this->direction = 1; }
-  if (steps_to_move < 0) { this->direction = 0; }
-
-
-  // decrement the number of steps, moving one step each time:
-  if (steps_left > 0)
-  {
-    unsigned long now = micros();
-    // move only if the appropriate delay has passed:
-    if (now - this->last_step_time >= this->step_delay)
-    {
-      // get the timeStamp of when you stepped:
-      this->last_step_time = now;
-      // increment or decrement the step number,
-      // depending on direction:
-      if (this->direction == 1)
-      {
-        this->step_number++;
-        if (this->step_number == this->stepsIn2pi) {
-          this->step_number = 0;
-        }
-      }
-      else
-      {
-        if (this->step_number == 0) {
-          this->step_number = this->stepsIn2pi;
-        }
-        this->step_number--;
-      }
-      // decrement the steps left:
-      steps_left--;
-      // step the motor to step number 0, 1, ..., {3 or 10}
-      if (this->pin_count == 5)
-        stepMotor(this->step_number % 10);
-      else
-        stepMotor(this->step_number % 4);
-    }
-  }
+  driver.writeReg(StepperRegAddr::CTRL, ctrl | (1 << 2));
 }
 
 /*
@@ -169,13 +130,6 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
 }
 
 /*
- * Moves the motor forward or backwards.
- */
-void Stepper::stepMotor(int thisStep)
-{
-}
-
-/*
  * Enables the driver (ENBL = 1).
  */
 void Stepper::enableDriver(Driver driver)
@@ -184,6 +138,66 @@ void Stepper::enableDriver(Driver driver)
   driver.writeReg(StepperRegAddr::CTRL, ctrl);
 }
 
+/*
+ * Sets direction of rotation
+ */
+void Stepper::setDirection(bool value)
+{
+  if (value)
+  {
+    ctrl |= (1 << 1);
+  }
+  else
+  {
+    ctrl &= ~(1 << 1);
+  }
+  driver.writeReg(StepperRegAddr::CTRL, ctrl);
+}
+
+void Stepper::setStepMode(StepperStepMode mode, Driver driver)
+{
+  uint8_t sm = 0b0010; // Pick 1/4 micro-step by default.
+
+  switch (mode)
+  {
+  case StepperStepMode::MicroStep1:   sm = 0b0000; break;
+  case StepperStepMode::MicroStep2:   sm = 0b0001; break;
+  case StepperStepMode::MicroStep4:   sm = 0b0010; break;
+  case StepperStepMode::MicroStep8:   sm = 0b0011; break;
+  case StepperStepMode::MicroStep16:  sm = 0b0100; break;
+  case StepperStepMode::MicroStep32:  sm = 0b0101; break;
+  case StepperStepMode::MicroStep64:  sm = 0b0110; break;
+  case StepperStepMode::MicroStep128: sm = 0b0111; break;
+  case StepperStepMode::MicroStep256: sm = 0b1000; break;
+  }
+
+  ctrl = (ctrl & 0b111110000111) | (sm << 3);
+  driver.writeReg(StepperRegAddr::CTRL, ctrl);
+}
+
+void Stepper::setStepMode(uint16_t mode)
+{
+  setStepMode((StepperStepMode)mode);
+}
+
+void Stepper::setCurrentMilliamps36v4(uint16_t current)
+  {
+    if (current > 8000) { current = 8000; }
+
+    uint8_t isgainBits = 0b11;
+    uint16_t torqueBits = ((uint32_t)768  * current) / 6875;
+
+    while (torqueBits > 0xFF)
+    {
+      isgainBits--;
+      torqueBits >>= 1;
+    }
+
+    ctrl = (ctrl & 0b110011111111) | (isgainBits << 8);
+    driver.writeReg(StepperRegAddr::CTRL, ctrl);
+    torque = (torque & 0b111100000000) | torqueBits;
+    driver.writeReg(StepperRegAddr::TORQUE, torque);
+  }
 
 // ---------- DRIVER FUNCTIONS -----------
 
@@ -233,7 +247,7 @@ void Driver::writeReg(uint8_t address, uint16_t value)
 }
 
 // Writes the specified value to a register.
-void Driver::writeReg(HPSDRegAddr address, uint16_t value)
+void Driver::writeReg(StepperRegAddr address, uint16_t value)
 {
   writeReg((uint8_t)address, value);
 }

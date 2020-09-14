@@ -3,6 +3,22 @@
 #define Stepper_h
 
 /*
+ * Driver class for DRV8711, handles all communications from teensy to driver.
+ */
+class Driver {
+    public:
+        void setCSPin(uint8_t cs_pin);
+        void writeReg(StepperRegAddr address, uint16_t value);
+        void resetSettings();
+        uint16_t transferToSPI(uint16_t value);
+
+    private:
+        void writeReg(uint8_t address, uint16_t value);
+        SPISettings settings = SPISettings(500000, MSBFIRST, SPI_MODE0);
+}
+
+
+/*
  * Stepper motor class for Analytical Robotics. Derived from the
  * following arduino libraries:
  *      https://github.com/pololu/high-power-stepper-driver-arduino
@@ -26,20 +42,16 @@ class Stepper {
     // command number of steps (cw/ccw) for each stepper
     void commandStepper(int enc_pos, int phi_des);
 
-    // mover method:
-    void step(int stepsIn2pi);
-
-    int version(void);
+    // driver to handle communication from teensy to stepper motor
+    Driver driver;
 
   private:
     void stepMotor(int this_step);
-    void writeCTRL();
-    void writeTORQUE();
-    void writeOFF();
-    void writeBLANK();
-    void writeDECAY();
-    void writeSTALL();
-    void writeDRIVE();
+    void step();
+    void setStepMode(StepperStepMode mode, Driver driver);
+    void setStepMode(uint16_t mode);
+    void enableDriver(Driver driver);
+    void setDirection(bool value);
 
 
     int direction;            // Direction of rotation
@@ -62,23 +74,6 @@ class Stepper {
 
     unsigned long last_step_time; // time stamp in us of when the last step was taken
 
-
-
 };
-
-/*
- * Driver class for DRV8711, handles all communications from teensy to driver.
- */
-class Driver {
-    public:
-        void setCSPin(uint8_t cs_pin);
-        void writeReg(StepperRegAddr address, uint16_t value);
-        void resetSettings();
-        uint16_t transferToSPI(uint16_t value);
-
-    private:
-        void writeReg(uint8_t address, uint16_t value);
-        SPISettings settings = SPISettings(500000, MSBFIRST, SPI_MODE0);
-}
 
 #endif
