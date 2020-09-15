@@ -85,7 +85,7 @@ class Driver {
  */
 class Stepper {
   public:
-    Stepper(int cs_pin, int stepsIn2pi, float phi_step, int steps_threshold,
+    Stepper(int stepsIn2pi, float phi_step, int steps_threshold,
             int max_vel, int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode);
 
     // calculate steps from encoder data pos to desired phi
@@ -100,7 +100,12 @@ class Stepper {
     // command number of steps (cw/ccw) for each stepper
     void commandStepper(int enc_pos, int phi_des);
 
-    // driver to handle communication from teensy to stepper motor
+    // setup driver communication
+    void setupDriver(int cs_pin);
+
+    // get motor direction of rotation
+    bool getDirection();
+
     Driver driver;
 
   private:
@@ -111,17 +116,16 @@ class Stepper {
     void setDirection(bool value);
     void enableDriver();
 
-
-    int direction;                  // Direction of rotation
     unsigned long step_delay;       // delay between steps, in ms, based on speed
     unsigned long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
-    int pin_count;                  // how many pins are in use.
+    int micro_step_size;            // micro step size: 1,2,4,...,256
     float phi_step;                 // degrees per stepper step (deg/step)
     int steps_threshold;            // number of steps to begin deceleration to a stop (step)
     int max_vel;                    // max continous veloicty for stepper rotation (steps/s)
     int min_vel;                    // min velocity which stepper will decelerate to (steps/s)
     int max_milliamps;              // max current stepper can draw through driver (mA)
+    StepperDecayMode decay_mode;    // decay mode on PWM signals
 };
 
 #endif

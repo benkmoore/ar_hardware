@@ -11,7 +11,7 @@
  * two-wire constructor.
  * Sets which wires should control the motor.
  */
-Stepper::Stepper(int cs_pin, int stepsIn2pi, float phi_step, int steps_threshold, int max_vel,
+Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_vel,
                 int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode) {
   // set constants
   this->phi_step = phi_step;
@@ -19,20 +19,22 @@ Stepper::Stepper(int cs_pin, int stepsIn2pi, float phi_step, int steps_threshold
   this->min_vel = min_vel;
   this->steps_threshold = steps_threshold;
   this->max_milliamps = max_milliamps;
+  this->decay_mode = decay_mode;
 
   // init class variables
-  this->direction = 0;      // motor direction
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
+}
 
+void Stepper::setupDriver(int cs_pin) {
   // setup driver and stepper modes
   this->driver = Driver();
   this->driver.setCSPin(cs_pin);
   delay(1);                 // allow driver time to power up
   this->driver.resetSettings();
-  this->setDecayMode(decay_mode);
-  this->setMaxCurrent(max_milliamps);
-  this->setStepMode(micro_step_size);
+  this->setDecayMode(this->decay_mode);
+  this->setMaxCurrent(this->max_milliamps);
+  this->setStepMode(this->micro_step_size);
   this->enableDriver();
 }
 
@@ -43,16 +45,18 @@ void Stepper::commandStepper(int enc_pos, int phi_des) {
   int steps = -1*(this->calculateSteps(enc_pos, phi_des)); // -1, fix stepper cw/ccw mappings
   this->controlSpeed(steps);
   if (steps > 0) {
-    this->setDirection(0);
-  } else {
     this->setDirection(1);
+    delay(1);
+  } else if (steps < 0) {
+    this->setDirection(0);
+    delay(1);
   }
   this->step(steps);
 }
 
 /*
  * Calculate steps from encoder data pos to desired phi.
- * wraps the number of steps to [-100, 100] = [-pi, pi]
+ * wraps the number of steps to [-100, 99] = [-pi, pi]
  * commands the shortest numbers of steps and direction
  * between the encoder data and phi desired.
  */
@@ -95,6 +99,13 @@ void Stepper::setDirection(bool value) {
   if (value) { this->driver.ctrl |= (1 << 1); }
   else { this->driver.ctrl &= ~(1 << 1); }
   this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl);
+}
+
+/*
+ * Get current direction of rotation
+ */
+bool Stepper::getDirection() {
+  return this->driver.ctrl >> 1 & 1;
 }
 
 /*

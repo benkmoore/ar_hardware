@@ -1,7 +1,8 @@
 #define USE_USBCON
-#include <ros.h>
-#include <ar_commander/ControllerCmd.h>
-#include <Encoder.h>
+#include "ros.h"
+#include "ar_commander/ControllerCmd.h"
+#include "Encoder.h"
+#include "SPI.h"
 #include "src/ar_stepper.h"
 
 /*
@@ -32,17 +33,17 @@
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
-// Step Motor CS pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int StepperCSPins[N_StepperMotors] = {10, 36, 37, 38};
+// Step Motor pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
+int StepperCSPins[N_StepperMotors] = {37, 36, 10, 38};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
 
 // Define steppers
-Stepper stepper1(StepperCSPins[0], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper2(StepperCSPins[1], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper3(StepperCSPins[2], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper4(StepperCSPins[3], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper1(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper2(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper3(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper4(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
 int phi_des1 = 0;
 int phi_des2 = 0;
@@ -134,7 +135,14 @@ void setup() {
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
 
-  // Setup motors
+  // Setup stepper motors
+  SPI.begin();
+  stepper1.setupDriver(StepperMotorPins[0]);
+  stepper2.setupDriver(StepperMotorPins[1]);
+  stepper3.setupDriver(StepperMotorPins[2]);
+  stepper4.setupDriver(StepperMotorPins[3]);
+  
+  // Setup DC motors
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DCMotorPins[i][0], OUTPUT);
     pinMode(DCMotorPins[i][1], OUTPUT);
