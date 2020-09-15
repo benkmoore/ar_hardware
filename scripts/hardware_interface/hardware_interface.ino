@@ -16,6 +16,9 @@
 #define OUT_BUFFER_SIZE 512                           // bytes
 
 // Stepper motor constants
+#define MAX_MILLIAMPS 3920                            // mA
+#define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
+#define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 80                            // step/s
 #define MIN_STEPPER_VEL 35                            // step/s
 #define STEPS_THRESHOLD 25                            // step
@@ -24,26 +27,22 @@
 
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
-#define DEADBAND 2                                    // steps
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
-// Step Motor pins [ [StepPin, DirPin], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int StepperPins[N_StepperMotors][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}};
+// Step Motor CS pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
+int StepperCSPins[N_StepperMotors] = {10, 36, 37, 38};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
 
-// Motor interface type for stppers
-byte motorInterfaceType = 1;
-
 // Define steppers
-Stepper stepper1(int(360.0/PHI_STEP), StepperPins[0][0], StepperPins[0][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
-Stepper stepper2(int(360.0/PHI_STEP), StepperPins[1][0], StepperPins[1][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
-Stepper stepper3(int(360.0/PHI_STEP), StepperPins[2][0], StepperPins[2][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
-Stepper stepper4(int(360.0/PHI_STEP), StepperPins[3][0], StepperPins[3][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
+Stepper stepper1(StepperCSPins[0], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper2(StepperCSPins[1], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper3(StepperCSPins[2], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper4(StepperCSPins[3], int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
 int phi_des1 = 0;
 int phi_des2 = 0;
