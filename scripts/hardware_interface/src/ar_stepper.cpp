@@ -22,6 +22,7 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ve
   this->decay_mode = decay_mode;
 
   // init class variables
+  this->direction = -1;
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
 }
@@ -45,11 +46,11 @@ void Stepper::commandStepper(int enc_pos, int phi_des) {
   int steps = -1*(this->calculateSteps(enc_pos, phi_des)); // -1, fix stepper cw/ccw mappings
   this->controlSpeed(steps);
   if (steps > 0) {
+    this->direction = 1;
     this->setDirection(1);
-    delay(1);
   } else if (steps < 0) {
+    this->direction = 0;
     this->setDirection(0);
-    delay(1);
   }
   this->step(steps);
 }
@@ -179,7 +180,7 @@ void Stepper::setDecayMode(StepperDecayMode mode) {
 // ---------- DRIVER FUNCTIONS -----------
 
 Driver::Driver() {
-  this->settings = SPISettings(500000, MSBFIRST, SPI_MODE0);
+  this->settings = SPISettings(2000000, MSBFIRST, SPI_MODE0);
 }
 
 

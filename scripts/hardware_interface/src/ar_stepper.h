@@ -105,6 +105,7 @@ class Stepper {
 
     // get motor direction of rotation
     bool getDirection();
+    void checkDirection(int steps);
 
     Driver driver;
 
@@ -116,6 +117,7 @@ class Stepper {
     void setDirection(bool value);
     void enableDriver();
 
+    int direction;                   // tracks motor rotation direction
     unsigned long step_delay;       // delay between steps, in ms, based on speed
     unsigned long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
