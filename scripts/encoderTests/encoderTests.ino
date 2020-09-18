@@ -14,6 +14,8 @@ uint8_t byteIn[3];
 long response = 0;
 int byteOut;
 int i = 0;
+int encNumber[] = {76, 80, 84, 88};
+
 void setup()   /****** SETUP: RUNS ONCE ******/
 {
   Serial.begin(9600);
@@ -33,70 +35,65 @@ void setup()   /****** SETUP: RUNS ONCE ******/
 
 }//--(end setup )---
 
-
 void loop()   /****** LOOP: RUNS CONSTANTLY ******/
 {
-  //digitalWrite(Pin13LED, HIGH);       //On when not transmitting
-//    if (Serial.available())
-//    {
-  byteOut = 84;//Serial.read(); //84;        //Locally store the transmitted string
+  for (int j = 0; j < 4; j++) {
+    //    if (Serial.available())
+    //    {
 
-  RS485Transmit();
-  Serial1.write(byteOut);      // Send byte to encoder
-  Serial.print("Sent: ");
-  Serial.println(byteOut);
-  Serial.println();
 
-  //digitalWrite(Pin13LED, LOW);      // Off momentarily
-  delay(10);
-  Serial1.flush();
-  RS485Receive();
-  delay(25);
-//    }
-  i = 0;
-  while (Serial1.available())       //Look for data from encoder
-  {
-    //Serial.println("Received");
-    //digitalWrite(Pin13LED, LOW);        // Off momentarily
-    byteIn[i] = Serial1.read();     // Read received byte
-    //Serial.println("byte " + String(i) +": " + String(byteIn[i], BIN));
+    byteOut = encNumber[j];//Serial.read(); //84;        //Locally store the transmitted string
+
+    RS485Transmit();
+    Serial1.write(byteOut);      // Send byte to encoder
+    Serial.print("Sent: ");
+    Serial.println(byteOut);
 
     delay(10);
-    i ++;
-    //Serial.println(response,BIN);
-    //Serial.println("-----------------------");
+    Serial1.flush();
+    RS485Receive();
+    delay(25);
+    //    }
+    i = 0;
+    while (Serial1.available())       //Look for data from encoder
+    {
+      //Serial.println("Received");
+      byteIn[i] = Serial1.read();     // Read received byte
 
-//    unsigned int len = 0;
+      delay(10);
+      i ++;
 
- 
+
+      //    unsigned int len = 0;
+
+
+    }
+
+    //remove checksum
+    byteIn[2] = byteIn[2] << 2;
+    
+    //remove checksum
+    byteIn[1] = byteIn[1] >> 2;
+
+
+//    Serial.println("byte 1: " + String(byteIn[1], BIN));
+
+    byteIn[2] = byteIn[2] >> 2;
+//    Serial.println("byte 2: " + String(byteIn[2], BIN));
+
+    response = byteIn[2];
+    response = (response << 6) + byteIn[1];
+
+    Serial.print("response: ");
+//    Serial.println(response, BIN);
+    Serial.println(response);
+    Serial.println();
+
+
+
+    delay(1000);
+
   }
-//
-//  Serial.println("byte 1: " + String(byteIn[1], BIN));
-//  Serial.println("byte 2: " + String(byteIn[2], BIN));
-
-  byteIn[2] = byteIn[2] << 2;
-  byteIn[1] = byteIn[1] >> 2;
-
-
-  Serial.println("byte 1: " + String(byteIn[1], BIN));
-//  Serial.println("byte 2: " + String(byteIn[2], BIN));
-
-  byteIn[2] = byteIn[2] >> 2;
-  Serial.println("byte 2: " + String(byteIn[2], BIN));
-
-  response = byteIn[2];
-  response = (response << 6) + byteIn[1];
-  //remove checksum
-  //  response = (response >> 2);
-  //  response<<=12;
-
-  Serial.print("response: ");
-  Serial.println(response, BIN);
-  Serial.println(response);
-
-
-
-
 }
 
 void RS485Transmit()
