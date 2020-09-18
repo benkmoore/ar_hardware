@@ -5,6 +5,16 @@
 #include "SPI.h"
 #include "src/ar_stepper.h"
 
+#define RX        0  //For Arduino Mega
+#define TX        1
+
+//#define RxTx 3
+#define Re    3
+#define De    5
+
+#define Transmit    HIGH
+#define Receive     LOW
+
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
@@ -29,6 +39,10 @@
 // Encoder constants
 #define ENC_CPR 4000                                  // Counts Per Revolution
 
+//##############encoder###############
+long response = 0;
+int byteOut;
+
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
@@ -50,21 +64,6 @@ int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
 
-// Encoder pin outs
-int encPinA_1 = 26;                                   // enc1 -> stepper1
-int encPinB_1 = 25;
-int encPinA_2 = 28;                                   // enc2 -> stepper2
-int encPinB_2 = 27;
-int encPinA_3 = 30;                                   // enc3 -> stepper3
-int encPinB_3 = 29;
-int encPinA_4 = 32;                                   // enc4 -> stepper4
-int encPinB_4 = 31;
-
-// Define encoders
-Encoder enc1(encPinA_1, encPinB_1);
-Encoder enc2(encPinA_2, encPinB_2);
-Encoder enc3(encPinA_3, encPinB_3);
-Encoder enc4(encPinA_4, encPinB_4);
 
 /*
  * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -125,6 +124,47 @@ int wrapToPi(float encoder_data) {
   return encoder_pos;
 }
 
+int checkEncoder(int address) {
+
+  byteOut = address;
+  RS485Transmit();
+
+  Serial1.write(byteOut);      // Send byte to encoder
+  delay(10);
+  Serial1.flush();
+  RS485Receive();
+  delay(25);
+  i = 0;
+  while (Serial1.available())       //Look for data from encoder
+  {
+    //Serial.println("Received");
+    byteIn[i] = Serial1.read();     // Read received byte
+
+    delay(10);
+    i ++;
+  }
+  byteIn[2] = byteIn[2] << 2;
+  byteIn[1] = byteIn[1] >> 2;
+  byteIn[2] = byteIn[2] >> 2;
+  response = byteIn[2];
+  response = (response << 6) + byteIn[1];
+
+
+  return response
+}
+
+void RS485Transmit()
+{
+  digitalWrite(Re, LOW);
+  digitalWrite(De, HIGH);
+}
+
+void RS485Receive()
+{
+  digitalWrite(Re, HIGH);
+  digitalWrite(De, LOW);
+}
+
 /*
  * ------------- SETUP INTERFACE ------------------
  */
@@ -141,13 +181,17 @@ void setup() {
   stepper2.setupDriver(StepperMotorPins[1]);
   stepper3.setupDriver(StepperMotorPins[2]);
   stepper4.setupDriver(StepperMotorPins[3]);
-  
+
   // Setup DC motors
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DCMotorPins[i][0], OUTPUT);
     pinMode(DCMotorPins[i][1], OUTPUT);
     pinMode(DCMotorPins[i][2], OUTPUT);
   }
+
+  pinMode(Re, OUTPUT);
+  pinMode(De, OUTPUT);
+  Serial1.begin(115200);        // set the data rate
 
 }
 
@@ -158,9 +202,9 @@ void loop() {
   hardware_interface.spinOnce();
 
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(wrapToPi(enc1.read()), phi_des1);
-  stepper2.commandStepper(wrapToPi(enc2.read()), phi_des2);
-  stepper3.commandStepper(wrapToPi(enc3.read()), phi_des3);
-  stepper4.commandStepper(wrapToPi(enc4.read()), phi_des4);
+  stepper1.commandStepper(wrapToPi(checkEncoder(76)), phi_des1);
+  stepper2.commandStepper(wrapToPi(checkEncoder(80)), phi_des2);
+  stepper3.commandStepper(wrapToPi(checkEncoder(84)), phi_des3);
+  stepper4.commandStepper(wrapToPi(checkEncoder(88)), phi_des4);
 
 }
