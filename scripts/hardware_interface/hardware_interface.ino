@@ -42,13 +42,15 @@
 //##############encoder###############
 long response = 0;
 int byteOut;
+uint8_t byteIn[3];
+int i = 0;
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
 // Step Motor pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int StepperCSPins[N_StepperMotors] = {37, 36, 10, 38};
+int StepperMotorPins[N_StepperMotors] = {37, 36, 10, 38};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
@@ -150,7 +152,7 @@ int checkEncoder(int address) {
   response = (response << 6) + byteIn[1];
 
 
-  return response
+  return response;
 }
 
 void RS485Transmit()
