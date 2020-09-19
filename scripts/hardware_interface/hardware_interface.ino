@@ -132,17 +132,13 @@ int checkEncoder(int address) {
   RS485Transmit();
 
   Serial1.write(byteOut);      // Send byte to encoder
-  delay(10);
   Serial1.flush();
   RS485Receive();
-  delay(25);
   i = 0;
   while (Serial1.available())       //Look for data from encoder
   {
     //Serial.println("Received");
     byteIn[i] = Serial1.read();     // Read received byte
-
-    delay(10);
     i ++;
   }
   byteIn[2] = byteIn[2] << 2;
