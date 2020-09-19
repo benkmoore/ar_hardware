@@ -49,10 +49,10 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
     Serial.print("Sent: ");
     Serial.println(byteOut);
 
-    delay(10);
+    delay(1);
     Serial1.flush();
     RS485Receive();
-    delay(25);
+//    delay(25);
     //    }
     i = 0;
     while (Serial1.available())       //Look for data from encoder
@@ -60,7 +60,7 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
       //Serial.println("Received");
       byteIn[i] = Serial1.read();     // Read received byte
 
-      delay(10);
+//      delay(10);
       i ++;
 
 
@@ -91,7 +91,7 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
 
 
 
-    delay(1000);
+//    delay(1000);
 
   }
 }
