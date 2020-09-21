@@ -52,7 +52,7 @@ const int N_StepperMotors = 4;
 int StepperMotorPins[N_StepperMotors] = {37, 36, 10, 38};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
+//int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
 
 // Define steppers
 Stepper stepper1(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -75,29 +75,29 @@ ros::Publisher chatter_pub("chatter", &test);
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
-
-// define ROS node name, rate, subscriber to /controller_cmds
-void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-  for(int i = 0; i < N_DCMotors; i++) {
-    if (msg.omega_arr.data[i] >= 0) {
-      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-    }
-    else if (msg.omega_arr.data[i] < 0) {
-      //msg data for reverse comes as a negative value, this is changed to positive below
-      msg.omega_arr.data[i] *= -1;
-      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-    }
-  }
-
-  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-
-}
-
-ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
+//
+//// define ROS node name, rate, subscriber to /controller_cmds
+//void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+//  for(int i = 0; i < N_DCMotors; i++) {
+//    if (msg.omega_arr.data[i] >= 0) {
+//      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+//    }
+//    else if (msg.omega_arr.data[i] < 0) {
+//      //msg data for reverse comes as a negative value, this is changed to positive below
+//      msg.omega_arr.data[i] *= -1;
+//      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+//    }
+//  }
+//
+//  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
+//  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+//  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+//  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+//  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+//
+//}
+//
+//ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
 
 
 /*
@@ -174,8 +174,8 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  hardware_interface.advertise(chatter_pub);
-  hardware_interface.subscribe(controller_cmds_sub);
+  //hardware_interface.advertise(chatter_pub);
+  //hardware_interface.subscribe(controller_cmds_sub);
   
   // Setup stepper motors 
   SPI.begin();
@@ -185,15 +185,16 @@ void setup() {
   stepper4.setupDriver(StepperMotorPins[3]);
   
   // Setup DC motors
-  for(int i = 0; i < N_DCMotors; i++) {
-    pinMode(DCMotorPins[i][0], OUTPUT);
-    pinMode(DCMotorPins[i][1], OUTPUT);
-    pinMode(DCMotorPins[i][2], OUTPUT);
-  }
+//  for(int i = 0; i < N_DCMotors; i++) {
+//    pinMode(DCMotorPins[i][0], OUTPUT);
+//    pinMode(DCMotorPins[i][1], OUTPUT);
+//    pinMode(DCMotorPins[i][2], OUTPUT);
+//  }
 
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
+  Serial.begin(9600);
   Serial2.begin(115200);        // set the data rate
 
 }
@@ -202,19 +203,29 @@ void setup() {
  * ------------- MAIN ------------------
  */
 void loop() {
+  
 
  /* while (!hardware_interface.connected()) {
     hardware_interface.spinOnce();
   }*/
   int out_80 = checkEncoder(80);
   int piwrap = wrapToPi(130);
-  int out_76 = checkEncoder(76);
-  test.data = out_80;
-  chatter_pub.publish(&test);
+  //int out_76 = checkEncoder(76);
+  //test.data = out_80;
+  //chatter_pub.publish(&test);
   hardware_interface.spinOnce();
 
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(wrapToPi(130), phi_des1);
+  Serial.print(checkEncoder(76));
+  Serial.print(' ');
+  Serial.print(checkEncoder(80));
+  Serial.print(' ');
+  Serial.print(checkEncoder(84));
+  Serial.print(' ');
+  Serial.print(checkEncoder(88));
+  Serial.println();
+
+  stepper1.commandStepper(6, phi_des1);
  /* stepper2.commandStepper(wrapToPi(6), phi_des2);
   stepper3.commandStepper(wrapToPi(checkEncoder(84)), phi_des3);
   stepper4.commandStepper(wrapToPi(checkEncoder(88)), phi_des4);
