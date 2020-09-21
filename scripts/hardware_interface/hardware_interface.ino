@@ -76,8 +76,8 @@ ros::Publisher chatter_pub("chatter", &test);
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 //
-//// define ROS node name, rate, subscriber to /controller_cmds
-//void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+// define ROS node name, rate, subscriber to /controller_cmds
+void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 //  for(int i = 0; i < N_DCMotors; i++) {
 //    if (msg.omega_arr.data[i] >= 0) {
 //      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
@@ -88,16 +88,16 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 //      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
 //    }
 //  }
-//
-//  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-//  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-//  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-//  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-//  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-//
-//}
-//
-//ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
+
+  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
+  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+
+}
+
+ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
 
 
 /*
@@ -174,8 +174,8 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  //hardware_interface.advertise(chatter_pub);
-  //hardware_interface.subscribe(controller_cmds_sub);
+  hardware_interface.advertise(chatter_pub);
+  hardware_interface.subscribe(controller_cmds_sub);
   
   // Setup stepper motors 
   SPI.begin();
@@ -194,7 +194,7 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-  Serial.begin(9600);
+//  Serial.begin(9600);
   Serial2.begin(115200);        // set the data rate
 
 }
@@ -203,31 +203,11 @@ void setup() {
  * ------------- MAIN ------------------
  */
 void loop() {
-  
-
- /* while (!hardware_interface.connected()) {
-    hardware_interface.spinOnce();
-  }*/
-  int out_80 = checkEncoder(80);
-  int piwrap = wrapToPi(130);
-  //int out_76 = checkEncoder(76);
-  //test.data = out_80;
-  //chatter_pub.publish(&test);
   hardware_interface.spinOnce();
-
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  Serial.print(checkEncoder(76));
-  Serial.print(' ');
-  Serial.print(checkEncoder(80));
-  Serial.print(' ');
-  Serial.print(checkEncoder(84));
-  Serial.print(' ');
-  Serial.print(checkEncoder(88));
-  Serial.println();
-
-  stepper1.commandStepper(6, phi_des1);
- /* stepper2.commandStepper(wrapToPi(6), phi_des2);
+  stepper1.commandStepper(wrapToPi(checkEncoder(76)), phi_des1);
+  stepper2.commandStepper(wrapToPi(checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(checkEncoder(84)), phi_des3);
   stepper4.commandStepper(wrapToPi(checkEncoder(88)), phi_des4);
-*/
+
 }
