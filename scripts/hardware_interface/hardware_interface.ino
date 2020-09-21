@@ -48,8 +48,8 @@ int i = 0;
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
-// Step Motor pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int StepperMotorPins[N_StepperMotors] = {38, 37, 10, 36};
+// Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
+int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 //int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
@@ -206,11 +206,13 @@ void loop() {
   hardware_interface.spinOnce();
   int out_88 = wrapToPi(checkEncoder(88));
   int out_84 = wrapToPi(checkEncoder(84));
-  test.data = out_88;
+  int out_80 = wrapToPi(checkEncoder(80));
+  int out_76 = wrapToPi(checkEncoder(76));
+  test.data = out_76;
   chatter_pub.publish(&test);
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(wrapToPi(checkEncoder(76)), phi_des1);
-  stepper2.commandStepper(wrapToPi(checkEncoder(80)), phi_des2);
+  stepper1.commandStepper(out_76, phi_des1);
+  stepper2.commandStepper(out_80, phi_des2);
   stepper3.commandStepper(out_84, phi_des3);
   stepper4.commandStepper(out_88, phi_des4);
 
