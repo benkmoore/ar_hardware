@@ -36,7 +36,7 @@
 #define RAD_2_DEG 57.295779513082320876798154814105
 
 // Encoder constants
-#define ENC_CPR 4000                                  // Counts Per Revolution
+#define ENC_CPR 4096                                  // Counts Per Revolution
 
 //##############encoder###############
 long response = 0;
@@ -49,7 +49,7 @@ const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
 // Step Motor pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int StepperMotorPins[N_StepperMotors] = {37, 36, 10, 38};
+int StepperMotorPins[N_StepperMotors] = {38, 37, 10, 36};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
 //int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
@@ -204,10 +204,14 @@ void setup() {
  */
 void loop() {
   hardware_interface.spinOnce();
+  int out_88 = wrapToPi(checkEncoder(88));
+  int out_84 = wrapToPi(checkEncoder(84));
+  test.data = out_88;
+  chatter_pub.publish(&test);
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   stepper1.commandStepper(wrapToPi(checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(checkEncoder(80)), phi_des2);
-  stepper3.commandStepper(wrapToPi(checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(checkEncoder(88)), phi_des4);
+  stepper3.commandStepper(out_84, phi_des3);
+  stepper4.commandStepper(out_88, phi_des4);
 
 }
