@@ -37,12 +37,6 @@
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
 
-//##############encoder###############
-long response = 0;
-int byteOut;
-uint8_t byteIn[3];
-int i = 0;
-
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
@@ -54,7 +48,68 @@ int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 static const int DC_reverse[N_DCMotors] = {18,19,20,21};
 static const int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
 
-int reverseFlags[N_DCMotors];
+int reverseFlags[N_DCMotors] = {0,0,0,0};
+
+
+
+class DC_Motors{
+  public:
+    const int *reverse;
+    const int *throttlePins;
+    int *reverseFlags;
+    void PowerDC (int, int);
+    void flipDirection (int);
+    DC_Motors();
+
+    // Define forward rotation - DC Motor
+};
+
+DC_Motors::DC_Motors(){
+  //reverseFlags = {0,0,0,0};
+  this->reverseFlags =  reverseFlags;
+  reverse = DC_reverse;
+  throttlePins = DC_throttlePins;  
+}
+
+void DC_Motors::PowerDC(int PWMspeed, int aPin) {
+      int index = aPin-throttlePins[0];
+
+      if(PWMspeed >= 0 ){             
+        if(this->reverseFlags[index] == 0){
+          analogWrite(aPin, PWMspeed);
+        }
+        else{
+          flipDirection(index);
+          analogWrite(aPin, PWMspeed);
+        }
+      }
+
+      if(PWMspeed < 0) {
+        if(this->reverseFlags[index] == 1){
+          analogWrite(aPin, PWMspeed);
+        }
+        else{
+          flipDirection(index);
+          analogWrite(aPin, PWMspeed);
+        }
+      }
+
+  
+    }
+
+    void DC_Motors::flipDirection(int reversePin){
+      digitalWrite(reverse[reversePin],HIGH);
+      delay(1);
+      digitalWrite(reverse[reversePin],LOW);
+      this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
+    }
+    
+//##############encoder###############
+long response = 0;
+int byteOut;
+uint8_t byteIn[3];
+int i = 0;
+
 
 
 // Define steppers
@@ -103,57 +158,6 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 /*
    ------------- SUPPORT FUNCTIONS ------------------
 */
-class DC_Motors{
-  public:
-    const int *reverse;
-    const int *throttlePins;
-    bool *reverseFlags;
-    void PowerDC (int, int);
-    void flipDirection (int);
-    DC_Motors();
-
-    // Define forward rotation - DC Motor
-}
-
-DC_Motors::DC_Motors(){
-  reverseFlags = {0,0,0,0};
-  this->reverseFlags =  reverseFlags;
-  reverse = DC_reverse;
-  throttlePins = DC_throttlePins;  
-}
-
-void DC_Motors::PowerDC(int PWMspeed, int aPin) {
-      int index = aPin-throttlePins[0];
-
-      if(PWMspeed >= 0 ){             
-        if(this->reverseFlags[index] == 0){
-          analogWrite(aPin, PWMspeed);
-        }
-        else{
-          flipDirection(index);
-          analogWrite(aPin, PWMspeed);
-        }
-      }
-
-      if(PWMspeed < 0) {
-        if(this->reverseFlags[index] == 1){
-          analogWrite(aPin, PWMspeed);
-        }
-        else{
-          flipDirection(index);
-          analogWrite(aPin, PWMspeed);
-        }
-      }
-
-  
-    }
-
-    void DC_Motors::flipDirection(int reversePin){
-      digitalWrite(reverse[reversePin],HIGH);
-      delay(1);
-      digitalWrite(reverse[reversePin],LOW);
-      this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
-    }
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToPi(float encoder_data) {
