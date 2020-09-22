@@ -43,8 +43,10 @@ void Stepper::setupDriver(int cs_pin) {
  * Command number of steps (cw/ccw) for stepper
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
-  int steps = -1*(this->calculateSteps(enc_pos, phi_des)); // -1, fix stepper cw/ccw mappings
+
+  int steps = this->calculateSteps(enc_pos, phi_des);
   this->controlSpeed(steps);
+
   if (steps > 0) {
     this->direction = 1;
     this->setDirection(1);
@@ -53,6 +55,7 @@ void Stepper::commandStepper(int enc_pos, int phi_des) {
     this->setDirection(0);
   }
   this->step(steps);
+
 }
 
 /*
@@ -70,6 +73,7 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
       steps = steps + int(360.0/this->phi_step);
     }
   }
+
   return steps;
 }
 
@@ -84,6 +88,8 @@ void Stepper::controlSpeed(int steps) {
   } else {
     this->setSpeedRPM(max(this->min_vel,int(this->max_vel/this->steps_threshold)*abs(steps)));
   }
+
+
 }
 
 /*
@@ -98,8 +104,12 @@ void Stepper::setSpeedRPM(long whatSpeed) {
  */
 void Stepper::setDirection(bool value) {
   if (value) { this->driver.ctrl |= (1 << 1); }
+
   else { this->driver.ctrl &= ~(1 << 1); }
+
   this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl);
+
+
 }
 
 /*
@@ -224,7 +234,14 @@ void Driver::writeReg(uint8_t address, uint16_t value) {
   // the second byte (12 bits total).
 
   this->selectChip();
+
+
+
+
+
+
   this->transferToSPI(((address & 0b111) << 12) | (value & 0xFFF));
+
   this->deselectChip();
 }
 
@@ -244,6 +261,8 @@ void Driver::deselectChip() {
 }
 
 uint16_t Driver::transferToSPI(uint16_t value) {
+
   return SPI.transfer16(value);
+
 }
 

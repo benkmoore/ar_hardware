@@ -3,17 +3,6 @@
 #include <ar_commander/ControllerCmd.h>
 #include <Encoder.h>
 #include "src/ar_stepper.h"
-<<<<<<< HEAD
-#define RX        0  //For Arduino Mega
-#define TX        1
-
-//#define RxTx 3
-#define Re    3
-#define De    5
-
-#define Transmit    HIGH
-#define Receive     LOW
-=======
 #include <std_msgs/Float64.h>
 //#include <ros/console.h>
 #define RX        7 
@@ -23,7 +12,6 @@
 #define Re    3
 #define De    4
 
->>>>>>> 513985b1501d60269ceb542a0b785073dd72593b
 
 /*
    ------------- FILE DEFINITION & SETUP ------------------
@@ -44,13 +32,7 @@
 #define RAD_2_DEG 57.295779513082320876798154814105
 
 // Encoder constants
-#define ENC_CPR 4000                                  // Counts Per Revolution
-#define DEADBAND 2                                    // steps
-
-//##############encoder###############
-long response = 0;
-int byteOut;
-
+#define ENC_CPR 4096                                  // Counts Per Revolution
 
 //##############encoder###############
 long response = 0;
@@ -62,12 +44,11 @@ int i = 0;
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
-
-// Step Motor pins: inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int StepperMotorPins[N_StepperMotors] = {37, 36, 10, 38};
+// Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
+int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
-int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
+//int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
 
 // Motor interface type for stppers
 byte motorInterfaceType = 1;
@@ -93,19 +74,19 @@ ros::Publisher chatter_pub("chatter", &test);
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
-
+//
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-  for (int i = 0; i < N_DCMotors; i++) {
-    if (msg.omega_arr.data[i] >= 0) {
-      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-    }
-    else if (msg.omega_arr.data[i] < 0) {
-      //msg data for reverse comes as a negative value, this is changed to positive below
-      msg.omega_arr.data[i] *= -1;
-      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-    }
-  }
+//  for(int i = 0; i < N_DCMotors; i++) {
+//    if (msg.omega_arr.data[i] >= 0) {
+//      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+//    }
+//    else if (msg.omega_arr.data[i] < 0) {
+//      //msg data for reverse comes as a negative value, this is changed to positive below
+//      msg.omega_arr.data[i] *= -1;
+//      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
+//    }
+//  }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -210,16 +191,17 @@ void setup() {
   stepper4.setupDriver(StepperMotorPins[3]);
   
   // Setup DC motors
-  for(int i = 0; i < N_DCMotors; i++) {
-    pinMode(DCMotorPins[i][0], OUTPUT);
-    pinMode(DCMotorPins[i][1], OUTPUT);
-    pinMode(DCMotorPins[i][2], OUTPUT);
-  }
+//  for(int i = 0; i < N_DCMotors; i++) {
+//    pinMode(DCMotorPins[i][0], OUTPUT);
+//    pinMode(DCMotorPins[i][1], OUTPUT);
+//    pinMode(DCMotorPins[i][2], OUTPUT);
+//  }
 
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
 
   RS485Receive();
+//  Serial.begin(9600);
   Serial2.begin(115200);        // set the data rate
 
 }
@@ -231,22 +213,17 @@ void setup() {
 
 
 void loop() {
-
- /* while (!hardware_interface.connected()) {
-    hardware_interface.spinOnce();
-  }*/
-  int out_80 = checkEncoder(80);
-  int piwrap = wrapToPi(130);
-  int out_76 = checkEncoder(76);
-  test.data = out_80;
-  chatter_pub.publish(&test);
   hardware_interface.spinOnce();
-
+  int out_88 = wrapToPi(checkEncoder(88));
+  int out_84 = wrapToPi(checkEncoder(84));
+  int out_80 = wrapToPi(checkEncoder(80));
+  int out_76 = wrapToPi(checkEncoder(76));
+  test.data = out_76;
+  chatter_pub.publish(&test);
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
+  stepper1.commandStepper(out_76, phi_des1);
+  stepper2.commandStepper(out_80, phi_des2);
+  stepper3.commandStepper(out_84, phi_des3);
+  stepper4.commandStepper(out_88, phi_des4);
 
-  stepper1.commandStepper(wrapToPi(130), phi_des1);
- /* stepper2.commandStepper(wrapToPi(6), phi_des2);
-  stepper3.commandStepper(wrapToPi(checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(checkEncoder(88)), phi_des4);
-*/
 }
