@@ -29,7 +29,7 @@
 #define MIN_STEPPER_VEL 35                            // step/s
 #define STEPS_THRESHOLD 25                            // step
 #define PHI_STEP 1.8                                  // deg/step
-#define RAD_2_DEG 57.295779513082320876798154814105
+#define RAD_2_DEG 57.2957795
 
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
@@ -47,7 +47,7 @@ const int N_StepperMotors = 4;
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
-// DC Motor pins [ [in1, in2, en], ... ] inner Y axis arm, outer Y axis arm, inner X axis arm, outer X axis arm
+// DC Motor pins 
 //int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
 
 // Motor interface type for stppers
@@ -133,29 +133,31 @@ int wrapToPi(float encoder_data) {
 
 
 int checkEncoder(int address) {
-
+  //when the encoder  sees its address being transmitted it returns its position
   byteOut = address;
   RS485Transmit();
 
-
-  Serial2.write(byteOut);           // Send byte to encoder
+  // Send byte to encoder
+  Serial2.write(byteOut);           
   delay(1);
   Serial2.flush();
   RS485Receive();
   i = 0;
-//ROS_DEBUG("in checkencoder");
-  while (Serial2.available())       // Look for data from encoder
+  // Look for data from encoder
+  while (Serial2.available())       
   {
-    byteIn[i] = Serial2.read();     // Read received byte
+    byteIn[i] = Serial2.read();     
     i ++;
   }
+  //byte 2 is the most significant (MS) byte, with the biggest two being the checkbits
   byteIn[2] = byteIn[2] << 2;
-  byteIn[1] = byteIn[1] >> 2;
   byteIn[2] = byteIn[2] >> 2;
+  //byte 1 the two least significant (LS) bits need to be removed as our encoder is only 12 bit
+  byteIn[1] = byteIn[1] >> 2;
+
   response = byteIn[2];
+  //encoder position data comes as a 12 bit value, we need the last 6 MSB's of the LS byte and the 6 LSB's of the MS byte
   response = (response << 6) + byteIn[1];
-
-
 
   return response;
 }
@@ -201,7 +203,6 @@ void setup() {
   pinMode(De, OUTPUT);
 
   RS485Receive();
-//  Serial.begin(9600);
   Serial2.begin(115200);        // set the data rate
 
 }
@@ -209,7 +210,6 @@ void setup() {
 /*
    ------------- MAIN ------------------
 */
-
 
 
 void loop() {
@@ -225,5 +225,4 @@ void loop() {
   stepper2.commandStepper(out_80, phi_des2);
   stepper3.commandStepper(out_84, phi_des3);
   stepper4.commandStepper(out_88, phi_des4);
-
 }
