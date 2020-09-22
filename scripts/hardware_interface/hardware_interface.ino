@@ -54,16 +54,17 @@ int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 static const int DC_reverse[N_DCMotors] = {18,19,20,21};
 static const int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
 
+int reverseFlags[N_DCMotors];
+
+
 // Define steppers
 Stepper stepper1(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper2(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper3(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper4(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
-DC_Motors DC_1();
-DC_Motors DC_2();
-DC_Motors DC_3();
-DC_Motors DC_4();
+DC_Motors DC_motors;
+
 
 
 int phi_des1 = 0;
@@ -85,7 +86,7 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for(int i = 0; i < N_DCMotors; i++) {    
-      PowerDC(msg.omega_arr.data[i], DC_throttlePins[i]);
+      DC_motors.PowerDC(msg.omega_arr.data[i], DC_throttlePins[i]);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
@@ -106,25 +107,23 @@ class DC_Motors{
   public:
     const int *reverse;
     const int *throttlePins;
-
+    bool *reverseFlags;
     void PowerDC (int, int);
     void flipDirection (int);
+    DC_Motors();
 
     // Define forward rotation - DC Motor
 }
 
-DC_Motors::DC_Motors (){
-  bool reverseFlags[N_DCMotors] = {0,0,0,0};
+DC_Motors::DC_Motors(){
+  reverseFlags = {0,0,0,0};
   this->reverseFlags =  reverseFlags;
   reverse = DC_reverse;
-  throttlePins = DC_throttlePins;
-
-  
-  
+  throttlePins = DC_throttlePins;  
 }
 
 void DC_Motors::PowerDC(int PWMspeed, int aPin) {
-      int index = aPin-throttlePins[0]
+      int index = aPin-throttlePins[0];
 
       if(PWMspeed >= 0 ){             
         if(this->reverseFlags[index] == 0){
@@ -136,7 +135,7 @@ void DC_Motors::PowerDC(int PWMspeed, int aPin) {
         }
       }
 
-      if(PWMspeed < 0 {
+      if(PWMspeed < 0) {
         if(this->reverseFlags[index] == 1){
           analogWrite(aPin, PWMspeed);
         }
@@ -151,9 +150,9 @@ void DC_Motors::PowerDC(int PWMspeed, int aPin) {
 
     void DC_Motors::flipDirection(int reversePin){
       digitalWrite(reverse[reversePin],HIGH);
-      delay(1)
+      delay(1);
       digitalWrite(reverse[reversePin],LOW);
-      this->reverseFlags[reversePin] = !this->reverseFlags[reversePin]
+      this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
     }
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
