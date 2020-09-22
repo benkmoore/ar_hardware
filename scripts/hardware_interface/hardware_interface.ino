@@ -4,7 +4,6 @@
 #include <Encoder.h>
 #include "src/ar_stepper.h"
 #include <std_msgs/Float64.h>
-//#include <ros/console.h>
 #define RX        7 
 #define TX        8
 
@@ -48,7 +47,8 @@ const int N_StepperMotors = 4;
 int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins 
-//int DCMotorPins[N_DCMotors][3] = {{13, 14, 15}, {22, 21, 23}, {38, 37, 36}, {35, 34, 33}};
+static const int DC_reverse[N_DCMotors] = {18,19,20,21};
+static const int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
 
 // Motor interface type for stppers
 byte motorInterfaceType = 1;
@@ -58,6 +58,12 @@ Stepper stepper1(int(360.0 / PHI_STEP), StepperPins[0][0], StepperPins[0][1], PH
 Stepper stepper2(int(360.0 / PHI_STEP), StepperPins[1][0], StepperPins[1][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
 Stepper stepper3(int(360.0 / PHI_STEP), StepperPins[2][0], StepperPins[2][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
 Stepper stepper4(int(360.0 / PHI_STEP), StepperPins[3][0], StepperPins[3][1], PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL);
+
+DC_Motors DC_1();
+DC_Motors DC_2();
+DC_Motors DC_3();
+DC_Motors DC_4();
+
 
 int phi_des1 = 0;
 int phi_des2 = 0;
@@ -77,16 +83,9 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 //
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-//  for(int i = 0; i < N_DCMotors; i++) {
-//    if (msg.omega_arr.data[i] >= 0) {
-//      Forward_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-//    }
-//    else if (msg.omega_arr.data[i] < 0) {
-//      //msg data for reverse comes as a negative value, this is changed to positive below
-//      msg.omega_arr.data[i] *= -1;
-//      Reverse_DCMotor(msg.omega_arr.data[i], DCMotorPins[i][0], DCMotorPins[i][1], DCMotorPins[i][2]);
-//    }
-//  }
+  for(int i = 0; i < N_DCMotors; i++) {    
+      PowerDC(msg.omega_arr.data[i], DC_throttlePins[i]);
+  }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -102,20 +101,59 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 /*
    ------------- SUPPORT FUNCTIONS ------------------
 */
+class DC_Motors{
+  public:
+    const int *reverse;
+    const int *throttlePins;
 
-// Define forward rotation - DC Motor
-void Forward_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  analogWrite(en, PWMspeed);
+    void PowerDC (int, int);
+    void flipDirection (int);
+
+    // Define forward rotation - DC Motor
 }
 
-// Define reverse rotation - DC Motor
-void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  analogWrite(en, PWMspeed);
+DC_Motors::DC_Motors (){
+  bool reverseFlags[N_DCMotors] = {0,0,0,0};
+  this->reverseFlags =  reverseFlags;
+  reverse = DC_reverse;
+  throttlePins = DC_throttlePins;
+
+  
+  
 }
+
+void DC_Motors::PowerDC(int PWMspeed, int aPin) {
+      int index = aPin-throttlePins[0]
+
+      if(PWMspeed >= 0 ){             
+        if(this->reverseFlags[index] == 0){
+          analogWrite(aPin, PWMspeed);
+        }
+        else{
+          flipDirection(index);
+          analogWrite(aPin, PWMspeed);
+        }
+      }
+
+      if(PWMspeed < 0 {
+        if(this->reverseFlags[index] == 1){
+          analogWrite(aPin, PWMspeed);
+        }
+        else{
+          flipDirection(index);
+          analogWrite(aPin, PWMspeed);
+        }
+      }
+
+  
+    }
+
+    void DC_Motors::flipDirection(int reversePin){
+      digitalWrite(reverse[reversePin],HIGH);
+      delay(1)
+      digitalWrite(reverse[reversePin],LOW);
+      this->reverseFlags[reversePin] = !this->reverseFlags[reversePin]
+    }
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToPi(float encoder_data) {
@@ -192,12 +230,11 @@ void setup() {
   stepper3.setupDriver(StepperMotorPins[2]);
   stepper4.setupDriver(StepperMotorPins[3]);
   
-  // Setup DC motors
-//  for(int i = 0; i < N_DCMotors; i++) {
-//    pinMode(DCMotorPins[i][0], OUTPUT);
-//    pinMode(DCMotorPins[i][1], OUTPUT);
-//    pinMode(DCMotorPins[i][2], OUTPUT);
-//  }
+
+  // Setup DC reverse pins
+  for(int i = 0; i < N_DCMotors; i++) {
+    pinMode(DC_reverse[i], OUTPUT);
+  }
 
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
