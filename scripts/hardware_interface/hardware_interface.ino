@@ -12,7 +12,10 @@
 #define Re    3
 #define De    4
 
-
+#define MAX_PWM 255                                   // pwm
+#define MIN_PWM -255  
+#define MAX_OMEGA 200    
+#define MIN_OMEGA -200    
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
@@ -32,8 +35,7 @@
 #define MIN_STEPPER_VEL 35                            // step/s
 #define STEPS_THRESHOLD 25                            // step
 #define PHI_STEP 1.8                                  // deg/step
-#define RAD_2_DEG 57.295779513082320876798154814105
-
+#define RAD_2_DEG 57.2957795
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
 
@@ -46,10 +48,9 @@ int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins 
 static const int DC_reverse[N_DCMotors] = {18,19,20,21};
-static const int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
+static const int DC_throttlePins[N_DCMotors] = {14,15,16,17};
 
 int reverseFlags[N_DCMotors] = {0,0,0,0};
-
 
 
 class DC_Motors{
@@ -73,7 +74,7 @@ DC_Motors::DC_Motors(){
 
 void DC_Motors::PowerDC(int PWMspeed, int aPin) {
       int index = aPin-throttlePins[0];
-
+//      Serial.println("in PowerDC");
       if(PWMspeed >= 0 ){             
         if(this->reverseFlags[index] == 0){
           analogWrite(aPin, PWMspeed);
@@ -93,8 +94,6 @@ void DC_Motors::PowerDC(int PWMspeed, int aPin) {
           analogWrite(aPin, PWMspeed);
         }
       }
-
-  
     }
 
     void DC_Motors::flipDirection(int reversePin){
@@ -111,7 +110,6 @@ uint8_t byteIn[3];
 int i = 0;
 
 
-
 // Define steppers
 Stepper stepper1(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper2(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -119,7 +117,6 @@ Stepper stepper3(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL
 Stepper stepper4(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
 DC_Motors DC_motors;
-
 
 
 int phi_des1 = 0;
@@ -140,8 +137,10 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 //
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-  for(int i = 0; i < N_DCMotors; i++) {    
-      DC_motors.PowerDC(msg.omega_arr.data[i], DC_throttlePins[i]);
+//  Serial.println("in callback");
+  for(int i = 0; i < N_DCMotors; i++) {   
+    int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
+      DC_motors.PowerDC(omega, DC_throttlePins[i]);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
@@ -230,12 +229,12 @@ void setup() {
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
   }
-
+  
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-//  Serial.begin(9600);
-  Serial2.begin(115200);        // set the data rate
+//  Serial.begin(57600);
+  //Serial2.begin(115200);        // set the data rate
 
 }
 
@@ -244,16 +243,16 @@ void setup() {
  */
 void loop() {
   hardware_interface.spinOnce();
-  int out_88 = wrapToPi(checkEncoder(88));
-  int out_84 = wrapToPi(checkEncoder(84));
-  int out_80 = wrapToPi(checkEncoder(80));
-  int out_76 = wrapToPi(checkEncoder(76));
-  test.data = out_76;
-  chatter_pub.publish(&test);
-  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(out_76, phi_des1);
-  stepper2.commandStepper(out_80, phi_des2);
-  stepper3.commandStepper(out_84, phi_des3);
-  stepper4.commandStepper(out_88, phi_des4);
+//  int out_88 = wrapToPi(checkEncoder(88));
+//  int out_84 = wrapToPi(checkEncoder(84));
+//  int out_80 = wrapToPi(checkEncoder(80));
+//  int out_76 = wrapToPi(checkEncoder(76));
+//  test.data = out_76;
+//  chatter_pub.publish(&test);
+//  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
+//  stepper1.commandStepper(out_76, phi_des1);
+//  stepper2.commandStepper(out_80, phi_des2);
+//  stepper3.commandStepper(out_84, phi_des3);
+//  stepper4.commandStepper(out_88, phi_des4);
 
 }
