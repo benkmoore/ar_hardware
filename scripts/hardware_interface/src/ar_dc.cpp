@@ -3,7 +3,7 @@
 
 
 
-DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlepins){
+DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlePins){
   //reverseFlags = {0,0,0,0};
   this->reverseFlags =  reverseFlags;
   this->reverse = DC_reverse;
