@@ -47,40 +47,41 @@ const int N_StepperMotors = 4;
 int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins 
-static const int DC_reverse[N_DCMotors] = {18,19,20,21};
-static const int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
+int DC_reverse[N_DCMotors] = {18,19,20,21};
+int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
 
 int reverseFlags[N_DCMotors] = {0,0,0,0};
 
 
 class DC_Motors{
   public:
-    const int *reverse;
-    const int *throttlePins;
+
+    DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlepins);
+    int *reverse;
+    int *throttlePins;
     int *reverseFlags;
     void PowerDC (int, int);
     void flipDirection (int);
-    DC_Motors();
 
     // Define forward rotation - DC Motor
 };
 
-DC_Motors::DC_Motors(){
+DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlepins){
   //reverseFlags = {0,0,0,0};
   this->reverseFlags =  reverseFlags;
-  reverse = DC_reverse;
-  throttlePins = DC_throttlePins;  
+  this->reverse = DC_reverse;
+  this->throttlePins = DC_throttlePins;  
 }
 
 void DC_Motors::PowerDC(int PWMspeed, int aPin) {
-      int index = aPin-throttlePins[0];
+      int index = aPin-this->throttlePins[0];
       Serial.println("in PowerDC");
       if(PWMspeed >= 0 ){             
         if(this->reverseFlags[index] == 0){
           analogWrite(aPin, PWMspeed);
         }
         else{
-          flipDirection(index);
+          this->flipDirection(index);
           analogWrite(aPin, PWMspeed);
         }
       }
@@ -90,18 +91,18 @@ void DC_Motors::PowerDC(int PWMspeed, int aPin) {
           analogWrite(aPin, PWMspeed);
         }
         else{
-          flipDirection(index);
+          this->flipDirection(index);
           analogWrite(aPin, PWMspeed);
         }
       }
     }
 
-    void DC_Motors::flipDirection(int reversePin){
-      digitalWrite(reverse[reversePin],HIGH);
-      delay(1);
-      digitalWrite(reverse[reversePin],LOW);
-      this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
-    }
+void DC_Motors::flipDirection(int reversePin){
+  digitalWrite(this->reverse[reversePin],HIGH);
+  delay(1);
+  digitalWrite(this->reverse[reversePin],LOW);
+  this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
+}
     
 //##############encoder###############
 long response = 0;
@@ -116,8 +117,7 @@ Stepper stepper2(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL
 Stepper stepper3(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper4(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
-DC_Motors DC_motors;
-
+DC_Motors DC_motors(reverseFlags, DC_reverse, DC_throttlePins);
 
 int phi_des1 = 0;
 int phi_des2 = 0;
@@ -136,23 +136,23 @@ ros::Publisher chatter_pub("chatter", &test);
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 //
 // define ROS node name, rate, subscriber to /controller_cmds
-void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-//  Serial.println("in callback");
-  for(int i = 0; i < N_DCMotors; i++) {   
-    int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-      DC_motors.PowerDC(omega, DC_throttlePins[i]);
-  }
-
-  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-
-}
-
-ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
-
+//void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+////  Serial.println("in callback");
+//  for(int i = 0; i < N_DCMotors; i++) {   
+//    int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
+//      DC_motors.PowerDC(omega, DC_throttlePins[i]);
+//  }
+//
+//  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
+//  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+//  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+//  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+//  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+//
+//}
+//
+//ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
+//
 
 /*
    ------------- SUPPORT FUNCTIONS ------------------
@@ -257,20 +257,14 @@ void loop() {
 //  stepper2.commandStepper(out_80, phi_des2);
 //  stepper3.commandStepper(out_84, phi_des3);
 //  stepper4.commandStepper(out_88, phi_des4);
-Serial.println("in loop");
-//for(int i = 0; i < N_DCMotors; i++) {
-//    
-//       DC_motors.PowerDC(250, DC_throttlePins[i]);
-//
-//  }
-analogWrite(250,A0);
-analogWrite(250,A1);
-analogWrite(250,A2);
-analogWrite(250,A3);
-delay(3);
-analogWrite(100,A0);
-analogWrite(100,A1);
-analogWrite(100,A2);
-analogWrite(100,A3);
+    Serial.println("in loop");
+        
+    DC_motors.PowerDC(250, A0);
+    delay(300);
+    DC_motors.PowerDC(0, A0);
+    delay(300);
+    
+    
+ 
 
 }
