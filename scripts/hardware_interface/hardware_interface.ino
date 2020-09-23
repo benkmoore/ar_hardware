@@ -48,7 +48,7 @@ int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins 
 static const int DC_reverse[N_DCMotors] = {18,19,20,21};
-static const int DC_throttlePins[N_DCMotors] = {14,15,16,17};
+static const int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
 
 int reverseFlags[N_DCMotors] = {0,0,0,0};
 
@@ -74,7 +74,7 @@ DC_Motors::DC_Motors(){
 
 void DC_Motors::PowerDC(int PWMspeed, int aPin) {
       int index = aPin-throttlePins[0];
-//      Serial.println("in PowerDC");
+      Serial.println("in PowerDC");
       if(PWMspeed >= 0 ){             
         if(this->reverseFlags[index] == 0){
           analogWrite(aPin, PWMspeed);
@@ -212,19 +212,21 @@ void RS485Receive()
 
 void setup() {
   // Init node and Subscribe to /controller_cmds
-  hardware_interface.getHardware()->setBaud(BAUD_RATE);
-  hardware_interface.initNode();
-  hardware_interface.advertise(chatter_pub);
-  hardware_interface.subscribe(controller_cmds_sub);
-  
+//  hardware_interface.getHardware()->setBaud(BAUD_RATE);
+//  hardware_interface.initNode();
+//  hardware_interface.advertise(chatter_pub);
+//  hardware_interface.subscribe(controller_cmds_sub);
+//  
   // Setup stepper motors 
   SPI.begin();
   stepper1.setupDriver(StepperMotorPins[0]);
   stepper2.setupDriver(StepperMotorPins[1]);
   stepper3.setupDriver(StepperMotorPins[2]);
   stepper4.setupDriver(StepperMotorPins[3]);
-  
-
+  pinMode(A0,OUTPUT);
+  pinMode(A1,OUTPUT);
+  pinMode(A2,OUTPUT);
+  pinMode(A3,OUTPUT);
   // Setup DC reverse pins
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
@@ -233,8 +235,9 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-//  Serial.begin(57600);
+ Serial.begin(9600);
   //Serial2.begin(115200);        // set the data rate
+  Serial.println("setup");
 
 }
 
@@ -242,7 +245,7 @@ void setup() {
  * ------------- MAIN ------------------
  */
 void loop() {
-  hardware_interface.spinOnce();
+//  hardware_interface.spinOnce();
 //  int out_88 = wrapToPi(checkEncoder(88));
 //  int out_84 = wrapToPi(checkEncoder(84));
 //  int out_80 = wrapToPi(checkEncoder(80));
@@ -254,5 +257,11 @@ void loop() {
 //  stepper2.commandStepper(out_80, phi_des2);
 //  stepper3.commandStepper(out_84, phi_des3);
 //  stepper4.commandStepper(out_88, phi_des4);
+Serial.println("in loop");
+for(int i = 0; i < N_DCMotors; i++) {
+    
+       DC_motors.PowerDC(250, DC_throttlePins[i]);
+
+  }
 
 }
