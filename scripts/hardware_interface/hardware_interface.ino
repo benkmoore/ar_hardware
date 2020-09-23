@@ -4,6 +4,8 @@
 #include "Encoder.h"
 #include "SPI.h"
 #include "src/ar_stepper.h"
+#include "src/ar_dc.h"
+
 #include <std_msgs/Float64.h>
 #define RX        7 
 #define TX        8
@@ -52,58 +54,6 @@ int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
 
 int reverseFlags[N_DCMotors] = {0,0,0,0};
 
-
-class DC_Motors{
-  public:
-
-    DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlepins);
-    int *reverse;
-    int *throttlePins;
-    int *reverseFlags;
-    void PowerDC (int, int);
-    void flipDirection (int);
-
-    // Define forward rotation - DC Motor
-};
-
-DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlepins){
-  //reverseFlags = {0,0,0,0};
-  this->reverseFlags =  reverseFlags;
-  this->reverse = DC_reverse;
-  this->throttlePins = DC_throttlePins;  
-}
-
-void DC_Motors::PowerDC(int PWMspeed, int aPin) {
-      int index = aPin-this->throttlePins[0];
-      Serial.println("in PowerDC");
-      if(PWMspeed >= 0 ){             
-        if(this->reverseFlags[index] == 0){
-          analogWrite(aPin, PWMspeed);
-        }
-        else{
-          this->flipDirection(index);
-          analogWrite(aPin, PWMspeed);
-        }
-      }
-
-      if(PWMspeed < 0) {
-        if(this->reverseFlags[index] == 1){
-          analogWrite(aPin, PWMspeed);
-        }
-        else{
-          this->flipDirection(index);
-          analogWrite(aPin, PWMspeed);
-        }
-      }
-    }
-
-void DC_Motors::flipDirection(int reversePin){
-  digitalWrite(this->reverse[reversePin],HIGH);
-  delay(1);
-  digitalWrite(this->reverse[reversePin],LOW);
-  this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
-}
-    
 //##############encoder###############
 long response = 0;
 int byteOut;
