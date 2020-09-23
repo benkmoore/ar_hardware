@@ -145,7 +145,7 @@ D. If the update rate of the tag isn't at 10Hz (highest) there will be issues wi
 
 E. Make sure that the position of the anchors is as accurate as possible or the location engine will be very unreliable or will just constantly fail. This can be entered using the android app or using mnicom. The auto positioning feature in the app can be used, however clear lines of sight between boards is a must for the auto positioning to work properly - follow instructions on the app.
 
-
+NOTE: [Drive](https://drive.google.com/drive/u/0/folders/1xLlcln9ASHMiTpSai7nGg3Y6ZoaNCo-Q) folder with documentation.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -161,6 +161,9 @@ E. Make sure that the position of the anchors is as accurate as possible or the 
 NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](https://www.pololu.com/product/3415).
 
 ---------------------------------------------------------------------------------------------------
+
+
+
 
 ### Stepper Motors & Drivers
 
