@@ -17,25 +17,31 @@ void DC_Motors::PowerDC(int PWMspeed, int aPin) {
             analogWrite(aPin, PWMspeed);
         }
         else{
+analogWrite(aPin, 0);
             this->flipDirection(index);
+	    
+	    delay(1);
             analogWrite(aPin, PWMspeed);
         }
     }
 
     if(PWMspeed < 0) {
         if(this->reverseFlags[index] == 1){
-            analogWrite(aPin, PWMspeed);
+            analogWrite(aPin, PWMspeed*-1);
         }
         else{
+		analogWrite(aPin, 0);
             this->flipDirection(index);
-            analogWrite(aPin, PWMspeed);
+	    
+	    
+            analogWrite(aPin, PWMspeed*-1);
         }
     }
 }
 
 void DC_Motors::flipDirection(int reversePin){
   digitalWrite(this->reverse[reversePin],HIGH);
-  delay(1);
+  delay(1000);
   digitalWrite(this->reverse[reversePin],LOW);
   this->reverseFlags[reversePin] = !this->reverseFlags[reversePin];
 }

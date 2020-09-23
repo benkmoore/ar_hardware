@@ -16,8 +16,8 @@
 
 #define MAX_PWM 255                                   // pwm
 #define MIN_PWM -255  
-#define MAX_OMEGA 200    
-#define MIN_OMEGA -200    
+#define MAX_OMEGA 255    
+#define MIN_OMEGA -255    
 /*
  * ------------- FILE DEFINITION & SETUP ------------------
  */
@@ -86,23 +86,23 @@ ros::Publisher chatter_pub("chatter", &test);
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 //
 // define ROS node name, rate, subscriber to /controller_cmds
-//void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-////  Serial.println("in callback");
-//  for(int i = 0; i < N_DCMotors; i++) {   
-//    int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-//      DC_motors.PowerDC(omega, DC_throttlePins[i]);
-//  }
-//
-//  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-//  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-//  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-//  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-//  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
-//
-//}
-//
-//ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
-//
+void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+//  Serial.println("in callback");
+  for(int i = 0; i < N_DCMotors; i++) {   
+    //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
+      DC_motors.PowerDC(msg.omega_arr.data[i], DC_throttlePins[i]);
+  }
+
+  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
+  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
+  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
+  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
+  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+
+}
+
+ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
+
 
 /*
    ------------- SUPPORT FUNCTIONS ------------------
@@ -139,8 +139,6 @@ int checkEncoder(int address) {
   byteIn[2] = byteIn[2] >> 2;
   response = byteIn[2];
   response = (response << 6) + byteIn[1];
-
-
   return response;
 }
 
@@ -164,9 +162,9 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-//  hardware_interface.advertise(chatter_pub);
-//  hardware_interface.subscribe(controller_cmds_sub);
-//  
+  hardware_interface.advertise(chatter_pub);
+  hardware_interface.subscribe(controller_cmds_sub);
+
   // Setup stepper motors 
   SPI.begin();
   stepper1.setupDriver(StepperMotorPins[0]);
@@ -185,9 +183,9 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
- Serial.begin(57600);
-  //Serial2.begin(115200);        // set the data rate
-  Serial.println("setup");
+  //Serial.begin(57600);
+  Serial2.begin(115200);        // set the data rate
+//  Serial.println("setup");
 
 }
 
@@ -196,25 +194,16 @@ void setup() {
  */
 void loop() {
   hardware_interface.spinOnce();
-//  int out_88 = wrapToPi(checkEncoder(88));
-//  int out_84 = wrapToPi(checkEncoder(84));
-//  int out_80 = wrapToPi(checkEncoder(80));
-//  int out_76 = wrapToPi(checkEncoder(76));
-//  test.data = out_76;
-//  chatter_pub.publish(&test);
+  int out_88 = wrapToPi(checkEncoder(88));
+  int out_84 = wrapToPi(checkEncoder(84));
+  int out_80 = wrapToPi(checkEncoder(80));
+  int out_76 = wrapToPi(checkEncoder(76));
+  test.data = out_76;
+  chatter_pub.publish(&test);
 //  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-//  stepper1.commandStepper(out_76, phi_des1);
-//  stepper2.commandStepper(out_80, phi_des2);
-//  stepper3.commandStepper(out_84, phi_des3);
-//  stepper4.commandStepper(out_88, phi_des4);
-    Serial.println("in loop");
+  stepper1.commandStepper(out_76, phi_des1);
+  stepper2.commandStepper(out_80, phi_des2);
+  stepper3.commandStepper(out_84, phi_des3);
+  stepper4.commandStepper(out_88, phi_des4);
         
-    DC_motors.PowerDC(250, A0);
-    delay(300);
-    DC_motors.PowerDC(0, A0);
-    delay(300);
-    
-    
- 
-
 }
