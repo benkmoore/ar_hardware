@@ -159,6 +159,25 @@ NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](ht
 
 ---------------------------------------------------------------------------------------------------
 
+
+### AMT21 encoder setup:
+
+1. Download and run AMT viewpoint [here](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
+
+2. Connect to encoder using usb adapter. 
+
+3. Set desired address using GUI (default is `0x54`). The addresses used by our hardware interface are `0x4C`, `0x50`, `0x54`, `0x58`. These correspond to 76, 80, 84, 88 in decimal and L, P, T, X.
+
+4. Install encoder onto motor shaft as per instructions [here](https://www.cuidevices.com/amt-mounting) from CUI website.
+
+5.
+
+7. Align the wheels to the desired 0 position with the encoders attatched. Run the encoderReset.ino program on the teensy.
+
+NOTE: AMT21 encoder [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
+
+---------------------------------------------------------------------------------------------------
+
 ### Stepper Motors & Drivers
 
 1. NOTE: For stepper motors adjust voltage across motor driver, DRV8825: see video at this link: https://youtu.be/89BHS9hfSUk, more info on DRV8825: [https://www.pololu.com/product/2133]. Aim for 0.5V or less (rotation appears smoothest at 0.35V)
