@@ -212,8 +212,8 @@ void RS485Receive()
 
 void setup() {
   // Init node and Subscribe to /controller_cmds
-//  hardware_interface.getHardware()->setBaud(BAUD_RATE);
-//  hardware_interface.initNode();
+  hardware_interface.getHardware()->setBaud(BAUD_RATE);
+  hardware_interface.initNode();
 //  hardware_interface.advertise(chatter_pub);
 //  hardware_interface.subscribe(controller_cmds_sub);
 //  
@@ -235,7 +235,7 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
- Serial.begin(9600);
+ Serial.begin(57600);
   //Serial2.begin(115200);        // set the data rate
   Serial.println("setup");
 
@@ -245,7 +245,7 @@ void setup() {
  * ------------- MAIN ------------------
  */
 void loop() {
-//  hardware_interface.spinOnce();
+  hardware_interface.spinOnce();
 //  int out_88 = wrapToPi(checkEncoder(88));
 //  int out_84 = wrapToPi(checkEncoder(84));
 //  int out_80 = wrapToPi(checkEncoder(80));
@@ -258,10 +258,19 @@ void loop() {
 //  stepper3.commandStepper(out_84, phi_des3);
 //  stepper4.commandStepper(out_88, phi_des4);
 Serial.println("in loop");
-for(int i = 0; i < N_DCMotors; i++) {
-    
-       DC_motors.PowerDC(250, DC_throttlePins[i]);
-
-  }
+//for(int i = 0; i < N_DCMotors; i++) {
+//    
+//       DC_motors.PowerDC(250, DC_throttlePins[i]);
+//
+//  }
+analogWrite(250,A0);
+analogWrite(250,A1);
+analogWrite(250,A2);
+analogWrite(250,A3);
+delay(3);
+analogWrite(100,A0);
+analogWrite(100,A1);
+analogWrite(100,A2);
+analogWrite(100,A3);
 
 }
