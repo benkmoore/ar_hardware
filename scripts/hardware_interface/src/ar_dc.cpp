@@ -12,7 +12,6 @@ DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlePins){
 
 void DC_Motors::PowerDC(int PWMspeed, int aPin) {
     int index = aPin-this->throttlePins[0];
-    Serial.println("in PowerDC");
     if(PWMspeed >= 0 ){             
         if(this->reverseFlags[index] == 0){
             analogWrite(aPin, PWMspeed);
