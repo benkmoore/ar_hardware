@@ -162,9 +162,6 @@ NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](ht
 
 ---------------------------------------------------------------------------------------------------
 
-
-
-
 ### Stepper Motors & Drivers
 
 1. NOTE: For stepper motors adjust voltage across motor driver, DRV8825: see video at this link: https://youtu.be/89BHS9hfSUk, more info on DRV8825: [https://www.pololu.com/product/2133]. Aim for 0.5V or less (rotation appears smoothest at 0.35V)
