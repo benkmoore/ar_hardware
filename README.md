@@ -162,7 +162,7 @@ NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](ht
 
 ### AMT21 encoder setup:
 
-1. Download and run AMT viewpoint [here](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
+1. Download and run AMT viewpoint [here](https://www.cuidevices.com/amt-viewpoint)
 
 2. Connect to encoder using usb adapter. 
 
