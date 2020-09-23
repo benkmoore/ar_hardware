@@ -130,7 +130,7 @@ G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and bui
 
 8. Press enter/return on the keyboard twice within 1 second to enter shell mode. If the port is correct and the USB cable is good and the firmware is good, you should see `DWM1001 TWR Real Time Location System`, and `dwm>`. Type `apg` and hit enter to get current tag pose. Type `?` followed by enter to see possible commands.
 
-9. Make sure that the position of the anchors is as accurate as possible or the location engine will be very unreliable or will just constantly fail. This can be entered using the android app or using mnicom. The auto positioning feature in the app can be used, however clear lines of sight between boards is a must.
+9. When installing on robot, after robot startup plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow our decawave interface to use the boards correctly.
 
 
 #### Debugging notes:
@@ -142,6 +142,8 @@ B. Anytime you connect to the board via USB make sure you use a good, reliable d
 C. The boards should all be perpendicular to the ground, ie. the antenna should be the furthest point from the ground. If the boards are horizontal they won't be able to communicate properly.
 
 D. If the update rate of the tag isn't at 10Hz (highest) there will be issues with delayed info. This should be done from the android app or using minicom.
+
+E. Make sure that the position of the anchors is as accurate as possible or the location engine will be very unreliable or will just constantly fail. This can be entered using the android app or using mnicom. The auto positioning feature in the app can be used, however clear lines of sight between boards is a must for the auto positioning to work properly - follow instructions on the app.
 
 
 
