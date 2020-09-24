@@ -49,8 +49,9 @@ const int N_StepperMotors = 4;
 int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
 // DC Motor pins 
-int DC_reverse[N_DCMotors] = {18,19,20,21};
-int DC_throttlePins[N_DCMotors] = {A0,A1,A2,A3};
+int DC_reverse[N_DCMotors] = {20,21,22,23};
+// analog pins A0 to A3 correspond to pins 14, 15 and 18, 19 on the teensy
+int DC_throttlePins[N_DCMotors] = {A0,A1,A4,A5};
 
 int reverseFlags[N_DCMotors] = {0,0,0,0};
 
@@ -90,7 +91,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 //  Serial.println("in callback");
   for(int i = 0; i < N_DCMotors; i++) {   
     //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-      DC_motors.PowerDC(msg.omega_arr.data[i], DC_throttlePins[i]);
+      DC_motors.PowerDC(msg.omega_arr.data[i], DC_throttlePins[i], i);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
@@ -173,8 +174,8 @@ void setup() {
   stepper4.setupDriver(StepperMotorPins[3]);
   pinMode(A0,OUTPUT);
   pinMode(A1,OUTPUT);
-  pinMode(A2,OUTPUT);
-  pinMode(A3,OUTPUT);
+  pinMode(A4,OUTPUT);
+  pinMode(A5,OUTPUT);
   // Setup DC reverse pins
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
@@ -183,7 +184,7 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-  //Serial.begin(57600);
+//  Serial.begin(57600);
   Serial2.begin(115200);        // set the data rate
 //  Serial.println("setup");
 
@@ -205,5 +206,5 @@ void loop() {
   stepper2.commandStepper(out_80, phi_des2);
   stepper3.commandStepper(out_84, phi_des3);
   stepper4.commandStepper(out_88, phi_des4);
-        
+
 }

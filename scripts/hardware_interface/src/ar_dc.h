@@ -4,7 +4,7 @@ class DC_Motors{
 
     DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlepins);
 
-    void PowerDC(int PWMspeed, int aPin);
+    void PowerDC(int PWMspeed, int aPin, int index);
 
     void flipDirection(int reversePin);
 
