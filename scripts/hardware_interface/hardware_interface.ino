@@ -85,10 +85,9 @@ ros::Publisher chatter_pub("chatter", &test);
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
-//
+
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-  //  Serial.println("in callback");
   for (int i = 0; i < N_DCMotors; i++) {
     //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
     DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
@@ -133,15 +132,15 @@ int checkEncoder(int address) {
   byteOut = address;
   RS485Transmit();
 
-  Serial2.write(byteOut);           // Send byte to encoder
+  Serial2.write(byteOut);           
   delay(1);
   Serial2.flush();
   RS485Receive();
   i = 0;
-  //ROS_DEBUG("in checkencoder");
-  while (Serial2.available())       // Look for data from encoder
+  // Look for data from encoder
+  while (Serial2.available())       
   {
-    byteIn[i] = Serial2.read();     // Read received byte
+    byteIn[i] = Serial2.read();     
     i ++;
   }
   byteIn[2] = byteIn[2] << 2;
@@ -193,7 +192,7 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-  Serial2.begin(115200);        // set the data rate
+  Serial2.begin(115200);        
 }
 
 /*
