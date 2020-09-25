@@ -1,8 +1,8 @@
-#define RX        0  //For Arduino Mega
-#define TX        1
+#define RX        7  //For Arduino Mega
+#define TX        8
 
 //#define RxTx 3
-#define Re    3
+#define Re    4
 #define De    5
 
 #define Transmit    HIGH
@@ -31,43 +31,39 @@ void setup()   /****** SETUP: RUNS ONCE ******/
   //digitalWrite(RxTx, Receive);   //Initialize transciever to receive data
   RS485Receive();
 
-  Serial1.begin(115200);        // set the data rate
+  Serial2.begin(115200);        // set the data rate
 
 }//--(end setup )---
 
 void loop()   /****** LOOP: RUNS CONSTANTLY ******/
 {
-  for (int j = 0; j < 4; j++) {
+//  for (int j = 0; j < 4; j++) {
     //    if (Serial.available())
     //    {
 
 
-    byteOut = encNumber[j];//Serial.read(); //84;        //Locally store the transmitted string
+    byteOut = encNumber[1];//Serial.read(); //84;        //Locally store the transmitted string
 
     RS485Transmit();
-    Serial1.write(byteOut);      // Send byte to encoder
+    Serial2.write(byteOut);      // Send byte to encoder
     Serial.print("Sent: ");
     Serial.println(byteOut);
 
     delay(1);
-    Serial1.flush();
+    Serial2.flush();
     RS485Receive();
 //    delay(25);
     //    }
     i = 0;
-    while (Serial1.available())       //Look for data from encoder
+    while (Serial2.available())       //Look for data from encoder
     {
       //Serial.println("Received");
-      byteIn[i] = Serial1.read();     // Read received byte
+      byteIn[i] = Serial2.read();     // Read received byte
 
 //      delay(10);
       i ++;
 
-
-      //    unsigned int len = 0;
-
-
-    }
+//    }
 
     //remove checksum
     byteIn[2] = byteIn[2] << 2;
