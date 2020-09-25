@@ -93,16 +93,9 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
     DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
   }
-  for (int i = 0; i < 4; i++) {
-    if (DC_motors.flip[i] == 1) {
-      flipflag = true;
-    }
-    else {
-      flipflag = false;
-    }
-  }
-  if (flipflag) {
-    DC_motors.flipDirection();
+
+  if (DC_motors.flipFlag == 1){
+      DC_motors.flipDirection();
   }
 
 

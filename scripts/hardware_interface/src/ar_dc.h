@@ -8,6 +8,7 @@ class DC_Motors{
 
     void flipDirection();
     int flip[4] = {0,0,0,0};
+    int flipFlag = 0;
   private:
     int *reverse;
     int *throttlePins;
