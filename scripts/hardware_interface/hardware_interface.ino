@@ -91,8 +91,10 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 //  Serial.println("in callback");
   for(int i = 0; i < N_DCMotors; i++) {   
     //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-      DC_motors.PowerDC(msg.omega_arr.data[i], DC_throttlePins[i], i);
+      DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
   }
+        DC_motors.flipDirection();
+
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
@@ -179,20 +181,20 @@ void setup() {
   // Setup DC reverse pins
   for(int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
-  }
-  
+    digitalWrite(DC_reverse[i], HIGH);
+  }  
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-//  Serial.begin(57600);
+  Serial.begin(57600);
   Serial2.begin(115200);        // set the data rate
-//  Serial.println("setup");
-
+  Serial.println("setup");
 }
 
 /*
  * ------------- MAIN ------------------
  */
+ int serread = 0;
 void loop() {
   hardware_interface.spinOnce();
   int out_88 = wrapToPi(checkEncoder(88));
@@ -206,5 +208,13 @@ void loop() {
   stepper2.commandStepper(out_80, phi_des2);
   stepper3.commandStepper(out_84, phi_des3);
   stepper4.commandStepper(out_88, phi_des4);
-
+if(Serial.available()){
+serread = Serial.parseInt();
+  
+ for(int i = 0; i < N_DCMotors; i++) {   
+    //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
+      DC_motors.PowerDC(DC_throttlePins[i], serread, i);
+  }
+        DC_motors.flipDirection();
+}
 }
