@@ -7,7 +7,7 @@
 #include "src/ar_dc.h"
 
 #include <std_msgs/Float64.h>
-#define RX        7 
+#define RX        7
 #define TX        8
 
 //#define RxTx
@@ -15,12 +15,12 @@
 #define De    4
 
 #define MAX_PWM 255                                   // pwm
-#define MIN_PWM -255  
-#define MAX_OMEGA 255    
-#define MIN_OMEGA -255    
+#define MIN_PWM -255
+#define MAX_OMEGA 255
+#define MIN_OMEGA -255
 /*
- * ------------- FILE DEFINITION & SETUP ------------------
- */
+   ------------- FILE DEFINITION & SETUP ------------------
+*/
 
 // ROS Serial constants
 #define NUM_PUBS 2
@@ -48,25 +48,25 @@ const int N_StepperMotors = 4;
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
 
-// DC Motor pins 
-int DC_reverse[N_DCMotors] = {20,21,22,23};
+// DC Motor pins
+int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 // analog pins A0 to A3 correspond to pins 14, 15 and 18, 19 on the teensy
-int DC_throttlePins[N_DCMotors] = {A0,A1,A4,A5};
+int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
 
-int reverseFlags[N_DCMotors] = {0,0,0,0};
+int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 
 //##############encoder###############
 long response = 0;
 int byteOut;
 uint8_t byteIn[3];
 int i = 0;
-
+bool flipflag = false;
 
 // Define steppers
-Stepper stepper1(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper2(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper3(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper4(int(360.0/PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper2(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper3(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
 DC_Motors DC_motors(reverseFlags, DC_reverse, DC_throttlePins);
 
@@ -80,31 +80,41 @@ std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
 
 /*
- * ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
- */
+   ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
+*/
 
 // ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 //
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-//  Serial.println("in callback");
-  for(int i = 0; i < N_DCMotors; i++) {   
+  //  Serial.println("in callback");
+  for (int i = 0; i < N_DCMotors; i++) {
     //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-      DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
+    DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
   }
-        DC_motors.flipDirection();
+  for (int i = 0; i < 4; i++) {
+    if (DC_motors.flip[i] == 1) {
+      flipflag = true;
+    }
+    else {
+      flipflag = false;
+    }
+  }
+  if (flipflag) {
+    DC_motors.flipDirection();
+  }
 
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  phi_des1 = (int) ( (-msg.phi_arr.data[0]*RAD_2_DEG)/PHI_STEP );
-  phi_des2 = (int) ( (-msg.phi_arr.data[1]*RAD_2_DEG)/PHI_STEP );
-  phi_des3 = (int) ( (-msg.phi_arr.data[2]*RAD_2_DEG)/PHI_STEP );
-  phi_des4 = (int) ( (-msg.phi_arr.data[3]*RAD_2_DEG)/PHI_STEP );
+  phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
+  phi_des2 = (int) ( (-msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
+  phi_des3 = (int) ( (-msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
+  phi_des4 = (int) ( (-msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
 
 }
 
-ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds",controllerCmdCallback);
+ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
 
 
 /*
@@ -114,9 +124,13 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToPi(float encoder_data) {
   // counts * (degs/count) * (step/deg) = steps
-  int encoder_pos = int( (encoder_data)*(360.0/ENC_CPR)*(1.0/PHI_STEP) ) % int( 360.0/PHI_STEP );
-  if (encoder_pos >= int( 180.0/PHI_STEP )) { encoder_pos = encoder_pos - int( 360.0/PHI_STEP ); }
-  else if (encoder_pos < int( -180.0/PHI_STEP )) { encoder_pos = encoder_pos + int( 360.0/PHI_STEP ); }
+  int encoder_pos = int( (encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP) ) % int( 360.0 / PHI_STEP );
+  if (encoder_pos >= int( 180.0 / PHI_STEP )) {
+    encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
+  }
+  else if (encoder_pos < int( -180.0 / PHI_STEP )) {
+    encoder_pos = encoder_pos + int( 360.0 / PHI_STEP );
+  }
 
   return encoder_pos;
 }
@@ -131,7 +145,7 @@ int checkEncoder(int address) {
   Serial2.flush();
   RS485Receive();
   i = 0;
-//ROS_DEBUG("in checkencoder");
+  //ROS_DEBUG("in checkencoder");
   while (Serial2.available())       // Look for data from encoder
   {
     byteIn[i] = Serial2.read();     // Read received byte
@@ -158,8 +172,8 @@ void RS485Receive()
 }
 
 /*
- * ------------- SETUP INTERFACE ------------------
- */
+   ------------- SETUP INTERFACE ------------------
+*/
 
 void setup() {
   // Init node and Subscribe to /controller_cmds
@@ -168,33 +182,30 @@ void setup() {
   hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
 
-  // Setup stepper motors 
+  // Setup stepper motors
   SPI.begin();
   stepper1.setupDriver(StepperMotorPins[0]);
   stepper2.setupDriver(StepperMotorPins[1]);
   stepper3.setupDriver(StepperMotorPins[2]);
   stepper4.setupDriver(StepperMotorPins[3]);
-  pinMode(A0,OUTPUT);
-  pinMode(A1,OUTPUT);
-  pinMode(A4,OUTPUT);
-  pinMode(A5,OUTPUT);
+  pinMode(A0, OUTPUT);
+  pinMode(A1, OUTPUT);
+  pinMode(A4, OUTPUT);
+  pinMode(A5, OUTPUT);
   // Setup DC reverse pins
-  for(int i = 0; i < N_DCMotors; i++) {
+  for (int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
     digitalWrite(DC_reverse[i], HIGH);
-  }  
+  }
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   RS485Receive();
-  Serial.begin(57600);
   Serial2.begin(115200);        // set the data rate
-  Serial.println("setup");
 }
 
 /*
- * ------------- MAIN ------------------
- */
- int serread = 0;
+   ------------- MAIN ------------------
+*/
 void loop() {
   hardware_interface.spinOnce();
   int out_88 = wrapToPi(checkEncoder(88));
@@ -203,18 +214,10 @@ void loop() {
   int out_76 = wrapToPi(checkEncoder(76));
   test.data = out_76;
   chatter_pub.publish(&test);
-//  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
+  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   stepper1.commandStepper(out_76, phi_des1);
   stepper2.commandStepper(out_80, phi_des2);
   stepper3.commandStepper(out_84, phi_des3);
   stepper4.commandStepper(out_88, phi_des4);
-if(Serial.available()){
-serread = Serial.parseInt();
-  
- for(int i = 0; i < N_DCMotors; i++) {   
-    //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-      DC_motors.PowerDC(DC_throttlePins[i], serread, i);
-  }
-        DC_motors.flipDirection();
-}
+
 }
