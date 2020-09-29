@@ -255,7 +255,7 @@ uint16_t Driver::transferToSPI(uint16_t value) {
 // ---------- Encoder FUNCTIONS -----------
 
 
-Encoder::Encoder(int Re, int De){
+AMTEncoder::AMTEncoder(int Re, int De){
   this->response = 0;
   this->flipflag = false;
   this->Re = Re;
@@ -264,7 +264,7 @@ Encoder::Encoder(int Re, int De){
 }
 
 
-int Encoder::checkEncoder(int address) {
+int AMTEncoder::checkEncoder(int address) {
 
   byteOut = address;
   this->RS485Transmit();
@@ -290,13 +290,13 @@ int Encoder::checkEncoder(int address) {
   return response;
 }
 
-void Encoder::RS485Transmit()
+void AMTEncoder::RS485Transmit()
 {
   digitalWrite(this->Re, LOW);
   digitalWrite(this->De, HIGH);
 }
 
-void Encoder::RS485Receive()
+void AMTEncoder::RS485Receive()
 {
   digitalWrite(this->Re, HIGH);
   digitalWrite(this->De, LOW);

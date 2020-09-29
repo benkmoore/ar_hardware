@@ -135,9 +135,9 @@ class Stepper {
 /*
  * Encoder class for AMT21 encoder
  */
-class Encoder {
+class AMTEncoder {
     public:
-        Encoder(int Re, int De);
+        AMTEncoder(int Re, int De);
         void RS485Transmit();           // sets the 'data enable' pin high and 'receive enable' pin low
         void RS485Receive();            // sets the 'receive enable' pin high and 'data enable' pin low 
         int checkEncoder(int address);  // checks position of desired encoder

@@ -72,6 +72,7 @@ Stepper stepper3(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_V
 Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
 DC_Motors DC_motors(reverseFlags, DC_reverse, DC_throttlePins, N_DCMotors, flip);
+AMTEncoder encoder(Re, De);
 
 int phi_des1 = 0;
 int phi_des2 = 0;
@@ -196,7 +197,7 @@ void setup() {
   pinMode(De, OUTPUT);
   // RS485Receive();
   // Serial2.begin(115200);  
-  Encoder encoder(Re, De);   
+    
 }
 
 /*
