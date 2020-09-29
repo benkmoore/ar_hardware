@@ -3,10 +3,11 @@
 
 
 
-DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlePins){
+DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlePins, int N_DCMotors){
   this->reverseFlags =  reverseFlags;
   this->reverse = DC_reverse;
   this->throttlePins = DC_throttlePins;  
+  this->N_DCMotors = N_DCMotors;
 }
 
 void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
