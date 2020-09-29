@@ -252,8 +252,8 @@ uint16_t Driver::transferToSPI(uint16_t value) {
   return SPI.transfer16(value);
 }
 
-// ---------- Encoder FUNCTIONS -----------
 
+// ---------- Encoder FUNCTIONS -----------
 
 AMTEncoder::AMTEncoder(int Re, int De){
   this->response = 0;

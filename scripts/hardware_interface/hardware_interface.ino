@@ -56,14 +56,6 @@ int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 int flip[N_DCMotors] = {0, 0, 0, 0};
 
-/*
-   ------------- Encoder serial communication variables ------------------
-*/
-long response = 0;
-int byteOut;
-uint8_t byteIn[3];
-int i = 0;
-bool flipflag = false;
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -131,41 +123,6 @@ int wrapToPi(float encoder_data) {
   return encoder_pos;
 }
 
-// int checkEncoder(int address) {
-
-//   byteOut = address;
-//   RS485Transmit();
-
-//   Serial2.write(byteOut);           
-//   delay(1);
-//   Serial2.flush();
-//   RS485Receive();
-//   i = 0;
-//   // Look for data from encoder
-//   while (Serial2.available())       
-//   {
-//     byteIn[i] = Serial2.read();     
-//     i ++;
-//   }
-//   byteIn[2] = byteIn[2] << 2;
-//   byteIn[1] = byteIn[1] >> 2;
-//   byteIn[2] = byteIn[2] >> 2;
-//   response = byteIn[2];
-//   response = (response << 6) + byteIn[1];
-//   return response;
-// }
-
-// void RS485Transmit()
-// {
-//   digitalWrite(Re, LOW);
-//   digitalWrite(De, HIGH);
-// }
-
-// void RS485Receive()
-// {
-//   digitalWrite(Re, HIGH);
-//   digitalWrite(De, LOW);
-// }
 
 /*
    ------------- SETUP INTERFACE ------------------
@@ -194,10 +151,7 @@ void setup() {
     digitalWrite(DC_reverse[i], HIGH);
   }
   pinMode(Re, OUTPUT);
-  pinMode(De, OUTPUT);
-  // RS485Receive();
-  // Serial2.begin(115200);  
-    
+  pinMode(De, OUTPUT);      
 }
 
 /*
@@ -205,16 +159,13 @@ void setup() {
 */
 void loop() {
   hardware_interface.spinOnce();
-  int out_88 = wrapToPi(encoder.checkEncoder(88));
-  int out_84 = wrapToPi(encoder.checkEncoder(84));
-  int out_80 = wrapToPi(encoder.checkEncoder(80));
-  int out_76 = wrapToPi(encoder.checkEncoder(76));
-  test.data = out_76;
-  chatter_pub.publish(&test);
-  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(out_76, phi_des1);
-  stepper2.commandStepper(out_80, phi_des2);
-  stepper3.commandStepper(out_84, phi_des3);
-  stepper4.commandStepper(out_88, phi_des4);
+  // int out_76 = wrapToPi(encoder.checkEncoder(76));
+  // test.data = out_76;
+  // chatter_pub.publish(&test);
 
+  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
+  stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+  stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
+  stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
 }

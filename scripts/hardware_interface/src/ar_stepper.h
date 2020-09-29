@@ -117,7 +117,7 @@ class Stepper {
     void setDirection(bool value);
     void enableDriver();
 
-    int direction;                   // tracks motor rotation direction
+    int direction;                  // tracks motor rotation direction
     unsigned long step_delay;       // delay between steps, in ms, based on speed
     unsigned long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
@@ -142,7 +142,6 @@ class AMTEncoder {
         void RS485Receive();            // sets the 'receive enable' pin high and 'data enable' pin low 
         int checkEncoder(int address);  // checks position of desired encoder
 
-
     private:
         long response;
         int byteOut;
@@ -150,8 +149,6 @@ class AMTEncoder {
         int i;
         bool flipflag;
         int Re, De;                      // Data and Receive enable pins
-
-
 };
 
 
