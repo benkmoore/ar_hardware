@@ -117,7 +117,7 @@ class Stepper {
     void setDirection(bool value);
     void enableDriver();
 
-    int direction;                   // tracks motor rotation direction
+    int direction;                  // tracks motor rotation direction
     unsigned long step_delay;       // delay between steps, in ms, based on speed
     unsigned long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
@@ -129,5 +129,27 @@ class Stepper {
     int max_milliamps;              // max current stepper can draw through driver (mA)
     StepperDecayMode decay_mode;    // decay mode on PWM signals
 };
+
+
+
+/*
+ * Encoder class for AMT21 encoder
+ */
+class AMTEncoder {
+    public:
+        AMTEncoder(int Re, int De);
+        void RS485Transmit();           // sets the 'data enable' pin high and 'receive enable' pin low
+        void RS485Receive();            // sets the 'receive enable' pin high and 'data enable' pin low 
+        int checkEncoder(int address);  // checks position of desired encoder
+
+    private:
+        long response;
+        int byteOut;
+        uint8_t byteIn[3];
+        int i;
+        bool flipflag;
+        int Re, De;                      // Data and Receive enable pins
+};
+
 
 #endif

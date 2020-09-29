@@ -251,3 +251,53 @@ void Driver::deselectChip() {
 uint16_t Driver::transferToSPI(uint16_t value) {
   return SPI.transfer16(value);
 }
+
+
+// ---------- Encoder FUNCTIONS -----------
+
+AMTEncoder::AMTEncoder(int Re, int De){
+  this->response = 0;
+  this->flipflag = false;
+  this->Re = Re;
+  this-> De = De;
+  Serial2.begin(115200);        
+}
+
+
+int AMTEncoder::checkEncoder(int address) {
+
+  byteOut = address;
+  this->RS485Transmit();
+
+  Serial2.write(byteOut);           
+  delay(1);
+  Serial2.flush();
+  this->RS485Receive();
+  i = 0;
+  // Look for data from encoder
+  while (Serial2.available())       
+  {
+    byteIn[i] = Serial2.read();     
+    i ++;
+  }
+  byteIn[2] = byteIn[2] << 2; // remove checksum (two most significant bits)
+  byteIn[2] = byteIn[2] >> 2; // remove checksum (two most significant bits)
+
+  byteIn[1] = byteIn[1] >> 2; //remove two least significant bits as our encoders are 12 bit, not 14 bit (2 bytes read = 16 bits - 2 LSB's and 2 MSB'2 gives 12 bit encoder data)
+  
+  response = byteIn[2];
+  response = (response << 6) + byteIn[1];
+  return response;
+}
+
+void AMTEncoder::RS485Transmit()
+{
+  digitalWrite(this->Re, LOW);
+  digitalWrite(this->De, HIGH);
+}
+
+void AMTEncoder::RS485Receive()
+{
+  digitalWrite(this->Re, HIGH);
+  digitalWrite(this->De, LOW);
+}
