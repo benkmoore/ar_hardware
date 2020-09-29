@@ -46,7 +46,7 @@ const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
-int StepperMotorPins[N_StepperMotors] = {37, 38, 10, 36};
+int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
@@ -55,7 +55,9 @@ int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
 
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 
-//##############encoder###############
+/*
+   ------------- Encoder serial communication variables ------------------
+*/
 long response = 0;
 int byteOut;
 uint8_t byteIn[3];

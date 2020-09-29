@@ -104,12 +104,8 @@ void Stepper::setSpeedRPM(long whatSpeed) {
  */
 void Stepper::setDirection(bool value) {
   if (value) { this->driver.ctrl |= (1 << 1); }
-
   else { this->driver.ctrl &= ~(1 << 1); }
-
   this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl);
-
-
 }
 
 /*
@@ -232,16 +228,8 @@ void Driver::writeReg(uint8_t address, uint16_t value) {
   // Read/write bit and register address are the first 4 bits of the first
   // byte; data is in the remaining 4 bits of the first byte combined with
   // the second byte (12 bits total).
-
   this->selectChip();
-
-
-
-
-
-
   this->transferToSPI(((address & 0b111) << 12) | (value & 0xFFF));
-
   this->deselectChip();
 }
 
@@ -261,8 +249,5 @@ void Driver::deselectChip() {
 }
 
 uint16_t Driver::transferToSPI(uint16_t value) {
-
   return SPI.transfer16(value);
-
 }
-
