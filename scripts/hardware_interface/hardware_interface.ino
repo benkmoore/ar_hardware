@@ -54,6 +54,7 @@ int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
 
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
+int flip[N_DCMotors] = {0, 0, 0, 0};
 
 /*
    ------------- Encoder serial communication variables ------------------
@@ -70,7 +71,7 @@ Stepper stepper2(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_V
 Stepper stepper3(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
-DC_Motors DC_motors(reverseFlags, DC_reverse, DC_throttlePins);
+DC_Motors DC_motors(reverseFlags, DC_reverse, DC_throttlePins, N_DCMotors, flip);
 
 int phi_des1 = 0;
 int phi_des2 = 0;
