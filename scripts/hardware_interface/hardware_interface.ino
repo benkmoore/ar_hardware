@@ -127,41 +127,41 @@ int wrapToPi(float encoder_data) {
   return encoder_pos;
 }
 
-int checkEncoder(int address) {
+// int checkEncoder(int address) {
 
-  byteOut = address;
-  RS485Transmit();
+//   byteOut = address;
+//   RS485Transmit();
 
-  Serial2.write(byteOut);           
-  delay(1);
-  Serial2.flush();
-  RS485Receive();
-  i = 0;
-  // Look for data from encoder
-  while (Serial2.available())       
-  {
-    byteIn[i] = Serial2.read();     
-    i ++;
-  }
-  byteIn[2] = byteIn[2] << 2;
-  byteIn[1] = byteIn[1] >> 2;
-  byteIn[2] = byteIn[2] >> 2;
-  response = byteIn[2];
-  response = (response << 6) + byteIn[1];
-  return response;
-}
+//   Serial2.write(byteOut);           
+//   delay(1);
+//   Serial2.flush();
+//   RS485Receive();
+//   i = 0;
+//   // Look for data from encoder
+//   while (Serial2.available())       
+//   {
+//     byteIn[i] = Serial2.read();     
+//     i ++;
+//   }
+//   byteIn[2] = byteIn[2] << 2;
+//   byteIn[1] = byteIn[1] >> 2;
+//   byteIn[2] = byteIn[2] >> 2;
+//   response = byteIn[2];
+//   response = (response << 6) + byteIn[1];
+//   return response;
+// }
 
-void RS485Transmit()
-{
-  digitalWrite(Re, LOW);
-  digitalWrite(De, HIGH);
-}
+// void RS485Transmit()
+// {
+//   digitalWrite(Re, LOW);
+//   digitalWrite(De, HIGH);
+// }
 
-void RS485Receive()
-{
-  digitalWrite(Re, HIGH);
-  digitalWrite(De, LOW);
-}
+// void RS485Receive()
+// {
+//   digitalWrite(Re, HIGH);
+//   digitalWrite(De, LOW);
+// }
 
 /*
    ------------- SETUP INTERFACE ------------------
@@ -191,8 +191,9 @@ void setup() {
   }
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
-  RS485Receive();
-  Serial2.begin(115200);        
+  // RS485Receive();
+  // Serial2.begin(115200);  
+  Encoder encoder(Re, De);   
 }
 
 /*
@@ -200,10 +201,10 @@ void setup() {
 */
 void loop() {
   hardware_interface.spinOnce();
-  int out_88 = wrapToPi(checkEncoder(88));
-  int out_84 = wrapToPi(checkEncoder(84));
-  int out_80 = wrapToPi(checkEncoder(80));
-  int out_76 = wrapToPi(checkEncoder(76));
+  int out_88 = wrapToPi(encoder.checkEncoder(88));
+  int out_84 = wrapToPi(encoder.checkEncoder(84));
+  int out_80 = wrapToPi(encoder.checkEncoder(80));
+  int out_76 = wrapToPi(encoder.checkEncoder(76));
   test.data = out_76;
   chatter_pub.publish(&test);
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps

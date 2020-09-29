@@ -130,4 +130,29 @@ class Stepper {
     StepperDecayMode decay_mode;    // decay mode on PWM signals
 };
 
+
+
+/*
+ * Encoder class for AMT21 encoder
+ */
+class Encoder {
+    public:
+        Encoder(int Re, int De);
+        void RS485Transmit();           // sets the 'data enable' pin high and 'receive enable' pin low
+        void RS485Receive();            // sets the 'receive enable' pin high and 'data enable' pin low 
+        int checkEncoder(int address);  // checks position of desired encoder
+
+
+    private:
+        long response;
+        int byteOut;
+        uint8_t byteIn[3];
+        int i;
+        bool flipflag;
+        int Re, De;                      // Data and Receive enable pins
+
+
+};
+
+
 #endif
