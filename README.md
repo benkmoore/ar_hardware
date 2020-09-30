@@ -177,9 +177,7 @@ NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](ht
 
 6. Connect the encoders to the RS485 bus A to A and B to B using schematic from [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
 
-7.
-
-8. Align the wheels to the desired 0 position with the encoders attatched. Run the encoderReset.ino program on the teensy and use the serial monitor to choose the encoders to reset.
+7. Align the wheels to the desired 0 position with the encoders attatched. Run the encoderReset.ino program on the teensy and use the serial monitor to choose the encoders to reset.
 
 NOTE: AMT21 encoder [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
 
