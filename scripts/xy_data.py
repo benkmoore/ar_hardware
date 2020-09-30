@@ -23,18 +23,23 @@ class SensorNode():
         self.xyLeft = [0,0]
         self.xyMid = [0,0]
         self.xyRight = [0,0]
+        self.theta = None
         # print self.xyLeft, self.xyMid, self.xyRight
 
-
+    def stateCallback(self, msg):
+        self.pos = np.array(msg.pos.data)
+        self.vel = np.array(msg.vel.data)
+        self.theta = msg.theta.data
+        self.omega = msg.omega.data
 
     def xyCallback(self, tof_data):
 
-        sinMid = np.sin(np.deg2rad(self.angleM))
-        cosMid = np.cos(np.deg2rad(self.angleM))
-        sinLeft = np.sin(np.deg2rad(self.angleL))
-        cosLeft = np.cos(np.deg2rad(self.angleL))
-        sinRight = np.sin(np.deg2rad(self.angleR))
-        cosRight = np.cos(np.deg2rad(self.angleR))
+        sinMid = np.sin(np.deg2rad(self.angleM + self.theta))
+        cosMid = np.cos(np.deg2rad(self.angleM + self.theta))
+        sinLeft = np.sin(np.deg2rad(self.angleL + self.theta))
+        cosLeft = np.cos(np.deg2rad(self.angleL + self.theta))
+        sinRight = np.sin(np.deg2rad(self.angleR + self.theta))
+        cosRight = np.cos(np.deg2rad(self.angleR + self.theta))
 
             #left refers to the sensor on the y axis, right is the sensor on the x 
             #when robot corner is at 0,0 left arm goes from (0,0) to (0,450) in mm
@@ -51,6 +56,8 @@ class SensorNode():
 
     def main(self):
         rospy.Subscriber('tof_data', TOF, self.xyCallback)
+        rospy.Subscriber('estimator/state', State, self.stateCallback)
+
         self.rate = float(rospy.get_param('~rate', 10.0))
         rate = rospy.Rate(self.rate)
 
