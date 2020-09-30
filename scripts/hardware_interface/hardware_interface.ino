@@ -63,7 +63,7 @@ int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 // analog pins A0 to A3 correspond to pins 14, 15 and 18, 19 on the teensy
-int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
+int DC_throttlePins[N_DCMotors] = {A0, A1,28,29};// A4, A5};
 
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 int flip[N_DCMotors] = {0, 0, 0, 0};
@@ -100,7 +100,7 @@ int phi_des4 = 0;
 
 
 std_msgs::Float64 test;
-ros::Publisher chatter_pub("chatter", &test);
+//ros::Publisher chatter_pub("chatter", &test);
 
 /*
    ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -157,10 +157,10 @@ int wrapToPi(float encoder_data) {
 // period = 0.001 //seconds
 //rate = 100 //Hz
 
-void pubCallback(const ar_commander::TOF &tof_msg){
-  tof_publisher.publish(&tof_msg);
+//void pubCallback(const ar_commander::TOF &tof_msg){
+//  tof_publisher.publish(&tof_msg);
 
-}
+//}
 
 
 /*
@@ -171,7 +171,6 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
   hardware_interface.advertise(tof_publisher);
   //hardware_interface.advertise(chatter);
@@ -223,8 +222,8 @@ void setup() {
   stepper4.setupDriver(StepperMotorPins[3]);
   pinMode(A0, OUTPUT);
   pinMode(A1, OUTPUT);
-  pinMode(A4, OUTPUT);
-  pinMode(A5, OUTPUT);
+  pinMode(28, OUTPUT);
+  pinMode(29, OUTPUT);
   // Setup DC reverse pins
   for (int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
@@ -243,7 +242,7 @@ void loop() {
   tof_msg.tof1 = tof1.readRangeContinuousMillimeters();
   tof_msg.tof2 = tof2.readRangeContinuousMillimeters();
   tof_msg.tof3 = tof3.readRangeContinuousMillimeters();
-  // tof_publisher.publish(&tof_msg);
+  tof_publisher.publish(&tof_msg);
 
 
   

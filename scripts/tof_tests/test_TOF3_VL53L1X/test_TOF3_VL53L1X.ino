@@ -15,9 +15,9 @@ uint8_t tofAddress3 = 0x37;
 void setup()
 {
   // Note Teensy 4.0 and Teensy 4.1 pin numbers are different
-  int out1 = 35;
-  int out2 = 34;
-  int out3 = 33;
+  int out1 = 39;
+  int out2 = 40;
+  int out3 = 41;
   pinMode(out1, OUTPUT);
   pinMode(out2, OUTPUT);
   pinMode(out3, OUTPUT);
