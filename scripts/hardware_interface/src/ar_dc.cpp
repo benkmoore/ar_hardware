@@ -19,7 +19,6 @@ void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
         else{
             this->flip[index] = 1;
             this->flipFlag = 1;    	    
-            analogWrite(aPin, PWMspeed);
         }
     }
 
@@ -30,7 +29,6 @@ void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
         else{
             this->flip[index] = 1;	
             this->flipFlag = 1;    
-            analogWrite(aPin, PWMspeed*-1);
         }
     }
     else if(PWMspeed == 0 ){             
