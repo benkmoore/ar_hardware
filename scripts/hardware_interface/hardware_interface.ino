@@ -50,8 +50,8 @@ int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-// analog pins A0 to A3 correspond to pins 14, 15 and 18, 19 on the teensy
-int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
+// analog pins A0 to A3 correspond to pins 14, 15 and 28, 29 on the teensy
+int DC_throttlePins[N_DCMotors] = {A0, A1, 28, 29};
 
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 int flip[N_DCMotors] = {0, 0, 0, 0};
@@ -152,8 +152,8 @@ void setup() {
   stepper4.setupDriver(StepperMotorPins[3]);
   pinMode(A0, OUTPUT);
   pinMode(A1, OUTPUT);
-  pinMode(A4, OUTPUT);
-  pinMode(A5, OUTPUT);
+  pinMode(28, OUTPUT);
+  pinMode(29, OUTPUT);
   // Setup DC reverse pins
   for (int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
