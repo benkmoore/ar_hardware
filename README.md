@@ -1,5 +1,22 @@
 # ar_hardware
 
+## Jetson setup & configure
+
+### Hardware required
+1. Jeston nano
+2. Micro SD card
+3. USB wifi dongle
+4. HDMI cable
+5. Mouse
+6. Keyboard
+7. Jetson power cord
+
+
+## Next steps
+https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#intro
+
+------------------------------------------------------------------------------
+
 ## Teensy Notes
 
 ### Setup
