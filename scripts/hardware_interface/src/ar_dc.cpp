@@ -45,7 +45,7 @@ void DC_Motors::flipDirection(){
       }
   }
   this->flipFlag = 0;    
-  delay(500);
+  delay(300);
   for(int i = 0; i < this->N_DCMotors; i++) {   
       digitalWrite(this->reverse[i],HIGH);
   }  
