@@ -85,16 +85,17 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
+    int pwmVal = 0;
     if (msg.omega_arr.data[i] > 0){
-      int pwm =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     }
     else if (msg.omega_arr.data[i] < 0){
-      int pwm =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
+      pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
     } 
     else{
-      int pwm = 0;
+      pwmVal = 0;
     }
-    DC_motors.PowerDC(DC_throttlePins[i], pwm, i);
+    DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
   }
 
   if (DC_motors.flipFlag == 1){
