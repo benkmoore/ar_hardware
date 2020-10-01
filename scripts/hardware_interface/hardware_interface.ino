@@ -15,9 +15,9 @@
 #define De    4
 
 #define MAX_PWM 255                                   // pwm
-#define MIN_PWM -255
-#define MAX_OMEGA 255
-#define MIN_OMEGA -255
+#define MIN_PWM 95
+#define MAX_VEL 3                                     // m/s
+#define MIN_VEL 0
 /*
    ------------- FILE DEFINITION & SETUP ------------------
 */
@@ -70,6 +70,7 @@ int phi_des1 = 0;
 int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
+int pwmVal;
 
 
 std_msgs::Float64 test;
@@ -85,12 +86,20 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
-    //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-    DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
+    if (msg.omega_arr.data[i] > 0){
+      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+    }
+    else if (msg.omega_arr.data[i] < 0){
+      pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
+    } 
+    else{
+      pwmVal = 0;
+    }
+    DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
   }
 
   if (DC_motors.flipFlag == 1){
-      DC_motors.flipDirection();
+    DC_motors.flipDirection();
   }
 
 
