@@ -95,13 +95,14 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     else{
       pwmVal = 0;
     }
+
     DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
   }
 
   if (DC_motors.flipFlag == 1){
     DC_motors.flipDirection();
   }
-
+  
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -161,6 +162,8 @@ void setup() {
   }
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);      
+//  Serial.begin(57600);
+
 }
 
 /*
@@ -176,5 +179,5 @@ void loop() {
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
 }
