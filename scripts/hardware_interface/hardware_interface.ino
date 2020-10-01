@@ -50,7 +50,7 @@ int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-// analog pins A0 to A3 correspond to pins 14, 15 and 18, 19 on the teensy
+// analog pins A0 to A3 correspond to pins 14, 15 and 28, 29 on the teensy
 int DC_throttlePins[N_DCMotors] = {A0, A1, 28, 29};
 
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
@@ -70,7 +70,7 @@ int phi_des1 = 0;
 int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
-    int pwmVal = 0;
+int pwmVal;
 
 
 std_msgs::Float64 test;
@@ -95,7 +95,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     else{
       pwmVal = 0;
     }
-//    Serial.println(pwmVal);
+
     DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
   }
 
@@ -179,26 +179,5 @@ void loop() {
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
-
-//
-//  for (int i = 0; i < N_DCMotors; i++) {
-//    float testVal = 0.1;
-//    if (testVal > 0){
-//      pwmVal =  map(testVal, MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
-//    }
-//    else if (testVal < 0){
-//      pwmVal =  map(testVal, -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
-//    } 
-//    else{
-//      pwmVal = 0;
-//    }
-////    Serial.println(pwmVal);
-//    DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
-//  }
-//
-//  if (DC_motors.flipFlag == 1){
-//    DC_motors.flipDirection();
-//  }
-  
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
 }
