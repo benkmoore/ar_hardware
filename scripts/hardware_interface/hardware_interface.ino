@@ -70,6 +70,7 @@ int phi_des1 = 0;
 int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
+    int pwmVal = 0;
 
 
 std_msgs::Float64 test;
@@ -86,21 +87,22 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
     if (msg.omega_arr.data[i] > 0){
-      int pwm =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     }
     else if (msg.omega_arr.data[i] < 0){
-      int pwm =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
+      pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
     } 
     else{
-      int pwm = 0;
+      pwmVal = 0;
     }
-    DC_motors.PowerDC(DC_throttlePins[i], pwm, i);
+//    Serial.println(pwmVal);
+    DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
   }
 
   if (DC_motors.flipFlag == 1){
     DC_motors.flipDirection();
   }
-
+  
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -160,6 +162,8 @@ void setup() {
   }
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);      
+//  Serial.begin(57600);
+
 }
 
 /*
@@ -176,4 +180,25 @@ void loop() {
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
   stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+
+//
+//  for (int i = 0; i < N_DCMotors; i++) {
+//    float testVal = 0.1;
+//    if (testVal > 0){
+//      pwmVal =  map(testVal, MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+//    }
+//    else if (testVal < 0){
+//      pwmVal =  map(testVal, -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
+//    } 
+//    else{
+//      pwmVal = 0;
+//    }
+////    Serial.println(pwmVal);
+//    DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
+//  }
+//
+//  if (DC_motors.flipFlag == 1){
+//    DC_motors.flipDirection();
+//  }
+  
 }
