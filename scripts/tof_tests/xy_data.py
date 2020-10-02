@@ -31,6 +31,10 @@ class SensorNode():
         self.vel = np.array(msg.vel.data)
         self.theta = msg.theta.data
         self.omega = msg.omega.data
+        self.posLeft = [0,400]
+        self.posMid = self.pos
+        self.posRight = [400,0]
+
 
     def xyCallback(self, tof_data):
 
