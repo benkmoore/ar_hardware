@@ -18,8 +18,8 @@ class SensorNode():
         self.posMid = [0,0]
         self.posRight = [400,0]
         self.angleL = 0
-        self.angleM = 45
-        self.angleR = 90
+        self.angleM = np.pi/4
+        self.angleR = np.pi/2
         self.xyLeft = [0,0]
         self.xyMid = [0,0]
         self.xyRight = [0,0]
@@ -32,18 +32,18 @@ class SensorNode():
         self.theta = msg.theta.data
         self.omega = msg.omega.data
         self.posLeft = [0,400]
-        self.posMid = self.pos
+        self.posMid = self.pos*1000
         self.posRight = [400,0]
 
 
     def xyCallback(self, tof_data):
 
-        sinMid = np.sin(np.deg2rad(self.angleM + self.theta))
-        cosMid = np.cos(np.deg2rad(self.angleM + self.theta))
-        sinLeft = np.sin(np.deg2rad(self.angleL + self.theta))
-        cosLeft = np.cos(np.deg2rad(self.angleL + self.theta))
-        sinRight = np.sin(np.deg2rad(self.angleR + self.theta))
-        cosRight = np.cos(np.deg2rad(self.angleR + self.theta))
+        sinMid = np.sin((self.angleM + self.theta))
+        cosMid = np.cos((self.angleM + self.theta))
+        sinLeft = np.sin((self.angleL + self.theta))
+        cosLeft = np.cos((self.angleL + self.theta))
+        sinRight = np.sin((self.angleR + self.theta))
+        cosRight = np.cos((self.angleR + self.theta))
 
             #left refers to the sensor on the y axis, right is the sensor on the x 
             #when robot corner is at 0,0 left arm goes from (0,0) to (0,450) in mm
@@ -51,7 +51,6 @@ class SensorNode():
         left_tof = tof_data.tof1
         mid_tof = tof_data.tof2
         right_tof = tof_data.tof3
-
 
         self.xyLeft = [round(left_tof*cosLeft + self.posLeft[0],2), round(left_tof*sinLeft + self.posLeft[1],2)]
         self.xyMid = [round(mid_tof*sinMid + self.posMid[0],2), round(mid_tof*cosMid + self.posMid[1],2)]
@@ -62,20 +61,20 @@ class SensorNode():
         rospy.Subscriber('tof_data', TOF, self.xyCallback)
         rospy.Subscriber('estimator/state', State, self.stateCallback)
 
-        self.rate = float(rospy.get_param('~rate', 10.0))
+        self.rate = float(rospy.get_param('~rate', 100.0))
         rate = rospy.Rate(self.rate)
 
         while not rospy.is_shutdown(): #and self.xyLeft != None:
-                plt.scatter(self.xyLeft[0],self.xyLeft[1])
+                #plt.scatter(self.xyLeft[0],self.xyLeft[1])
                 plt.scatter(self.xyMid[0],self.xyMid[1])        
-                plt.scatter(self.xyRight[0],self.xyRight[1])
+                #plt.scatter(self.xyRight[0],self.xyRight[1])
 
                 # i+=1;
                 plt.show()
                 plt.pause(0.0001)
                 rate.sleep()
 
-                print self.xyLeft, self.xyMid, self.xyRight
+#                print self.posMid, self.xyMid, self.theta
         rospy.spin()
 
 
@@ -85,7 +84,7 @@ if __name__ == '__main__':
     try:
         plt.ion()
         fig=plt.figure()
-        plt.axis([0,400,0,400])
+        plt.axis([-8000,8000,-8000,8000])
 
         sensors = SensorNode()
         sensors.main()
