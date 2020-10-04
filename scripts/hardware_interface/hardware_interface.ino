@@ -1,6 +1,6 @@
 #define USE_USBCON
 #include "ros.h"
-#include "ar_commander/ControllerCmd.h"
+#include "ar_commander/MotorCmd.h"
 #include "Encoder.h"
 #include "SPI.h"
 #include "src/ar_stepper.h"
@@ -84,14 +84,14 @@ ros::Publisher chatter_pub("chatter", &test);
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
 // define ROS node name, rate, subscriber to /controller_cmds
-void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+void controllerCmdCallback(const ar_commander::MotorCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
     if (msg.omega_arr.data[i] > 0){
       pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     }
     else if (msg.omega_arr.data[i] < 0){
       pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
-    } 
+    }
     else{
       pwmVal = 0;
     }
@@ -102,7 +102,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   if (DC_motors.flipFlag == 1){
     DC_motors.flipDirection();
   }
-  
+
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -161,7 +161,7 @@ void setup() {
     digitalWrite(DC_reverse[i], HIGH);
   }
   pinMode(Re, OUTPUT);
-  pinMode(De, OUTPUT);      
+  pinMode(De, OUTPUT);
 //  Serial.begin(57600);
 
 }
@@ -179,5 +179,5 @@ void loop() {
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
 }
