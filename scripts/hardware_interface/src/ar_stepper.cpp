@@ -44,7 +44,7 @@ void Stepper::setupDriver(int cs_pin) {
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
 
-  int steps = this->calculateSteps(enc_pos, phi_des);
+  int steps = this->calculateSteps(enc_pos, -1*phi_des);
   this->controlSpeed(steps);
 
   if (steps > 0) {

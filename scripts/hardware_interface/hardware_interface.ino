@@ -31,11 +31,11 @@
 
 // Stepper motor constants
 #define MAX_MILLIAMPS 3920                            // mA
-#define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
+#define MICRO_STEP_SIZE 256                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 80                            // step/s
 #define MIN_STEPPER_VEL 35                            // step/s
-#define STEPS_THRESHOLD 25                            // step
+#define STEPS_THRESHOLD 0                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -71,7 +71,7 @@ int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
 int pwmVal;
-
+int callbackTime;
 
 std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
@@ -87,11 +87,13 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
     if (msg.omega_arr.data[i] > 0){
-      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+     // pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+       pwmVal = 90;
     }
     else if (msg.omega_arr.data[i] < 0){
-      pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
-    } 
+      //pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
+      pwmVal = -90;    
+} 
     else{
       pwmVal = 0;
     }
@@ -110,6 +112,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_des3 = (int) ( (-msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
   phi_des4 = (int) ( (-msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
 
+  callbackTime = millis();
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
@@ -179,5 +182,9 @@ void loop() {
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+  if (millis()-callbackTime>1000){
+    for (int i = 0; i < N_DCMotors; i++){ 
+      DC_motors.PowerDC(DC_throttlePins[i], 0, i);
+}}
 }
