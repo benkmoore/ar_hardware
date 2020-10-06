@@ -38,7 +38,7 @@ void loop()
 {
 //    if (Serial.available())
 //    {
-  byteOut = 76;//Serial.read(); //84;        //Locally store the transmitted string
+  byteOut = 88;//Serial.read(); //84;        //Locally store the transmitted string
 
   RS485Transmit();
   Serial2.write(byteOut);      // Send byte to encoder
