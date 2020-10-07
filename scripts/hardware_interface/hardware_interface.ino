@@ -31,16 +31,16 @@
 
 // Stepper motor constants
 #define MAX_MILLIAMPS 3920                            // mA
-#define MICRO_STEP_SIZE 256                             // 1 step = 1/MICRO_STEP_SIZE
+#define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
-#define MAX_STEPPER_VEL 80                            // step/s
-#define MIN_STEPPER_VEL 35                            // step/s
+#define MAX_STEPPER_VEL 100                            // step/s
+#define MIN_STEPPER_VEL 0                            // step/s
 #define STEPS_THRESHOLD 0                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
-
+#define DEADBAND 2
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
@@ -107,10 +107,10 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
-  phi_des2 = (int) ( (-msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
-  phi_des3 = (int) ( (-msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
-  phi_des4 = (int) ( (-msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
+  phi_des1 = (int) ( (msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
+  phi_des2 = (int) ( (msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
+  phi_des3 = (int) ( (msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
+  phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
 
   callbackTime = millis();
 }
@@ -173,18 +173,29 @@ void setup() {
    ------------- MAIN ------------------
 */
 void loop() {
-  hardware_interface.spinOnce();
+ // hardware_interface.spinOnce();
   // int out_76 = wrapToPi(encoder.checkEncoder(76));
   // test.data = out_76;
   // chatter_pub.publish(&test);
-
-  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
-  stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
-  stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
+/*if((abs(wrapToPi(encoder.checkEncoder(76)))-phi_des1)>DEADBAND){
+stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+}
+if((abs(wrapToPi(encoder.checkEncoder(80)))-phi_des2)>DEADBAND){
+ stepper1.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des1);
+}
+if((abs(wrapToPi(encoder.checkEncoder(84)))-phi_des3)>DEADBAND){
+ stepper1.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des1);
+}
+if((abs(wrapToPi(encoder.checkEncoder(88))))-phi_des4>DEADBAND){
+ stepper1.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des1);
+}*/
+ // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
+  //stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+  //stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
+  //stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
   stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
-  if (millis()-callbackTime>1000){
+ /* if (millis()-callbackTime>1000){
     for (int i = 0; i < N_DCMotors; i++){ 
       DC_motors.PowerDC(DC_throttlePins[i], 0, i);
-}}
+}}*/
 }

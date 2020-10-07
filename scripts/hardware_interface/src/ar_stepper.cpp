@@ -44,7 +44,7 @@ void Stepper::setupDriver(int cs_pin) {
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
 
-  int steps = this->calculateSteps(enc_pos, -1*phi_des);
+  int steps = this->calculateSteps(enc_pos, phi_des);
   this->controlSpeed(steps);
 
   if (steps > 0) {
@@ -93,10 +93,10 @@ void Stepper::controlSpeed(int steps) {
 }
 
 /*
- * Sets the speed in revs per minute
+ * Sets the speed in steps per sec
  */
 void Stepper::setSpeedRPM(long whatSpeed) {
-  this->step_delay = 60L * 1000L * 1000L / this->stepsIn2pi / whatSpeed;
+  this->step_delay = 1000L * 1000L /  whatSpeed;
 }
 
 /*
@@ -270,8 +270,8 @@ int AMTEncoder::checkEncoder(int address) {
   this->RS485Transmit();
 
   Serial2.write(byteOut);           
-  delay(1);
-  Serial2.flush();
+  delayMicroseconds(900);
+  //Serial2.flush();
   this->RS485Receive();
   i = 0;
   // Look for data from encoder
@@ -282,7 +282,6 @@ int AMTEncoder::checkEncoder(int address) {
   }
   byteIn[2] = byteIn[2] << 2; // remove checksum (two most significant bits)
   byteIn[2] = byteIn[2] >> 2; // remove checksum (two most significant bits)
-
   byteIn[1] = byteIn[1] >> 2; //remove two least significant bits as our encoders are 12 bit, not 14 bit (2 bytes read = 16 bits - 2 LSB's and 2 MSB'2 gives 12 bit encoder data)
   
   response = byteIn[2];
