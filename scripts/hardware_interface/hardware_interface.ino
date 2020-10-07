@@ -33,9 +33,9 @@
 #define MAX_MILLIAMPS 3920                            // mA
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
-#define MAX_STEPPER_VEL 100                            // step/s
-#define MIN_STEPPER_VEL 0                            // step/s
-#define STEPS_THRESHOLD 0                            // step
+#define MAX_STEPPER_VEL 200                            // step/s
+#define MIN_STEPPER_VEL 100                            // step/s
+#define STEPS_THRESHOLD 50                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -190,12 +190,12 @@ if((abs(wrapToPi(encoder.checkEncoder(88))))-phi_des4>DEADBAND){
  stepper1.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des1);
 }*/
  // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  //stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
-  //stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
-  //stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
+  stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+  stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
+  stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
   stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
- /* if (millis()-callbackTime>1000){
+  if (millis()-callbackTime>1000){
     for (int i = 0; i < N_DCMotors; i++){ 
       DC_motors.PowerDC(DC_throttlePins[i], 0, i);
-}}*/
+}}
 }

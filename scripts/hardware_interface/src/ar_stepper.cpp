@@ -259,8 +259,9 @@ AMTEncoder::AMTEncoder(int Re, int De){
   this->response = 0;
   this->flipflag = false;
   this->Re = Re;
-  this-> De = De;
+  this->De = De;
   Serial2.begin(115200);        
+ // Serial.begin(115200);
 }
 
 
@@ -268,16 +269,23 @@ int AMTEncoder::checkEncoder(int address) {
 
   byteOut = address;
   this->RS485Transmit();
-
+  //int available = Serial2.availableForWrite();
+  //Serial.print("start");
+  //Serial.println(available);
   Serial2.write(byteOut);           
-  delayMicroseconds(900);
-  //Serial2.flush();
+   //available = Serial2.availableForWrite();
+   //Serial.println(available);
+   delayMicroseconds(400);
+  Serial2.flush();
+  //available = Serial2.availableForWrite();
+//Serial.println(available);
   this->RS485Receive();
   i = 0;
   // Look for data from encoder
   while (Serial2.available())       
   {
-    byteIn[i] = Serial2.read();     
+    byteIn[i] = Serial2.read();
+//Serial.println(byteIn[i],BIN);    
     i ++;
   }
   byteIn[2] = byteIn[2] << 2; // remove checksum (two most significant bits)
@@ -286,6 +294,7 @@ int AMTEncoder::checkEncoder(int address) {
   
   response = byteIn[2];
   response = (response << 6) + byteIn[1];
+ // Serial.println(response);
   return response;
 }
 
