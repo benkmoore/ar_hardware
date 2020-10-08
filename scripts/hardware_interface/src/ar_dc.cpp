@@ -1,10 +1,5 @@
 #include "Arduino.h"
 #include "ar_dc.h"
-#include <Adafruit_MCP4728.h>
-#include <Wire.h>
-
-Adafruit_MCP4728 mcp;
-mcp.begin;
 
 
 DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlePins, int N_DCMotors, int* flip){
@@ -15,30 +10,30 @@ DC_Motors::DC_Motors(int* reverseFlags, int* DC_reverse, int* DC_throttlePins, i
   this->flip = flip;
 }
 
-// void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
-//     if(PWMspeed > 0 ){             
-//         if(this->reverseFlags[index] == 0){
-//             analogWrite(aPin, PWMspeed);
-//         }
-//         else{
-//             this->flip[index] = 1;
-//             this->flipFlag = 1;    	    
-//         }
-//     }
+ void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
+     if(PWMspeed > 0 ){             
+         if(this->reverseFlags[index] == 0){
+             analogWrite(aPin, PWMspeed);
+         }
+         else{
+             this->flip[index] = 1;
+             this->flipFlag = 1;    	    
+         }
+     }
 
-//     else if(PWMspeed < 0) {
-//         if(this->reverseFlags[index] == 1){
-//             analogWrite(aPin, PWMspeed*-1);
-//         }
-//         else{
-//             this->flip[index] = 1;	
-//             this->flipFlag = 1;    
-//         }
-//     }
-//     else if(PWMspeed == 0 ){             
-//             analogWrite(aPin, PWMspeed);
-//     }
-// }
+     else if(PWMspeed < 0) {
+         if(this->reverseFlags[index] == 1){
+             analogWrite(aPin, PWMspeed*-1);
+         }
+         else{
+             this->flip[index] = 1;	
+             this->flipFlag = 1;    
+         }
+     }
+     else if(PWMspeed == 0 ){             
+             analogWrite(aPin, PWMspeed);
+     }
+ }
 
 void DC_Motors::flipDirection(){
   for(int i = 0; i < this->N_DCMotors; i++) {   
@@ -57,7 +52,7 @@ void DC_Motors::flipDirection(){
 
 
 
-void DC_Motors::PowerDC(char* channel, int PWMspeed, int index) {
+/*void DC_Motors::PowerDC(char* channel, int PWMspeed, int index) {
     if(PWMspeed > 0 ){             
         if(this->reverseFlags[index] == 0){
             // analogWrite(aPin, PWMspeed);
@@ -85,4 +80,4 @@ void DC_Motors::PowerDC(char* channel, int PWMspeed, int index) {
             mcp.setChannelValue(channel[index], PWMspeed);
 
     }
-}
+}*/

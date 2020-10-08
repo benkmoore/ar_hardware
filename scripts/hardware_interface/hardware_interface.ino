@@ -8,7 +8,7 @@
 # include "Wire.h"
 #include <Adafruit_MCP4728.h>
 //#include "iostream"
-//#include <string>
+#include <string>
 //using namespace std;
 
 #include <std_msgs/Float64.h>
@@ -57,7 +57,7 @@ int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 // analog pins A0 to A3 correspond to pins 14, 15 and 28, 29 on the teensy
-int DC_throttlePins[N_DCMotors] = {A0, A1, 28, 29};
+//int DC_throttlePins[N_DCMotors] = {A0, A1, 28, 29};
 
 int DC_reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 int flip[N_DCMotors] = {0, 0, 0, 0};
@@ -73,6 +73,7 @@ Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_V
 //DC_Motors DC_motors(DC_reverseFlags, DC_reverse, DC_throttlePins, N_DCMotors, flip);
 AMTEncoder encoder(Re, De);
 Adafruit_MCP4728 mcp;
+
 int phi_des1 = 0;
 int phi_des2 = 0;
 int phi_des3 = 0;
@@ -81,7 +82,7 @@ int pwmVal;
 int callbackTime;
 
 std_msgs::Float64 test;
-ros::Publisher chatter_pub("chatter", &test);
+//ros::Publisher chatter_pub("chatter", &test);
 
 /*
    ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -94,12 +95,12 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
     if (msg.omega_arr.data[i] > 0) {
-      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
-
+      //      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      pwmVal = 2000;
     }
     else if (msg.omega_arr.data[i] < 0) {
-      pwmVal =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
-
+      //      pwmVal =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
+      pwmVal = 2000;
     }
     else {
       pwmVal = 0;
@@ -108,7 +109,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     if (pwmVal > 0 ) {
       if (DC_reverseFlags[i] == 0) {
         // analogWrite(aPin, pwmVal);
-        mcp.setChannelValue(MCP4728_CHANNEL_A, pwmVal);
+                mcp.setChannelValue(MCP4728_CHANNEL_D, pwmVal);
       }
       else {
         flip[i] = 1;
@@ -119,7 +120,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     else if (pwmVal < 0) {
       if (DC_reverseFlags[i] == 1) {
         // analogWrite(aPin, pwmVal*-1);
-        mcp.setChannelValue(MCP4728_CHANNEL_A, pwmVal);
+                mcp.setChannelValue(MCP4728_CHANNEL_D, pwmVal);
 
       }
       else {
@@ -129,7 +130,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     }
     else if (pwmVal == 0 ) {
       // analogWrite(aPin, pwmVal);
-      mcp.setChannelValue(MCP4728_CHANNEL_A, pwmVal);
+            mcp.setChannelValue(MCP4728_CHANNEL_D, pwmVal);
 
     }
 
@@ -190,9 +191,9 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  hardware_interface.advertise(chatter_pub);
+  //  hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
-  delay (5000);
+  //  delay (5000);
   mcp.begin();
 
   // Setup stepper motors
@@ -201,15 +202,15 @@ void setup() {
   stepper2.setupDriver(StepperMotorPins[1]);
   stepper3.setupDriver(StepperMotorPins[2]);
   stepper4.setupDriver(StepperMotorPins[3]);
-  pinMode(A0, OUTPUT);
-  pinMode(A1, OUTPUT);
-  pinMode(28, OUTPUT);
-  pinMode(29, OUTPUT);
+  //  pinMode(A0, OUTPUT);
+  //  pinMode(A1, OUTPUT);
+  //  pinMode(28, OUTPUT);
+  //  pinMode(29, OUTPUT);
   // Setup DC DC_reverse pins
-  for (int i = 0; i < N_DCMotors; i++) {
-    pinMode(DC_reverse[i], OUTPUT);
-    digitalWrite(DC_reverse[i], HIGH);
-  }
+    for (int i = 0; i < N_DCMotors; i++) {
+      pinMode(DC_reverse[i], OUTPUT);
+      digitalWrite(DC_reverse[i], HIGH);
+    }
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
   //  Serial.begin(57600);
@@ -220,7 +221,7 @@ void setup() {
    ------------- MAIN ------------------
 */
 void loop() {
-  // hardware_interface.spinOnce();
+   hardware_interface.spinOnce();
   // int out_76 = wrapToPi(encoder.checkEncoder(76));
   // test.data = out_76;
   // chatter_pub.publish(&test);
@@ -245,5 +246,5 @@ void loop() {
   //    for (int i = 0; i < N_DCMotors; i++){
   //      DC_motors.PowerDC(channel[i], 0, i);
   //}
-//}
+  //}
 }
