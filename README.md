@@ -12,8 +12,10 @@
 7. Jetson power cord
 
 
-## Next steps
+### Flash the SD card & boot
 https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#intro
+
+### Install requirements & repos
 
 ------------------------------------------------------------------------------
 
