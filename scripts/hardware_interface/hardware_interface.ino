@@ -14,8 +14,8 @@
 #define Re    3
 #define De    4
 
-#define MAX_PWM 255                                   // pwm
-#define MIN_PWM 95
+#define MAX_PWM 2000                                   // pwm
+#define MIN_PWM 1320
 #define MAX_VEL 3                                     // m/s
 #define MIN_VEL 0
 /*
@@ -47,6 +47,8 @@ const int N_StepperMotors = 4;
 
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
+
+char str[4] = {'MCP4728_CHANNEL_A','MCP4728_CHANNEL_B','MCP4728_CHANNEL_C', 'MCP4728_CHANNEL_D','\0'};
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
