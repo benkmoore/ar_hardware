@@ -48,7 +48,7 @@ const int N_StepperMotors = 4;
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 
-char str[4] = {'MCP4728_CHANNEL_A','MCP4728_CHANNEL_B','MCP4728_CHANNEL_C', 'MCP4728_CHANNEL_D','\0'};
+char channel[4] = {'MCP4728_CHANNEL_A','MCP4728_CHANNEL_B','MCP4728_CHANNEL_C', 'MCP4728_CHANNEL_D','\0'};
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
