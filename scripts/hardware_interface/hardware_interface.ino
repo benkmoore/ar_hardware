@@ -110,7 +110,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       }
     }
     else{
-      pwmVal = 0
+      pwmVal[i] = 0;
     }
   }
 
@@ -221,10 +221,11 @@ void loop() {
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
-  //  if (millis()-callbackTime>1000){
-  //    for (int i = 0; i < N_DCMotors; i++){
-  //      DC_motors.PowerDC(channel[i], 0, i);
-  //}
-  //}
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
+  if (millis()-callbackTime>1000){
+    for (int i = 0; i < N_DCMotors; i++){
+      mcp.fastWrite(0, 0, 0, 0);
+ 
+    }
+  }
 }
