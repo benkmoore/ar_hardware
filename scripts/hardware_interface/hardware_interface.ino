@@ -78,7 +78,7 @@ int phi_des1 = 0;
 int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
-int pwmVal;
+int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 
 std_msgs::Float64 test;
@@ -94,46 +94,24 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
-    if (msg.omega_arr.data[i] > 0) {
-      //      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
-      pwmVal = 2000;
+    if (msg.omega_arr.data[i] > 0 ) {
+      pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      if (DC_reverseFlags[i] != 0) {
+        flip[i] = 1;
+        flipFlag = 1;
+      }
     }
+
     else if (msg.omega_arr.data[i] < 0) {
-      //      pwmVal =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
-      pwmVal = 2000;
-    }
-    else {
-      pwmVal = 0;
-    }
-
-    if (pwmVal > 0 ) {
-      if (DC_reverseFlags[i] == 0) {
-        // analogWrite(aPin, pwmVal);
-                mcp.setChannelValue(MCP4728_CHANNEL_D, pwmVal);
-      }
-      else {
+       pwmVal[i] =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
+      if (DC_reverseFlags[i] != 1) {
         flip[i] = 1;
         flipFlag = 1;
       }
     }
-
-    else if (pwmVal < 0) {
-      if (DC_reverseFlags[i] == 1) {
-        // analogWrite(aPin, pwmVal*-1);
-                mcp.setChannelValue(MCP4728_CHANNEL_D, pwmVal);
-
-      }
-      else {
-        flip[i] = 1;
-        flipFlag = 1;
-      }
+    else{
+      pwmVal = 0
     }
-    else if (pwmVal == 0 ) {
-      // analogWrite(aPin, pwmVal);
-            mcp.setChannelValue(MCP4728_CHANNEL_D, pwmVal);
-
-    }
-
   }
 
   if (flipFlag == 1) {
@@ -150,6 +128,8 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       digitalWrite(DC_reverse[i], HIGH);
     }
   }
+
+  mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
 
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
