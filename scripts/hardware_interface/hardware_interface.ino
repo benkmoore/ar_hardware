@@ -20,7 +20,7 @@
 #define De    4
 
 #define MAX_PWM 2000                                   // pwm
-#define MIN_PWM 1320
+#define MIN_PWM 1350
 #define MAX_VEL 3                                     // m/s
 #define MIN_VEL 0
 /*
@@ -39,8 +39,8 @@
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                            // step/s
-#define MIN_STEPPER_VEL 100                            // step/s
-#define STEPS_THRESHOLD 50                            // step
+#define MIN_STEPPER_VEL 0                            // step/s
+#define STEPS_THRESHOLD 30                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -113,6 +113,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       pwmVal[i] = 0;
     }
   }
+//  mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
 
   if (flipFlag == 1) {
     for (int i = 0; i < N_DCMotors; i++) {
