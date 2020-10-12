@@ -11,7 +11,7 @@ localName="$1"
 masterIP="$2"
 masterName="$3"
 
-if [ -z "$1" ]; then echo Must specify a local robot ID. Note: check robot ID matches namespace in launch file.; exit 1; fi
+if [ -z "$1" ]; then echo Must specify a local robot name. Note: check robot name must match namespace in launch file.; exit 1; fi
 if [ -z "$2" ]; then echo Must specify a master IP address.; exit 1; fi
 if [ -z "$3" ]; then echo Must specify a master name.; exit 1; fi
 
