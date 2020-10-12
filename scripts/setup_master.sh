@@ -2,8 +2,12 @@
 
 # Setups slave robot to attach to master.
 # Follows steps at: http://www.iri.upc.edu/files/scidoc/1607-Multi-master-ROS-systems.pdf
+#
+# example usage:
+# sudo ./setup_master.sh robot1 192.168.1.19 bens_machine
 
-localName ="$1"
+
+localName="$1"
 masterIP="$2"
 masterName="$3"
 
@@ -14,9 +18,9 @@ if [ -z "$3" ]; then echo Must specify a master name.; exit 1; fi
 localIP=$(hostname -I | awk '{print $1}')
 
 # export ROS config if not already set
-grep -qF -- "ROS_MASTER_URI=http://$masterIP:11311" "~/.bashrc" || export ROS_MASTER_URI=http://$masterIP:11311
-grep -qF -- "ROS_IP=$localIP" "~/.bashrc" || export ROS_IP=localIP
-grep -qF -- "ROS_NAMESPACE=$localName" "~/.bashrc" || export ROS_NAMESPACE=localname
+sudo grep -qF -- "ROS_MASTER_URI=http://$masterIP:11311" ~/.bashrc || export ROS_MASTER_URI=http://$masterIP:11311
+sudo grep -qF -- "ROS_IP=$localIP" ~/.bashrc || export ROS_IP=localIP
+sudo grep -qF -- "ROS_NAMESPACE=$localName" ~/.bashrc || export ROS_NAMESPACE=localname
 source ~/.bashrc
 source ~/catkin_ws/devel/setup.bash
 
@@ -27,11 +31,11 @@ echo Local IP address:  "$localIP"
 echo Local namespace:  "$localName"
 
 # setup hosts on network if not already set
-host_file='/etc/hosts'
-grep -qF -- "$localIP  $localName" "$host_file" || echo "$localIP  $localName" >> "$host_file"
-grep -qF -- "$masterIP $masterName" "$host_file" || echo "$masterIP $masterName" >> "$host_file"
+host_file="/etc/hosts"
+sudo grep -qF -- "$localIP  $localName" "$host_file" || echo "$localIP  $localName" >> "$host_file"
+sudo grep -qF -- "$masterIP $masterName" "$host_file" || echo "$masterIP $masterName" >> "$host_file"
 
 # enable multicast networking if not already set
-multicast = "net.ipv4.icmp_echo_ignore_broadcasts=0"
-grep -qF -- "$multicast" "/etc/sysctl.conf" || echo "$multicast" >> "/etc/sysctl.conf"
+multicast="net.ipv4.icmp_echo_ignore_broadcasts=0"
+sudo grep -qF -- "$multicast" /etc/sysctl.conf || echo "$multicast" >> /etc/sysctl.conf
 sudo service procps restart
