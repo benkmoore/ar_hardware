@@ -18,9 +18,9 @@ if [ -z "$3" ]; then echo Must specify a master name.; exit 1; fi
 localIP=$(hostname -I | awk '{print $1}')
 
 # export ROS config if not already set
-sudo grep -qF -- "ROS_MASTER_URI=http://$masterIP:11311" ~/.bashrc || export ROS_MASTER_URI=http://$masterIP:11311
-sudo grep -qF -- "ROS_IP=$localIP" ~/.bashrc || export ROS_IP=localIP
-sudo grep -qF -- "ROS_NAMESPACE=$localName" ~/.bashrc || export ROS_NAMESPACE=localname
+sudo grep -qF -- "export ROS_MASTER_URI=http://$masterIP:11311" ~/.bashrc || echo "export ROS_MASTER_URI=http://$masterIP:11311" >> ~/.bashrc
+sudo grep -qF -- "export ROS_IP=$localIP" ~/.bashrc || echo "export ROS_IP=$localIP" >> ~/.bashrc
+sudo grep -qF -- "export ROS_NAMESPACE=$localName" ~/.bashrc || echo "export ROS_NAMESPACE=$localName" >> ~/.bashrc
 source ~/.bashrc
 source ~/catkin_ws/devel/setup.bash
 
@@ -32,7 +32,7 @@ echo Local namespace:  "$localName"
 
 # setup hosts on network if not already set
 host_file="/etc/hosts"
-sudo grep -qF -- "$localIP  $localName" "$host_file" || echo "$localIP  $localName" >> "$host_file"
+sudo grep -qF -- "$localIP $localName" "$host_file"  || echo "$localIP $localName" >> "$host_file"
 sudo grep -qF -- "$masterIP $masterName" "$host_file" || echo "$masterIP $masterName" >> "$host_file"
 
 # enable multicast networking if not already set
