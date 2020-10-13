@@ -27,7 +27,6 @@ void setup()
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  Serial.println("Serial ready for transmitting");
 
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
@@ -62,8 +61,7 @@ void loop()
   for (int j = 0; j < 4; j++) {
     RS485Transmit();
     Serial2.write(encNumber[j]);      // Send byte to encoder
-    Serial.print("Sent: ");
-    Serial.println(encNumber[j]);
+   
 
     delay(10);
     RS485Receive();
@@ -71,9 +69,7 @@ void loop()
     delay(10);
     //    Serial2.flush();
     response = listen();
-    Serial.print("Response: ");
-    Serial.println(response);
-    Serial.println();
+Serial.println(response);
     delay(100);
   }
 
