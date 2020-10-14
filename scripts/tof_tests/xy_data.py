@@ -16,6 +16,10 @@ class SensorNode():
         self.posLeft = None
         self.posMid = None
         self.posRight = None
+        self.relativeL = [150,450]
+        self.relativeM = [150,150]
+        self.relativeR = [450,150]
+
         self.angleL = 0
         self.angleM = np.pi/4
         self.angleR = np.pi/2
@@ -38,9 +42,9 @@ class SensorNode():
         sinR = np.sin((self.theta+0.322))
         cosR = np.cos((self.theta+0.322))
 
-        self.absLeft = np.sqrt(150**2+450**2)
-        self.absMid = np.sqrt(150**2+150**2)
-        self.absRight = np.sqrt(450**2+150**2)
+        self.absLeft = np.sqrt(self.relativeL[0]**2+ self.relativeL[1]**2)
+        self.absMid = np.sqrt(self.relativeM[0]**2 + self.relativeM[1]**2)
+        self.absRight = np.sqrt(self.relativeR[0]**2 + self.relativeR[1]**2)
 
         self.posLeft = self.pos*1000 + [cosL*self.absLeft,sinL*self.absLeft]
         self.posMid = self.pos*1000 + [cosM*self.absMid,sinM*self.absMid]
