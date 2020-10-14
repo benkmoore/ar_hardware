@@ -62,6 +62,11 @@ class SensorNode():
         mid_tof = tof_data.tof2
         right_tof = tof_data.tof3
 
+        if self.posLeft is not None:
+            self.xyLeft = [round(left_tof*cosLeft + self.posLeft[0],2), round(left_tof*sinLeft + self.posLeft[1],2)]
+            self.xyMid = [round(mid_tof*cosMid + self.posMid[0],2), round(mid_tof*sinMid + self.posMid[1],2)]
+            self.xyRight = [round(right_tof*cosRight + self.posRight[0],2), round(right_tof*sinRight + self.posRight[1],2)]
+
     def main(self):
         rospy.Subscriber('tof_data', TOF, self.xyCallback)
         rospy.Subscriber('estimator/state', State, self.stateCallback)
