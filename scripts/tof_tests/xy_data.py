@@ -23,7 +23,7 @@ class SensorNode():
         self.xyLeft = [0,0]
         self.xyMid = [0,0]
         self.xyRight = [0,0]
-        self.theta = None
+        self.theta = 0
         # print self.xyLeft, self.xyMid, self.xyRight
 
     def stateCallback(self, msg):
@@ -37,9 +37,8 @@ class SensorNode():
 
 
     def xyCallback(self, tof_data):
-
-        sinMid = np.sin((self.angleM + self.theta))
-        cosMid = np.cos((self.angleM + self.theta))
+        sinMid = np.sin((self.angleM - self.theta))
+        cosMid = np.cos((self.angleM - self.theta))
         sinLeft = np.sin((self.angleL + self.theta))
         cosLeft = np.cos((self.angleL + self.theta))
         sinRight = np.sin((self.angleR + self.theta))
@@ -52,23 +51,24 @@ class SensorNode():
         mid_tof = tof_data.tof2
         right_tof = tof_data.tof3
 
-        self.xyLeft = [round(left_tof*cosLeft + self.posLeft[0],2), round(left_tof*sinLeft + self.posLeft[1],2)]
+        #self.xyLeft = [round(left_tof*cosLeft + self.posLeft[0],2), round(left_tof*sinLeft + self.posLeft[1],2)]
         self.xyMid = [round(mid_tof*sinMid + self.posMid[0],2), round(mid_tof*cosMid + self.posMid[1],2)]
-        self.xyRight = [round(right_tof*cosRight + self.posRight[0],2), round(right_tof*sinRight + self.posRight[1],2)]
+        #self.xyRight = [round(right_tof*cosRight + self.posRight[0],2), round(right_tof*sinRight + self.posRight[1],2)]
         # print self.xyLeft, self.xyMid, self.xyRight
 
     def main(self):
         rospy.Subscriber('tof_data', TOF, self.xyCallback)
         rospy.Subscriber('estimator/state', State, self.stateCallback)
 
-        self.rate = float(rospy.get_param('~rate', 100.0))
+        self.rate = float(rospy.get_param('~rate', 70.0))
         rate = rospy.Rate(self.rate)
 
         while not rospy.is_shutdown(): #and self.xyLeft != None:
                 #plt.scatter(self.xyLeft[0],self.xyLeft[1])
-                plt.scatter(self.xyMid[0],self.xyMid[1])        
+                plt.scatter(self.xyMid[0],self.xyMid[1],marker = ".")        
                 #plt.scatter(self.xyRight[0],self.xyRight[1])
-
+                plt.xlabel("x value in mm")
+                plt.ylabel("y value in mm")
                 # i+=1;
                 plt.show()
                 plt.pause(0.0001)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     try:
         plt.ion()
         fig=plt.figure()
-        plt.axis([-8000,8000,-8000,8000])
+        plt.axis([-2000,6000,-2000,6000])
 
         sensors = SensorNode()
         sensors.main()
