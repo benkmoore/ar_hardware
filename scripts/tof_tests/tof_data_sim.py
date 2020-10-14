@@ -18,7 +18,7 @@ def tofSensors():
         # tof = np.random.randint(1,100, size=(1,3))
 
         state.pos.data = np.zeros(2)
-        state.theta.data = np.pi/4
+        state.theta.data = 0#np.pi/4
         state.vel.data = np.zeros(2)
         state.omega.data = 0
 

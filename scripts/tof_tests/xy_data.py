@@ -31,18 +31,18 @@ class SensorNode():
         self.vel = np.array(msg.vel.data)
         self.theta = msg.theta.data
         self.omega = msg.omega.data
-        self.posLeft = [0,400]
-        self.posMid = self.pos*1000
-        self.posRight = [400,0]
+        #self.posLeft = self.pos*1000 + [150,450]
+        self.posMid = self.pos*1000 + [150,150]
+        #self.posRight = self.pos*1000 + [450,150]
 
 
     def xyCallback(self, tof_data):
         sinMid = np.sin((self.angleM - self.theta))
         cosMid = np.cos((self.angleM - self.theta))
-        sinLeft = np.sin((self.angleL + self.theta))
-        cosLeft = np.cos((self.angleL + self.theta))
-        sinRight = np.sin((self.angleR + self.theta))
-        cosRight = np.cos((self.angleR + self.theta))
+        sinLeft = np.sin((self.angleL - self.theta))
+        cosLeft = np.cos((self.angleL - self.theta))
+        sinRight = np.sin((self.angleR - self.theta))
+        cosRight = np.cos((self.angleR - self.theta))
 
             #left refers to the sensor on the y axis, right is the sensor on the x 
             #when robot corner is at 0,0 left arm goes from (0,0) to (0,450) in mm
