@@ -40,7 +40,7 @@
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                            // step/s
 #define MIN_STEPPER_VEL 0                            // step/s
-#define STEPS_THRESHOLD 30                            // step
+#define STEPS_THRESHOLD 50                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -94,6 +94,8 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
+	float omega = msg.omega_arr.data[i];
+	msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
     if (msg.omega_arr.data[i] > 0 ) {
       pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
       if (DC_reverseFlags[i] != 0) {
