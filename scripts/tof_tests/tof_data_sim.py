@@ -10,15 +10,14 @@ state = State()
 def tofSensors():
     rospy.init_node('tof_data', anonymous=True)
     rate = rospy.Rate(10) # 10hz
-    pubTOF = rospy.Publisher('tof_data', TOF, queue_size=10)
+    pubTOF = rospy.Publisher('sensor/tof_data', TOF, queue_size=10)
     pubState = rospy.Publisher('estimator/state', State, queue_size=10)
     print ('started')
 
     while not rospy.is_shutdown():
         # tof = np.random.randint(1,100, size=(1,3))
-
         state.pos.data = np.zeros(2)
-        state.theta.data = 0
+        state.theta.data = 0# np.pi
         state.vel.data = np.zeros(2)
         state.omega.data = 0
 
