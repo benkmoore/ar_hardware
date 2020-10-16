@@ -5,11 +5,13 @@
 #include "SPI.h"
 #include "src/ar_stepper.h"
 //#include "src/ar_dc.h"
-# include "Wire.h"
+#include "Wire.h"
 #include <Adafruit_MCP4728.h>
 //#include "iostream"
 #include <string>
 //using namespace std;
+
+#include "RF24.h" 
 
 #include <std_msgs/Float64.h>
 #define RX        7
@@ -49,6 +51,18 @@
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
+
+RF24 myRadio (5, 6); 
+struct package
+{
+  int kill = 0;
+  float throttle = 0.0;
+  float phi = 0.0;
+};
+
+byte addresses[][6] = {"3"}; 
+typedef struct package Package;
+Package rf_data;
 
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
@@ -169,6 +183,15 @@ int wrapToPi(float encoder_data) {
 */
 
 void setup() {
+  //##########################rf###########################
+  myRadio.begin(); 
+  myRadio.setChannel(115); 
+  myRadio.setPALevel(RF24_PA_MAX);
+  myRadio.setDataRate( RF24_250KBPS ) ; 
+  myRadio.openReadingPipe(1, addresses[0]);
+  myRadio.startListening();
+  //#######################################################
+
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
@@ -206,18 +229,21 @@ void loop() {
   // int out_76 = wrapToPi(encoder.checkEncoder(76));
   // test.data = out_76;
   // chatter_pub.publish(&test);
-  /*if((abs(wrapToPi(encoder.checkEncoder(76)))-phi_des1)>DEADBAND){
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+ 
+
+  if ( myRadio.available()){
+    while (myRadio.available())
+    {
+      myRadio.read( &rf_data, sizeof(rf_data) );
     }
-    if((abs(wrapToPi(encoder.checkEncoder(80)))-phi_des2)>DEADBAND){
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des1);
-    }
-    if((abs(wrapToPi(encoder.checkEncoder(84)))-phi_des3)>DEADBAND){
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des1);
-    }
-    if((abs(wrapToPi(encoder.checkEncoder(88))))-phi_des4>DEADBAND){
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des1);
-    }*/
+  } 
+  while(rf_data.kill == 1){
+    mcp.fastWrite(0,0,0,0);
+    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
+    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
+    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));
+    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), wrapToPi(encoder.checkEncoder(88))); 
+  }
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
