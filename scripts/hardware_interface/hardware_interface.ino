@@ -127,7 +127,6 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       pwmVal[i] = 0;
     }
   }
-//  mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
 
   if (flipFlag == 1) {
     for (int i = 0; i < N_DCMotors; i++) {
@@ -165,7 +164,6 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToPi(float encoder_data) {
-  // counts * (degs/count) * (step/deg) = steps
   int encoder_pos = int( (encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP) ) % int( 360.0 / PHI_STEP );
   if (encoder_pos >= int( 180.0 / PHI_STEP )) {
     encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
@@ -188,7 +186,6 @@ void setup() {
   hardware_interface.initNode();
    hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
-  //  delay (5000);
   mcp.begin();
 
   // Setup stepper motors
@@ -226,7 +223,7 @@ void setup() {
    ------------- MAIN ------------------
 */
 void loop() {
-   hardware_interface.spinOnce();
+  hardware_interface.spinOnce();
   chatter_pub.publish(&test);
  
 
@@ -239,24 +236,24 @@ void loop() {
 
   test.data = 0.0;
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-if (rf_data.kill == 0){  
-stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
-  stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
-  stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
-  if (millis()-callbackTime>1000){
-    for (int i = 0; i < N_DCMotors; i++){
-      mcp.fastWrite(0, 0, 0, 0);
+  if (rf_data.kill == 0){  
+    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
+    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
+    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
+    if (millis()-callbackTime>1000){
+      for (int i = 0; i < N_DCMotors; i++){
+        mcp.fastWrite(0, 0, 0, 0);
+      }
     }
   }
-}
-else{
-test.data = 1.0;
+  else{
+    test.data = 1.0;
     mcp.fastWrite(0,0,0,0); 
     stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
     stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
     stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));
     stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), wrapToPi(encoder.checkEncoder(88)));
- 
-}
+    
+  }
 }
