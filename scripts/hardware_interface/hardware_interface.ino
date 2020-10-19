@@ -96,7 +96,7 @@ int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 
 std_msgs::Float64 test;
-//ros::Publisher chatter_pub("chatter", &test);
+ros::Publisher chatter_pub("chatter", &test);
 
 /*
    ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -195,7 +195,7 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  //  hardware_interface.advertise(chatter_pub);
+   hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
   //  delay (5000);
   mcp.begin();
@@ -238,12 +238,16 @@ void loop() {
     }
   } 
   while(rf_data.kill == 1){
+    test = 1.0;
+    chatter_pub.publish(&test);
+
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
     stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
     stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));
     stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), wrapToPi(encoder.checkEncoder(88))); 
   }
+  test = 0.0;
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
