@@ -4,13 +4,9 @@
 #include "Encoder.h"
 #include "SPI.h"
 #include "src/ar_stepper.h"
-//#include "src/ar_dc.h"
 #include "Wire.h"
 #include <Adafruit_MCP4728.h>
-//#include "iostream"
 #include <string>
-//using namespace std;
-
 #include "RF24.h" 
 
 #include <std_msgs/Float64.h>
@@ -223,9 +219,8 @@ void setup() {
 */
 void loop() {
   hardware_interface.spinOnce();
-  chatter_pub.publish(&test);
+  // chatter_pub.publish(&test);
  
-
   if (myRadio.available()){
     while (myRadio.available())
     {
