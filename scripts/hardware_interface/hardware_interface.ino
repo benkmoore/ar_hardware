@@ -108,7 +108,7 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
-    if (msg.omega_arr.data[i] > 0 ) {
+    if (msg.omega_arr.data[i] > 0 && rf_data.kill == 0) {
       pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
       if (DC_reverseFlags[i] != 0) {
         flip[i] = 1;
@@ -116,7 +116,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       }
     }
 
-    else if (msg.omega_arr.data[i] < 0) {
+    else if (msg.omega_arr.data[i] < 0 && rf_data.kill == 0) {
        pwmVal[i] =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
       if (DC_reverseFlags[i] != 1) {
         flip[i] = 1;
@@ -183,15 +183,6 @@ int wrapToPi(float encoder_data) {
 */
 
 void setup() {
-  //##########################rf###########################
-  myRadio.begin(); 
-  myRadio.setChannel(115); 
-  myRadio.setPALevel(RF24_PA_MAX);
-  myRadio.setDataRate( RF24_250KBPS ) ; 
-  myRadio.openReadingPipe(1, addresses[0]);
-  myRadio.startListening();
-  //#######################################################
-
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
@@ -219,6 +210,16 @@ void setup() {
   pinMode(De, OUTPUT);
   //  Serial.begin(57600);
 
+  //##########################rf###########################
+  myRadio.begin();
+  myRadio.setChannel(115);
+  myRadio.setPALevel(RF24_PA_MAX);
+  myRadio.setDataRate( RF24_250KBPS ) ;
+  myRadio.openReadingPipe(1, addresses[0]);
+  myRadio.startListening();
+  //#######################################################
+
+
 }
 
 /*
@@ -226,37 +227,36 @@ void setup() {
 */
 void loop() {
    hardware_interface.spinOnce();
-  // int out_76 = wrapToPi(encoder.checkEncoder(76));
-  // test.data = out_76;
-  // chatter_pub.publish(&test);
+  chatter_pub.publish(&test);
  
 
-  if ( myRadio.available()){
+  if (myRadio.available()){
     while (myRadio.available())
     {
       myRadio.read( &rf_data, sizeof(rf_data) );
     }
   } 
-  while(rf_data.kill == 1){
-    test = 1.0;
-    chatter_pub.publish(&test);
 
-    mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
-    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
-    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), wrapToPi(encoder.checkEncoder(88))); 
-  }
-  test = 0.0;
+  test.data = 0.0;
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+if (rf_data.kill == 0){  
+stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
   stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
   if (millis()-callbackTime>1000){
     for (int i = 0; i < N_DCMotors; i++){
       mcp.fastWrite(0, 0, 0, 0);
- 
     }
   }
+}
+else{
+test.data = 1.0;
+    mcp.fastWrite(0,0,0,0); 
+    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
+    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
+    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));
+    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), wrapToPi(encoder.checkEncoder(88)));
+ 
+}
 }
