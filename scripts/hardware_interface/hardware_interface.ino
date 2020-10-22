@@ -17,10 +17,10 @@
 #define Re    3
 #define De    4
 
-#define MAX_PWM 2000                                   // pwm
+#define MAX_PWM 4096                                   // pwm
 #define MIN_PWM 1350
-#define MAX_VEL 3                                     // m/s
-#define MIN_VEL 0
+#define MAX_VEL 6                                     // m/s
+#define MIN_VEL 0.05
 /*
    ------------- FILE DEFINITION & SETUP ------------------
 */
@@ -106,7 +106,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
     float omega = msg.omega_arr.data[i];
 	  msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
-    if (msg.omega_arr.data[i] > 0 && rf_data.kill == 0) {
+    if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
       pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
       if (DC_reverseFlags[i] != 0) {
         flip[i] = 1;
@@ -114,7 +114,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       }
     }
 
-    else if (msg.omega_arr.data[i] < 0 && rf_data.kill == 0) {
+    else if (msg.omega_arr.data[i] <= -1 * MIN_VEL && rf_data.kill == 0) {
        pwmVal[i] =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
       if (DC_reverseFlags[i] != 1) {
         flip[i] = 1;
@@ -128,14 +128,14 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 
   if (flipFlag == 1) {
     for (int i = 0; i < N_DCMotors; i++) {
-      if (flip[i] == 1) {
-        digitalWrite(DC_reverse[i], LOW);
-        flip[i] = 0;
-        DC_reverseFlags[i] = !DC_reverseFlags[i];
-      }
-    }
+      	if (flip[i] == 1) {
+        	digitalWrite(DC_reverse[i], LOW);
+        	flip[i] = 0;
+        	DC_reverseFlags[i] = !DC_reverseFlags[i];
+	}
+    }	
     flipFlag = 0;
-    delay(500);
+    delay(200);
     for (int i = 0; i < N_DCMotors; i++) {
       digitalWrite(DC_reverse[i], HIGH);
     }
