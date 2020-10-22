@@ -18,7 +18,7 @@
 #define De    4
 
 #define MAX_PWM 4096                                   // pwm
-#define MIN_PWM 1350
+#define MIN_PWM 1365
 #define MAX_VEL 6                                     // m/s
 #define MIN_VEL 0.05
 /*
@@ -38,7 +38,7 @@
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                            // step/s
 #define MIN_STEPPER_VEL 0                            // step/s
-#define STEPS_THRESHOLD 50                            // step
+#define STEPS_THRESHOLD 25                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
