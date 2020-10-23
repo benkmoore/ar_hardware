@@ -115,7 +115,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     }
 
     else if (msg.omega_arr.data[i] <= -1 * MIN_VEL && rf_data.kill == 0) {
-       pwmVal[i] =  map(msg.omega_arr.data[i], -1 * MAX_VEL, MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
+       pwmVal[i] =  map(msg.omega_arr.data[i], -1 * MAX_VEL, -1 * MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
       if (DC_reverseFlags[i] != 1) {
         flip[i] = 1;
         flipFlag = 1;
