@@ -17,9 +17,9 @@
 #define Re    3
 #define De    4
 
-#define MAX_PWM 4096                                   // pwm
+#define MAX_PWM 1500                                   // pwm
 #define MIN_PWM 1365
-#define MAX_VEL 6                                     // m/s
+#define MAX_VEL 0.7                                     // m/s
 #define MIN_VEL 0.05
 /*
    ------------- FILE DEFINITION & SETUP ------------------
@@ -37,8 +37,8 @@
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                            // step/s
-#define MIN_STEPPER_VEL 0                            // step/s
-#define STEPS_THRESHOLD 25                            // step
+#define MIN_STEPPER_VEL 40                            // step/s
+#define STEPS_THRESHOLD 10                            // step
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -115,7 +115,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     }
 
     else if (msg.omega_arr.data[i] <= -1 * MIN_VEL && rf_data.kill == 0) {
-       pwmVal[i] =  map(msg.omega_arr.data[i], -1 * MAX_VEL, -1 * MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
+       pwmVal[i] = map(msg.omega_arr.data[i], -1 * MAX_VEL, -1 * MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
       if (DC_reverseFlags[i] != 1) {
         flip[i] = 1;
         flipFlag = 1;
