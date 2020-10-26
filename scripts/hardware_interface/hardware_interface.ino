@@ -7,7 +7,7 @@
 #include "Wire.h"
 #include <Adafruit_MCP4728.h>
 #include <string>
-#include "RF24.h" 
+#include "RF24.h"
 
 #include <std_msgs/Float64.h>
 #define RX        7
@@ -38,7 +38,8 @@
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                            // step/s
 #define MIN_STEPPER_VEL 40                            // step/s
-#define STEPS_THRESHOLD 10                            // step
+#define STEPS_THRESHOLD 10                            // steps
+#define MAX_PHI_DELTA 50                              // steps
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -48,7 +49,7 @@
 const int N_DCMotors = 4;
 const int N_StepperMotors = 4;
 
-RF24 myRadio (5, 6); 
+RF24 myRadio (5, 6);
 struct package
 {
   int kill = 0;
@@ -56,7 +57,7 @@ struct package
   float phi = 0.0;
 };
 
-byte addresses[][6] = {"3"}; 
+byte addresses[][6] = {"3"};
 typedef struct package Package;
 Package rf_data;
 
@@ -133,7 +134,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
         	flip[i] = 0;
         	DC_reverseFlags[i] = !DC_reverseFlags[i];
 	}
-    }	
+    }
     flipFlag = 0;
     delay(200);
     for (int i = 0; i < N_DCMotors; i++) {
@@ -220,21 +221,24 @@ void setup() {
 void loop() {
   hardware_interface.spinOnce();
   // chatter_pub.publish(&test);
- 
+
   if (myRadio.available()){
     while (myRadio.available())
     {
       myRadio.read( &rf_data, sizeof(rf_data) );
     }
-  } 
+  }
 
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-  if (rf_data.kill == 0){  
+  if (rf_data.kill == 0){
     stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
     stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
     stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
-    if (millis()-callbackTime>1000){
+    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+
+    // check wheels are aligned betfore actuating DC motors
+    phi_flag = (stepper1->phi_flag or stepper2->phi_flag or stepper3->phi_flag or stepper4->phi_flag)
+    if ((millis()-callbackTime>1000) or phi_flag) {
       for (int i = 0; i < N_DCMotors; i++){
         mcp.fastWrite(0, 0, 0, 0);
       }
@@ -242,7 +246,7 @@ void loop() {
   }
   //if kill switch is on
   else{
-    mcp.fastWrite(0,0,0,0); 
+    mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
     stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
     stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));

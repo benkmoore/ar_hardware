@@ -85,7 +85,7 @@ class Driver {
  */
 class Stepper {
   public:
-    Stepper(int stepsIn2pi, float phi_step, int steps_threshold,
+    Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_phi_delta,
             int max_vel, int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode);
 
     // calculate steps from encoder data pos to desired phi
@@ -118,12 +118,14 @@ class Stepper {
     void enableDriver();
 
     int direction;                  // tracks motor rotation direction
+    bool phi_flag;                  // indicate if phi des and phi curr are above phi_threshold, stop DC motors
     unsigned long step_delay;       // delay between steps, in us, based on speed
     unsigned long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
     int micro_step_size;            // micro step size: 1,2,4,...,256
     float phi_step;                 // degrees per stepper step (deg/step)
     int steps_threshold;            // number of steps to begin deceleration to a stop (step)
+    int max_phi_delta;              // number of steps between des and curr to stop DCs
     int max_vel;                    // max continous veloicty for stepper rotation (steps/s)
     int min_vel;                    // min velocity which stepper will decelerate to (steps/s)
     int max_milliamps;              // max current stepper can draw through driver (mA)
@@ -139,7 +141,7 @@ class AMTEncoder {
     public:
         AMTEncoder(int Re, int De);
         void RS485Transmit();           // sets the 'data enable' pin high and 'receive enable' pin low
-        void RS485Receive();            // sets the 'receive enable' pin high and 'data enable' pin low 
+        void RS485Receive();            // sets the 'receive enable' pin high and 'data enable' pin low
         int checkEncoder(int address);  // checks position of desired encoder
 
     private:

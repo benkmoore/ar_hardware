@@ -11,13 +11,14 @@
  * two-wire constructor.
  * Sets which wires should control the motor.
  */
-Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_vel,
+Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_phi_delta, int max_vel,
                 int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode) {
   // set constants
   this->phi_step = phi_step;
   this->max_vel = max_vel;
   this->min_vel = min_vel;
   this->steps_threshold = steps_threshold;
+  this->max_phi_delta = max_phi_delta;
   this->max_milliamps = max_milliamps;
   this->decay_mode = decay_mode;
 
@@ -25,6 +26,7 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ve
   this->direction = -1;
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
+  this->phi_flag = false;
 }
 
 void Stepper::setupDriver(int cs_pin) {
@@ -62,7 +64,10 @@ void Stepper::commandStepper(int enc_pos, int phi_des) {
  * Calculate steps from encoder data pos to desired phi.
  * wraps the number of steps to [-100, 99] = [-pi, pi]
  * commands the shortest numbers of steps and direction
- * between the encoder data and phi desired.
+ * between the encoder data and phi desired. Checks if
+ * difference between phi desired and phi currrent is less
+ * than the max allowable number of steps and updates the
+ * phi flag to stop or conutinue actuating the DC motors.
  */
 int Stepper::calculateSteps(int encoder_data, int phi_des) {
   int steps = phi_des - encoder_data;
@@ -72,6 +77,12 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
     } else if (steps < 0) {
       steps = steps + int(360.0/this->phi_step);
     }
+  }
+
+  if (abs(steps) > this->max_phi_delta) { // check phi delta
+      this->phi_flag = true;
+  } else {
+      this->phi_flag = false;
   }
 
   return steps;
@@ -260,7 +271,7 @@ AMTEncoder::AMTEncoder(int Re, int De){
   this->flipflag = false;
   this->Re = Re;
   this->De = De;
-  Serial2.begin(115200);        
+  Serial2.begin(115200);
  // Serial.begin(115200);
 }
 
@@ -272,7 +283,7 @@ int AMTEncoder::checkEncoder(int address) {
   //int available = Serial2.availableForWrite();
   //Serial.print("start");
   //Serial.println(available);
-  Serial2.write(byteOut);           
+  Serial2.write(byteOut);
    //available = Serial2.availableForWrite();
    //Serial.println(available);
    delayMicroseconds(400);
@@ -282,16 +293,16 @@ int AMTEncoder::checkEncoder(int address) {
   this->RS485Receive();
   i = 0;
   // Look for data from encoder
-  while (Serial2.available())       
+  while (Serial2.available())
   {
     byteIn[i] = Serial2.read();
-//Serial.println(byteIn[i],BIN);    
+//Serial.println(byteIn[i],BIN);
     i ++;
   }
   byteIn[2] = byteIn[2] << 2; // remove checksum (two most significant bits)
   byteIn[2] = byteIn[2] >> 2; // remove checksum (two most significant bits)
   byteIn[1] = byteIn[1] >> 2; //remove two least significant bits as our encoders are 12 bit, not 14 bit (2 bytes read = 16 bits - 2 LSB's and 2 MSB'2 gives 12 bit encoder data)
-  
+
   response = byteIn[2];
   response = (response << 6) + byteIn[1];
  // Serial.println(response);
