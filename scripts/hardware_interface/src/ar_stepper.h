@@ -107,7 +107,11 @@ class Stepper {
     bool getDirection();
     void checkDirection(int steps);
 
+    // instantiate stepper motor driver
     Driver driver;
+
+    // indicate if phi des and phi curr are above phi_threshold, stop DC motors
+    bool phi_flag;
 
   private:
     void step(int steps_to_move);
@@ -118,7 +122,6 @@ class Stepper {
     void enableDriver();
 
     int direction;                  // tracks motor rotation direction
-    bool phi_flag;                  // indicate if phi des and phi curr are above phi_threshold, stop DC motors
     unsigned long step_delay;       // delay between steps, in us, based on speed
     unsigned long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take

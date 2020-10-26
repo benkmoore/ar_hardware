@@ -63,7 +63,7 @@ Package rf_data;
 
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
-
+bool phi_flag = false;
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
@@ -76,10 +76,10 @@ int flipFlag = 0;
 //std::string channel[4] = {"MCP4728_CHANNEL_A", "MCP4728_CHANNEL_B", "MCP4728_CHANNEL_C", "MCP4728_CHANNEL_D"};
 
 // Define steppers
-Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper2(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper3(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
-Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper2(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper3(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
+Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 
 //DC_Motors DC_motors(DC_reverseFlags, DC_reverse, DC_throttlePins, N_DCMotors, flip);
 AMTEncoder encoder(Re, De);
@@ -237,7 +237,7 @@ void loop() {
     stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
 
     // check wheels are aligned betfore actuating DC motors
-    phi_flag = (stepper1->phi_flag or stepper2->phi_flag or stepper3->phi_flag or stepper4->phi_flag)
+    phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
     if ((millis()-callbackTime>1000) or phi_flag) {
       for (int i = 0; i < N_DCMotors; i++){
         mcp.fastWrite(0, 0, 0, 0);
