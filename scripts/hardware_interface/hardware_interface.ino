@@ -17,10 +17,10 @@
 #define Re    3
 #define De    4
 
-#define MAX_PWM 1500                                   // pwm
-#define MIN_PWM 1365
-#define MAX_VEL 0.7                                     // m/s
-#define MIN_VEL 0.05
+#define MAX_PWM 1650                                   // pwm
+#define MIN_PWM 1495
+#define MAX_VEL 1.0                                     // m/s
+#define MIN_VEL 0.15
 /*
    ------------- FILE DEFINITION & SETUP ------------------
 */
@@ -39,7 +39,7 @@
 #define MAX_STEPPER_VEL 200                            // step/s
 #define MIN_STEPPER_VEL 40                            // step/s
 #define STEPS_THRESHOLD 10                            // steps
-#define MAX_PHI_DELTA 50                              // steps
+#define MAX_PHI_DELTA 20                              // steps
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -239,17 +239,20 @@ void loop() {
     // check wheels are aligned betfore actuating DC motors
     phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
     if ((millis()-callbackTime>1000) or phi_flag) {
-      for (int i = 0; i < N_DCMotors; i++){
         mcp.fastWrite(0, 0, 0, 0);
-      }
+	stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 0);
+    	stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), 0);
+    	stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 0);
+    	stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 0);
+
     }
   }
   //if kill switch is on
   else{
     mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), wrapToPi(encoder.checkEncoder(76)));
-    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), wrapToPi(encoder.checkEncoder(80)));
-    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), wrapToPi(encoder.checkEncoder(84)));
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), wrapToPi(encoder.checkEncoder(88)));
+    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 0);
+    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), 0);
+    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 0);
+    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 0);
   }
 }
