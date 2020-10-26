@@ -19,7 +19,6 @@ void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
         else{
             this->flip[index] = 1;
             this->flipFlag = 1;    	    
-            analogWrite(aPin, PWMspeed);
         }
     }
 
@@ -30,7 +29,6 @@ void DC_Motors::PowerDC(int aPin, int PWMspeed, int index) {
         else{
             this->flip[index] = 1;	
             this->flipFlag = 1;    
-            analogWrite(aPin, PWMspeed*-1);
         }
     }
     else if(PWMspeed == 0 ){             
@@ -47,7 +45,7 @@ void DC_Motors::flipDirection(){
       }
   }
   this->flipFlag = 0;    
-  delay(500);
+  delay(300);
   for(int i = 0; i < this->N_DCMotors; i++) {   
       digitalWrite(this->reverse[i],HIGH);
   }  

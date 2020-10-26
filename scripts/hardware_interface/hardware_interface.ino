@@ -15,9 +15,9 @@
 #define De    4
 
 #define MAX_PWM 255                                   // pwm
-#define MIN_PWM -255
-#define MAX_OMEGA 255
-#define MIN_OMEGA -255
+#define MIN_PWM 95
+#define MAX_VEL 3                                     // m/s
+#define MIN_VEL 0
 /*
    ------------- FILE DEFINITION & SETUP ------------------
 */
@@ -50,8 +50,8 @@ int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-// analog pins A0 to A3 correspond to pins 14, 15 and 18, 19 on the teensy
-int DC_throttlePins[N_DCMotors] = {A0, A1, A4, A5};
+// analog pins A0 to A3 correspond to pins 14, 15 and 28, 29 on the teensy
+int DC_throttlePins[N_DCMotors] = {A0, A1, 28, 29};
 
 int reverseFlags[N_DCMotors] = {0, 0, 0, 0};
 int flip[N_DCMotors] = {0, 0, 0, 0};
@@ -70,6 +70,7 @@ int phi_des1 = 0;
 int phi_des2 = 0;
 int phi_des3 = 0;
 int phi_des4 = 0;
+int pwmVal;
 
 
 std_msgs::Float64 test;
@@ -85,14 +86,23 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
-    //int omega =  map(msg.omega_arr.data[i],MIN_OMEGA,MAX_OMEGA, MIN_PWM, MAX_PWM);
-    DC_motors.PowerDC(DC_throttlePins[i], msg.omega_arr.data[i], i);
+    if (msg.omega_arr.data[i] > 0){
+      pwmVal =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+    }
+    else if (msg.omega_arr.data[i] < 0){
+      pwmVal =  map(msg.omega_arr.data[i], -1*MAX_VEL, MIN_VEL, -1*MAX_PWM, -1*MIN_PWM);
+    } 
+    else{
+      pwmVal = 0;
+    }
+
+    DC_motors.PowerDC(DC_throttlePins[i], pwmVal, i);
   }
 
   if (DC_motors.flipFlag == 1){
-      DC_motors.flipDirection();
+    DC_motors.flipDirection();
   }
-
+  
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (-msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -143,8 +153,8 @@ void setup() {
   stepper4.setupDriver(StepperMotorPins[3]);
   pinMode(A0, OUTPUT);
   pinMode(A1, OUTPUT);
-  pinMode(A4, OUTPUT);
-  pinMode(A5, OUTPUT);
+  pinMode(28, OUTPUT);
+  pinMode(29, OUTPUT);
   // Setup DC reverse pins
   for (int i = 0; i < N_DCMotors; i++) {
     pinMode(DC_reverse[i], OUTPUT);
@@ -152,6 +162,8 @@ void setup() {
   }
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);      
+//  Serial.begin(57600);
+
 }
 
 /*
@@ -167,5 +179,5 @@ void loop() {
   stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
   stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
   stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+  stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);  
 }
