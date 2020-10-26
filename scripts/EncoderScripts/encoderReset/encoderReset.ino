@@ -1,5 +1,7 @@
 /*
-  this script is to reset the position of the 4 encoders to 0.
+  load this script to reset the position of the 4 encoders to 0. Serial terminal can be used to 
+  monitor the postion of each encoder. Each encoder is reset when the script is loaded. Then
+  the encoders are constantly pinged for their current position.
 */
 
 #define RX        7
