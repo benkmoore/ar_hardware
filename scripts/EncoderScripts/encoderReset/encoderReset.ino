@@ -24,9 +24,6 @@ int encNumber [4] = {76, 80, 84, 88};
 void setup()
 {
   Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
   Serial.println("Serial ready for transmitting");
 
   pinMode(Re, OUTPUT);
