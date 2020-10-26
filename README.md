@@ -165,11 +165,11 @@ NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](ht
 
 ### AMT21 encoder setup:
 
-1. Download and run AMT viewpoint [here](https://www.cuidevices.com/amt-viewpoint)
+1. Download and run AMT viewpoint [here](https://www.cuidevices.com/amt-viewpoint). (Windows only).
 
-2. Connect to encoder using usb adapter. 
+2. Connect to encoder using usb adapter.
 
-3. Set desired address using GUI (default is `0x54`). The addresses used by our hardware interface are `0x4C`, `0x50`, `0x54`, `0x58`. These correspond to 76, 80, 84, 88 in decimal and L, P, T, X.
+3. Set desired address using GUI (default is `0x54`). The addresses used by our hardware interface are `0x4C`, `0x50`, `0x54`, `0x58`. These correspond to 76, 80, 84, 88 in decimal and L, P, T, X. These correspond to wheel position: furthest from centre on the Y-arm, closest to centre Y-arm, closest to centre X-arm, furthest from centre X-arm.
 
 4. Install encoder onto motor shaft as per instructions [here](https://www.cuidevices.com/amt-mounting) from CUI website.
 
@@ -177,7 +177,7 @@ NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](ht
 
 6. Connect the encoders to the RS485 bus A to A and B to B using schematic from [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
 
-7. Align the wheels to the desired 0 position with the encoders attatched. Run the encoderReset.ino program on the teensy and use the serial monitor to choose the encoders to reset.
+7. Align the wheels to the desired 0 position with the encoders attatched. Run the encoderReset.ino program on the teensy to set the encoder 0 position. This will persist after shutdown.
 
 NOTE: AMT21 encoder [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
 
