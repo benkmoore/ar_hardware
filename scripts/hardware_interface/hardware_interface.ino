@@ -192,6 +192,8 @@ void setup() {
   // hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
   mcp.begin();
+  mcp.fastWrite(0, 0, 0, 0);
+  mcp.saveToEEPROM();
 
   // Setup stepper motors
   SPI.begin();
