@@ -39,7 +39,7 @@
 #define MAX_STEPPER_VEL 200                            // step/s
 #define MIN_STEPPER_VEL 40                            // step/s
 #define STEPS_THRESHOLD 10                            // steps
-#define MAX_PHI_DELTA 20                              // steps
+#define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 // Encoder constants
@@ -141,9 +141,15 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       digitalWrite(DC_reverse[i], HIGH);
     }
   }
+phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
+    if (phi_flag && pwmVal[0] != 0) {
+          //mcp.fastWrite(max(abs(pwmVal[0]/3),MIN_PWM), max(abs(pwmVal[1]/3),MIN_PWM), max(abs(pwmVal[2]/3),MIN_PWM), max(abs(pwmVal[3]/3),MIN_PWM));
+  mcp.fastWrite(0,0,0,0);
 
+    }
+else{
   mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
-
+}
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ( (msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
@@ -231,20 +237,25 @@ void loop() {
 
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   if (rf_data.kill == 0){
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
-    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
-    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
-
+     if ((millis()-callbackTime<1000)) {
+        stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
+        stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
+        stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
+        stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+    }
     // check wheels are aligned betfore actuating DC motors
-    phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
-    if ((millis()-callbackTime>1000) or phi_flag) {
+    //phi_flag = false; //(stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
+    //if (phi_flag) {
+    //    mcp.fastWrite(0, 0, 0, 0);
+    //}
+   
+    // shutdown robot if no cmds recieved within last time window
+    if ((millis()-callbackTime>1000)) {
         mcp.fastWrite(0, 0, 0, 0);
 	stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 0);
     	stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), 0);
     	stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 0);
     	stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 0);
-
     }
   }
   //if kill switch is on
