@@ -103,62 +103,62 @@ std_msgs::Float64 test;
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
 // define ROS node name, rate, subscriber to /controller_cmds
-// void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-//   for (int i = 0; i < N_DCMotors; i++) {
-//     float omega = msg.omega_arr.data[i];
-// 	  msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
-//     if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
-//       pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
-//       if (DC_reverseFlags[i] != 0) {
-//         flip[i] = 1;
-//         flipFlag = 1;
-//       }
-//     }
+void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+  for (int i = 0; i < N_DCMotors; i++) {
+    float omega = msg.omega_arr.data[i];
+	  msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
+    if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
+      pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      if (DC_reverseFlags[i] != 0) {
+        flip[i] = 1;
+        flipFlag = 1;
+      }
+    }
 
-//     else if (msg.omega_arr.data[i] <= -1 * MIN_VEL && rf_data.kill == 0) {
-//        pwmVal[i] = map(msg.omega_arr.data[i], -1 * MAX_VEL, -1 * MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
-//       if (DC_reverseFlags[i] != 1) {
-//         flip[i] = 1;
-//         flipFlag = 1;
-//       }
-//     }
-//     else{
-//       pwmVal[i] = 0;
-//     }
-//   }
+    else if (msg.omega_arr.data[i] <= -1 * MIN_VEL && rf_data.kill == 0) {
+       pwmVal[i] = map(msg.omega_arr.data[i], -1 * MAX_VEL, -1 * MIN_VEL, -1 * MAX_PWM, -1 * MIN_PWM);
+      if (DC_reverseFlags[i] != 1) {
+        flip[i] = 1;
+        flipFlag = 1;
+      }
+    }
+    else{
+      pwmVal[i] = 0;
+    }
+  }
 
-//   if (flipFlag == 1) {
-//     for (int i = 0; i < N_DCMotors; i++) {
-//       	if (flip[i] == 1) {
-//         	digitalWrite(DC_reverse[i], LOW);
-//         	flip[i] = 0;
-//         	DC_reverseFlags[i] = !DC_reverseFlags[i];
-// 	}
-//     }
-//     flipFlag = 0;
-//     delay(200);
-//     for (int i = 0; i < N_DCMotors; i++) {
-//       digitalWrite(DC_reverse[i], HIGH);
-//     }
-//   }
-// phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
-//     if (phi_flag && pwmVal[0] != 0) {
-//           //mcp.fastWrite(max(abs(pwmVal[0]/3),MIN_PWM), max(abs(pwmVal[1]/3),MIN_PWM), max(abs(pwmVal[2]/3),MIN_PWM), max(abs(pwmVal[3]/3),MIN_PWM));
-//   mcp.fastWrite(0,0,0,0);
+  if (flipFlag == 1) {
+    for (int i = 0; i < N_DCMotors; i++) {
+      	if (flip[i] == 1) {
+        	digitalWrite(DC_reverse[i], LOW);
+        	flip[i] = 0;
+        	DC_reverseFlags[i] = !DC_reverseFlags[i];
+	}
+    }
+    flipFlag = 0;
+    delay(200);
+    for (int i = 0; i < N_DCMotors; i++) {
+      digitalWrite(DC_reverse[i], HIGH);
+    }
+  }
+phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
+    if (phi_flag && pwmVal[0] != 0) {
+          //mcp.fastWrite(max(abs(pwmVal[0]/3),MIN_PWM), max(abs(pwmVal[1]/3),MIN_PWM), max(abs(pwmVal[2]/3),MIN_PWM), max(abs(pwmVal[3]/3),MIN_PWM));
+  mcp.fastWrite(0,0,0,0);
 
-//     }
-// else{
-//   mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
-// }
+    }
+else{
+  mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
+}
 
-//   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-//   phi_des1 = (int) ( (msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
-//   phi_des2 = (int) ( (msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
-//   phi_des3 = (int) ( (msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
-//   phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
+  // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
+  phi_des1 = (int) ( (msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
+  phi_des2 = (int) ( (msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
+  phi_des3 = (int) ( (msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
+   phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
 
-//   callbackTime = millis();
-// }
+   callbackTime = millis();
+ }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
 

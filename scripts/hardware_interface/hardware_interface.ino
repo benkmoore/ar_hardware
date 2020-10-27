@@ -155,10 +155,10 @@ else{
   phi_des1 = (int) ( (msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
   phi_des2 = (int) ( (msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
   phi_des3 = (int) ( (msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
-  phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
+   phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
 
-  callbackTime = millis();
-}
+   callbackTime = millis();
+ }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
 
@@ -201,10 +201,7 @@ void setup() {
   stepper2.setupDriver(StepperMotorPins[1]);
   stepper3.setupDriver(StepperMotorPins[2]);
   stepper4.setupDriver(StepperMotorPins[3]);
-  //  pinMode(A0, OUTPUT);
-  //  pinMode(A1, OUTPUT);
-  //  pinMode(28, OUTPUT);
-  //  pinMode(29, OUTPUT);
+
   // Setup DC DC_reverse pins
     for (int i = 0; i < N_DCMotors; i++) {
       pinMode(DC_reverse[i], OUTPUT);
@@ -240,16 +237,11 @@ void loop() {
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   if (rf_data.kill == 0){
      if ((millis()-callbackTime<1000)) {
-        stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
-        stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
-        stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-        stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
+        stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), rf_data.phi);
+        stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), rf_data.phi);
+        stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), rf_data.phi);
+        stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), rf_data.phi);
     }
-    // check wheels are aligned betfore actuating DC motors
-    //phi_flag = false; //(stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
-    //if (phi_flag) {
-    //    mcp.fastWrite(0, 0, 0, 0);
-    //}
    
     // shutdown robot if no cmds recieved within last time window
     if ((millis()-callbackTime>1000)) {
