@@ -56,7 +56,7 @@ struct package
   float throttle = 0.0;
   float phi = 0.0;
 };
-
+float rf_phi_scaled = 0.0;
 byte addresses[][6] = {"3"};
 typedef struct package Package;
 Package rf_data;
@@ -226,25 +226,27 @@ void setup() {
 void loop() {
   hardware_interface.spinOnce();
   // chatter_pub.publish(&test);
+   callbackTime = millis();
 
   if (myRadio.available()){
-    while (myRadio.available())
-    {
+   // while (myRadio.available())
+    //{
       myRadio.read( &rf_data, sizeof(rf_data) );
-    }
+    //}
   }
-
+rf_phi_scaled = (int) ( (rf_data.phi * RAD_2_DEG) / PHI_STEP );
   // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
   if (rf_data.kill == 0){
      if ((millis()-callbackTime<1000)) {
-        stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), rf_data.phi);
-        stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), rf_data.phi);
-        stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), rf_data.phi);
-        stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), rf_data.phi);
-    }
+        stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), rf_phi_scaled);
+        stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), rf_phi_scaled);
+        stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), rf_phi_scaled);
+        stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), rf_phi_scaled);
+mcp.fastWrite(rf_data.throttle, rf_data.throttle, rf_data.throttle, rf_data.throttle); 
+   }
    
     // shutdown robot if no cmds recieved within last time window
-    if ((millis()-callbackTime>1000)) {
+   if ((millis()-callbackTime>1000)) {
         mcp.fastWrite(0, 0, 0, 0);
 	stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 0);
     	stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), 0);
@@ -259,5 +261,6 @@ void loop() {
     stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), 0);
     stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 0);
     stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 0);
-  }
+ 
+ }
 }
