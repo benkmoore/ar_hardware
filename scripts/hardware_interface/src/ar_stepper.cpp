@@ -286,7 +286,7 @@ int AMTEncoder::checkEncoder(int address) {
   Serial2.write(byteOut);
    //available = Serial2.availableForWrite();
    //Serial.println(available);
-   delayMicroseconds(400);
+   delayMicroseconds(1000);
   Serial2.flush();
   //available = Serial2.availableForWrite();
 //Serial.println(available);

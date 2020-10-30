@@ -88,7 +88,7 @@ int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 
 std_msgs::Float64 test;
-// ros::Publisher chatter_pub("chatter", &test);
+ros::Publisher chatter_pub("chatter", &test);
 
 /*
    ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
@@ -99,6 +99,8 @@ ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
+test.data = 1.0;
+
   for (int i = 0; i < N_DCMotors; i++) {
     float omega = msg.omega_arr.data[i];
 	msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
@@ -124,6 +126,8 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
 
   callbackTime = millis();
+  chatter_pub.publish(&test);
+
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
@@ -155,7 +159,7 @@ void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  // hardware_interface.advertise(chatter_pub);
+  hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
 
   // Setup pwm to analog board
