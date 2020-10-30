@@ -37,8 +37,8 @@
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                            // step/s
-#define MIN_STEPPER_VEL 40                            // step/s
-#define STEPS_THRESHOLD 10                            // steps
+#define MIN_STEPPER_VEL 0                            // step/s
+#define STEPS_THRESHOLD 20                            // steps
 #define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
