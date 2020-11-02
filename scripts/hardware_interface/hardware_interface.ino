@@ -111,7 +111,7 @@ test.data = 1.0;
     }
   }
 
-  phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
+  phi_flag = false; // (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
   if (phi_flag && pwmVal[0] != 0) {
       //mcp.fastWrite(max(abs(pwmVal[0]/3),MIN_PWM), max(abs(pwmVal[1]/3),MIN_PWM), max(abs(pwmVal[2]/3),MIN_PWM), max(abs(pwmVal[3]/3),MIN_PWM));
       mcp.fastWrite(0,0,0,0);
