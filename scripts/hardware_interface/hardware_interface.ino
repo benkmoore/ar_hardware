@@ -24,8 +24,8 @@
 #define MAX_CALLBACK_TIME 1000                        // ms
 
 // DC motor velocity map
-#define MAX_PWM 1650                                  // pwm
-#define MIN_PWM 1495                                  // pwm
+#define MAX_PWM 2538                                  // pwm
+#define MIN_PWM 2285                                  // pwm
 #define MAX_VEL 1.0                                   // m/s
 #define MIN_VEL 0.15                                  // m/s
 
@@ -164,7 +164,10 @@ void setup() {
 
   // Setup pwm to analog board
   mcp.begin();
-  mcp.fastWrite(0, 0, 0, 0);
+  mcp.setChannelValue(MCP4728_CHANNEL_A, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
+  mcp.setChannelValue(MCP4728_CHANNEL_B, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
+  mcp.setChannelValue(MCP4728_CHANNEL_C, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
+  mcp.setChannelValue(MCP4728_CHANNEL_D, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
   mcp.saveToEEPROM();
 
   // Setup stepper motors
