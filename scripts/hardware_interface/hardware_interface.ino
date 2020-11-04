@@ -24,13 +24,13 @@
 #define MAX_CALLBACK_TIME 1000                        // ms
 
 // DC motor velocity map
-#define MAX_PWM 2538                                  // pwm
-#define MIN_PWM 2285                                  // pwm
+#define MAX_PWM 2600                                  // pwm
+#define MIN_PWM 2280                                  // pwm
 #define MAX_VEL 1.0                                   // m/s
 #define MIN_VEL 0.15                                  // m/s
 
 // Stepper motor constants
-#define MAX_MILLIAMPS 3920                            // mA
+#define MAX_MILLIAMPS 2800                            // mA
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                           // step/s
@@ -68,6 +68,7 @@ bool phi_flag = false;
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
+float VEL_SCALING = 1.0;
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -80,10 +81,10 @@ AMTEncoder encoder(Re, De);
 Adafruit_MCP4728 mcp;
 
 // global variables for controller callback
-int phi_des1 = 0;
-int phi_des2 = 0;
-int phi_des3 = 0;
-int phi_des4 = 0;
+int phi_des1 = 25;
+int phi_des2 = 25;
+int phi_des3 = 25;
+int phi_des4 = 25;
 int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 
@@ -105,7 +106,7 @@ test.data = 1.0;
     float omega = msg.omega_arr.data[i];
 	msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
     if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
-      pwmVal[i] =  map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      pwmVal[i] =  map(VEL_SCALING*msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     } else {
       pwmVal[i] = 0;
     }
@@ -211,9 +212,9 @@ void loop() {
     stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 0);
-    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), 0);
-    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 0);
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 0);
+    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 25);
+    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(76)), 25);
+    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 25);
+    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 25);
   }
 }
