@@ -5,15 +5,10 @@
 #include "SPI.h"
 #include "src/ar_stepper.h"
 #include "Wire.h"
-#include <Adafruit_MCP4728.h>
-#include <string>
+#include "Adafruit_MCP4728.h"
 #include "RF24.h"
-#include <std_msgs/Float64.h>
+#include "std_msgs/Float64.h"
 
-
-/*
-   ------------- FILE DEFINITION & SETUP ------------------
-*/
 
 // ROS Serial constants
 #define NUM_PUBS 2
@@ -24,8 +19,8 @@
 #define MAX_CALLBACK_TIME 1000                        // ms
 
 // DC motor velocity map
-#define MAX_PWM 2600                                  // pwm
-#define MIN_PWM 2280                                  // pwm
+#define MAX_PWM 2600                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
+#define MIN_PWM 2280                                  // 12 bit value converted to analog voltage
 #define MAX_VEL 1.0                                   // m/s
 #define MIN_VEL 0.15                                  // m/s
 
@@ -35,23 +30,21 @@
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                           // step/s
 #define MIN_STEPPER_VEL 40                            // step/s
-#define STEPS_THRESHOLD 10                            // steps
+#define STEPS_THRESHOLD 10                            // steps from target to start stepper decceleration
 #define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
 #define RAD_2_DEG 57.2957795
 
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
-#define DEADBAND 2
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
 // Input number of DC motors, stepper motors in use
-const int N_DCMotors = 4;
-const int N_StepperMotors = 4;
+const int N_DCMotors = 4, N_StepperMotors = 4;
 
 // Define rf radio
-RF24 myRadio (5, 6);
+RF24 rf_Coms (5, 6);
 struct package
 {
   int kill = 0;
@@ -80,31 +73,27 @@ Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA
 AMTEncoder encoder(Re, De);
 Adafruit_MCP4728 mcp;
 
-// global variables for controller callback
-int phi_des1 = 25;
-int phi_des2 = 25;
-int phi_des3 = 25;
-int phi_des4 = 25;
+// Variables for controller callback
+int phi_des1 = 25, phi_des2 = 25, phi_des3 = 25, phi_des4 = 25;
 int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 
 std_msgs::Float64 test;
-ros::Publisher chatter_pub("chatter", &test);
+// ros::Publisher chatter_pub("chatter", &test);
 
 /*
-   ------------- RECEIVE ROS MSGS & CMD MOTORS ------------------
+   -------------------------- Controller commands to motor actuation --------------------------
 */
 
-// ROS node
 ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
-test.data = 1.0;
+// test.data = 1.0;
 
   for (int i = 0; i < N_DCMotors; i++) {
     float omega = msg.omega_arr.data[i];
-	msg.omega_arr.data[i] = constrain(omega, -1*MAX_VEL, MAX_VEL);
+	  msg.omega_arr.data[i] = constrain(omega, MIN_VEL, MAX_VEL);
     if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
       pwmVal[i] =  map(VEL_SCALING*msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     } else {
@@ -114,32 +103,31 @@ test.data = 1.0;
 
   phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
   if (phi_flag && pwmVal[0] != 0) {
-      //mcp.fastWrite(max(abs(pwmVal[0]/3),MIN_PWM), max(abs(pwmVal[1]/3),MIN_PWM), max(abs(pwmVal[2]/3),MIN_PWM), max(abs(pwmVal[3]/3),MIN_PWM));
       mcp.fastWrite(0,0,0,0);
-  } else {
-      mcp.fastWrite(abs(pwmVal[0]), abs(pwmVal[1]), abs(pwmVal[2]), abs(pwmVal[3]));
+  } 
+  else {
+      mcp.fastWrite(pwmVal[0], pwmVal[1], pwmVal[2], pwmVal[3]);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
-  phi_des1 = (int) ( (msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP );
-  phi_des2 = (int) ( (msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP );
-  phi_des3 = (int) ( (msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP );
-  phi_des4 = (int) ( (msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP );
+  phi_des1 = (int) ((msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP);
+  phi_des2 = (int) ((msg.phi_arr.data[1] * RAD_2_DEG) / PHI_STEP);
+  phi_des3 = (int) ((msg.phi_arr.data[2] * RAD_2_DEG) / PHI_STEP);
+  phi_des4 = (int) ((msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP);
 
   callbackTime = millis();
-  chatter_pub.publish(&test);
-
+  // chatter_pub.publish(&test);
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
 
 
 /*
-   ------------- SUPPORT FUNCTIONS ------------------
+   -------------------------- Support function --------------------------
 */
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
-int wrapToPi(float encoder_data) {
+int wrapToSteps(float encoder_data) {
   int encoder_pos = int( (encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP) ) % int( 360.0 / PHI_STEP );
   if (encoder_pos >= int( 180.0 / PHI_STEP )) {
     encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
@@ -147,23 +135,21 @@ int wrapToPi(float encoder_data) {
   else if (encoder_pos < int( -180.0 / PHI_STEP )) {
     encoder_pos = encoder_pos + int( 360.0 / PHI_STEP );
   }
-
   return encoder_pos;
 }
 
-
 /*
-   ------------- SETUP INTERFACE ------------------
+   -------------------------- Setup Interface --------------------------
 */
 
 void setup() {
   // Init node and Subscribe to /controller_cmds
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
-  hardware_interface.advertise(chatter_pub);
   hardware_interface.subscribe(controller_cmds_sub);
+  hardware_interface.advertise(chatter_pub);
 
-  // Setup pwm to analog board
+  // Setup analog board to use 2.048v as vref
   mcp.begin();
   mcp.setChannelValue(MCP4728_CHANNEL_A, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
   mcp.setChannelValue(MCP4728_CHANNEL_B, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
@@ -182,39 +168,37 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
 
-  // Setup rf communication
-  myRadio.begin();
-  myRadio.setChannel(115);
-  myRadio.setPALevel(RF24_PA_MAX);
-  myRadio.setDataRate( RF24_250KBPS ) ;
-  myRadio.openReadingPipe(1, addresses[0]);
-  myRadio.startListening();
+  // Setup rf communication for kill switch
+  rf_Coms.begin();
+  rf_Coms.setChannel(115);
+  rf_Coms.setPALevel(RF24_PA_MAX);
+  rf_Coms.setDataRate( RF24_250KBPS ) ;
+  rf_Coms.openReadingPipe(1, addresses[0]);
+  rf_Coms.startListening();
 }
 
 /*
-   ------------- MAIN ------------------
+   -------------------------- Main Loop --------------------------
 */
 void loop() {
   hardware_interface.spinOnce();
   // chatter_pub.publish(&test);
-
-  if (myRadio.available()) {
-    while (myRadio.available()) {
-      myRadio.read( &rf_data, sizeof(rf_data) );
-    }
+  if (rf_Coms.available()) {
+    rf_Coms.read( &rf_data, sizeof(rf_data) );
   }
 
-  if ((rf_data.kill == 0) and (millis()-callbackTime<MAX_CALLBACK_TIME)) {
+  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME)) {
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), phi_des1);
-    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(80)), phi_des2);
-    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), phi_des3);
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), phi_des4);
-  } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
+    stepper1.commandStepper(wrapToSteps(encoder.checkEncoder(76)), phi_des1);
+    stepper2.commandStepper(wrapToSteps(encoder.checkEncoder(80)), phi_des2);
+    stepper3.commandStepper(wrapToSteps(encoder.checkEncoder(84)), phi_des3);
+    stepper4.commandStepper(wrapToSteps(encoder.checkEncoder(88)), phi_des4);
+  } else { 
+    // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(wrapToPi(encoder.checkEncoder(76)), 25);
-    stepper2.commandStepper(wrapToPi(encoder.checkEncoder(76)), 25);
-    stepper3.commandStepper(wrapToPi(encoder.checkEncoder(84)), 25);
-    stepper4.commandStepper(wrapToPi(encoder.checkEncoder(88)), 25);
+    stepper1.commandStepper(wrapToSteps(encoder.checkEncoder(76)), 25);
+    stepper2.commandStepper(wrapToSteps(encoder.checkEncoder(76)), 25);
+    stepper3.commandStepper(wrapToSteps(encoder.checkEncoder(84)), 25);
+    stepper4.commandStepper(wrapToSteps(encoder.checkEncoder(88)), 25);
   }
 }
