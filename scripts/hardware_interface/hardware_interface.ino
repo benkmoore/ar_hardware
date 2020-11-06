@@ -61,7 +61,7 @@ bool phi_flag = false;
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-float VEL_SCALING = 1.0;
+float VEL_SCALING = 0.94;
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
