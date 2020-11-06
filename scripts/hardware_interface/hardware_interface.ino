@@ -61,7 +61,7 @@ bool phi_flag = false;
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-float VEL_SCALING = 0.94;
+float VEL_SCALING = 1.0;
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -127,13 +127,23 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 */
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
+
+// int wrapToSteps(float encoder_data) {
+//   int encoder_pos = int( (encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP) ) % int( 360.0 / PHI_STEP );
+//   if (encoder_pos >= int( 180.0 / PHI_STEP )) {
+//     encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
+//   }
+//   else if (encoder_pos < int( -180.0 / PHI_STEP )) {
+//     encoder_pos = encoder_pos + int( 360.0 / PHI_STEP );
+//   }
+//   return encoder_pos;
+// }
+
+// wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToSteps(float encoder_data) {
-  int encoder_pos = int( (encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP) ) % int( 360.0 / PHI_STEP );
-  if (encoder_pos >= int( 180.0 / PHI_STEP )) {
+  int encoder_pos = round((encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP)) ;
+  if (encoder_pos >= 100 {
     encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
-  }
-  else if (encoder_pos < int( -180.0 / PHI_STEP )) {
-    encoder_pos = encoder_pos + int( 360.0 / PHI_STEP );
   }
   return encoder_pos;
 }
