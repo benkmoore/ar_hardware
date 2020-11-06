@@ -37,6 +37,7 @@
 
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
+#define ENCODERWAIT 100
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
@@ -126,8 +127,8 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
+    encTime = millis();
   }
-encTime = millis();
   // chatter_pub.publish(&test);
 }
 
@@ -227,10 +228,10 @@ void loop() {
   } else { 
     // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(enc76_wrap, 0);
-    stepper2.commandStepper(enc80_wrap, 0);
-    stepper3.commandStepper(enc84_wrap, 0);
-    stepper4.commandStepper(enc88_wrap, 0);
+    stepper1.commandStepper(enc76_wrap, 25);
+    stepper2.commandStepper(enc80_wrap, 25);
+    stepper3.commandStepper(enc84_wrap, 25);
+    stepper4.commandStepper(enc88_wrap, 25);
     encoder76 = encoder.checkEncoder(76);
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
