@@ -61,7 +61,7 @@ bool phi_flag = false;
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-float VEL_SCALING = 1.0;
+float VEL_SCALING = 0.94;
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -93,7 +93,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 
   for (int i = 0; i < N_DCMotors; i++) {
     float omega = msg.omega_arr.data[i];
-	  msg.omega_arr.data[i] = constrain(omega, MIN_VEL, MAX_VEL);
+	  msg.omega_arr.data[i] = constrain(omega, 0, MAX_VEL);
     if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
       pwmVal[i] =  map(VEL_SCALING*msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     } else {
@@ -142,7 +142,7 @@ ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmd
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToSteps(float encoder_data) {
   int encoder_pos = round((encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP)) ;
-  if (encoder_pos >= 100 {
+  if (encoder_pos >= 100) {
     encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
   }
   return encoder_pos;
@@ -157,7 +157,7 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
-  hardware_interface.advertise(chatter_pub);
+  //hardware_interface.advertise(chatter_pub);
 
   // Setup analog board to use 2.048v as vref
   mcp.begin();
@@ -207,7 +207,7 @@ void loop() {
     // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(wrapToSteps(encoder.checkEncoder(76)), 25);
-    stepper2.commandStepper(wrapToSteps(encoder.checkEncoder(76)), 25);
+    stepper2.commandStepper(wrapToSteps(encoder.checkEncoder(80)), 25);
     stepper3.commandStepper(wrapToSteps(encoder.checkEncoder(84)), 25);
     stepper4.commandStepper(wrapToSteps(encoder.checkEncoder(88)), 25);
   }
