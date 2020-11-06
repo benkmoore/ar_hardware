@@ -78,6 +78,11 @@ int phi_des1 = 25, phi_des2 = 25, phi_des3 = 25, phi_des4 = 25;
 int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 
+float encoder76 = encoder.checkEncoder(76);
+float encoder80 = encoder.checkEncoder(80);
+float encoder84 = encoder.checkEncoder(84);
+float encoder88 = encoder.checkEncoder(88);
+float encTime = millis();
 std_msgs::Float64 test;
 // ros::Publisher chatter_pub("chatter", &test);
 
@@ -116,6 +121,13 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_des4 = (int) ((msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP);
 
   callbackTime = millis();
+  if (millis() - encTime > ENCODERWAIT){
+    encoder76 = encoder.checkEncoder(76);
+    encoder80 = encoder.checkEncoder(80);
+    encoder84 = encoder.checkEncoder(84);
+    encoder88 = encoder.checkEncoder(88);
+  }
+encTime = millis();
   // chatter_pub.publish(&test);
 }
 
@@ -185,6 +197,11 @@ void setup() {
   rf_Coms.setDataRate( RF24_250KBPS ) ;
   rf_Coms.openReadingPipe(1, addresses[0]);
   rf_Coms.startListening();
+
+  encoder76 = encoder.checkEncoder(76);
+  encoder80 = encoder.checkEncoder(80);
+  encoder84 = encoder.checkEncoder(84);
+  encoder88 = encoder.checkEncoder(88);
 }
 
 /*
@@ -196,19 +213,27 @@ void loop() {
   if (rf_Coms.available()) {
     rf_Coms.read( &rf_data, sizeof(rf_data) );
   }
+  int enc76_wrap = wrapToSteps(encoder76);
+  int enc80_wrap = wrapToSteps(encoder80);
+  int enc84_wrap = wrapToSteps(encoder84);
+  int enc88_wrap = wrapToSteps(encoder88);
 
   if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME)) {
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
-    stepper1.commandStepper(wrapToSteps(encoder.checkEncoder(76)), phi_des1);
-    stepper2.commandStepper(wrapToSteps(encoder.checkEncoder(80)), phi_des2);
-    stepper3.commandStepper(wrapToSteps(encoder.checkEncoder(84)), phi_des3);
-    stepper4.commandStepper(wrapToSteps(encoder.checkEncoder(88)), phi_des4);
+    stepper1.commandStepper(enc76_wrap, phi_des1);
+    stepper2.commandStepper(enc80_wrap, phi_des2);
+    stepper3.commandStepper(enc84_wrap, phi_des3);
+    stepper4.commandStepper(enc88_wrap, phi_des4);
   } else { 
     // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(wrapToSteps(encoder.checkEncoder(76)), 25);
-    stepper2.commandStepper(wrapToSteps(encoder.checkEncoder(80)), 25);
-    stepper3.commandStepper(wrapToSteps(encoder.checkEncoder(84)), 25);
-    stepper4.commandStepper(wrapToSteps(encoder.checkEncoder(88)), 25);
+    stepper1.commandStepper(enc76_wrap, 0);
+    stepper2.commandStepper(enc80_wrap, 0);
+    stepper3.commandStepper(enc84_wrap, 0);
+    stepper4.commandStepper(enc88_wrap, 0);
+    encoder76 = encoder.checkEncoder(76);
+    encoder80 = encoder.checkEncoder(80);
+    encoder84 = encoder.checkEncoder(84);
+    encoder88 = encoder.checkEncoder(88);
   }
 }
