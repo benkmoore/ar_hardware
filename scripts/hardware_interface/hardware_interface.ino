@@ -37,7 +37,7 @@
 
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
-#define ENCODERWAIT 100
+#define ENCODERWAIT 50
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
