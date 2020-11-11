@@ -94,12 +94,11 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
  * below MIN_VEL.
  */
 void Stepper::controlSpeed(int steps) {
-  if (abs(steps) > this->steps_threshold) {
+  if ((abs(steps) > this->steps_threshold) or steps == 0) {
     this->setSpeedRPM(this->max_vel);
   } else {
     this->setSpeedRPM(max(this->min_vel,int(this->max_vel/this->steps_threshold)*abs(steps)));
   }
-
 
 }
 
@@ -107,7 +106,7 @@ void Stepper::controlSpeed(int steps) {
  * Sets the speed in steps per sec
  */
 void Stepper::setSpeedRPM(long whatSpeed) {
-  this->step_delay = 1000L * 1000L /  whatSpeed;
+  this->step_delay = abs(1000L * 1000L /  whatSpeed);
 }
 
 /*
