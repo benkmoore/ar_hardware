@@ -22,6 +22,7 @@ struct package
   bool kill = 0;
   float throttle = 0.0;
   float phi = 0.0;
+  bool control = 0;
 };
 float phiPrev = 0.0;
 typedef struct package Package;
@@ -40,6 +41,7 @@ void setup()
   pinMode(15, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, INPUT);
+  pinmode(16, INPUT);
 
 
   delay(1000);
@@ -62,6 +64,10 @@ void loop()
     data.phi = atan2(y, x);
     data.throttle = speedMapped;
     //    data.throttle = 1475;
+  }
+  if (digitalRead(16){
+    data.control = !data.control;
+    delay(10);
   }
   // data.throttle = analogRead(20);
   data.kill = digitalRead(15);
