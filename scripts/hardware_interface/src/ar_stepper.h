@@ -122,8 +122,8 @@ class Stepper {
     void enableDriver();
 
     int direction;                  // tracks motor rotation direction
-    unsigned long step_delay;       // delay between steps, in us, based on speed
-    unsigned long last_step_time;   // time stamp in us of when the last step was taken
+    long step_delay;       // delay between steps, in us, based on speed
+    long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
     int micro_step_size;            // micro step size: 1,2,4,...,256
     float phi_step;                 // degrees per stepper step (deg/step)

@@ -4,7 +4,6 @@
 #include "ar_stepper.h"
 
 
-
 // ---------- STEPPER FUNCTIONS -----------
 
 /*
@@ -131,10 +130,11 @@ bool Stepper::getDirection() {
  */
 void Stepper::step(int steps_to_move) {
   if (abs(steps_to_move) > 0) {
-    unsigned long now = micros();
-    if (now - this->last_step_time >= this->step_delay) {
-      this->last_step_time = now;
-      this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
+    long now = micros();
+    
+    if ((now - this->last_step_time) >= this->step_delay) {
+        this->last_step_time = now;
+  	this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
     }
   }
 }
@@ -196,7 +196,7 @@ void Stepper::setDecayMode(StepperDecayMode mode) {
 // ---------- DRIVER FUNCTIONS -----------
 
 Driver::Driver() {
-  this->settings = SPISettings(2000000, MSBFIRST, SPI_MODE0);
+  this->settings = SPISettings(500000, MSBFIRST, SPI_MODE0);
 }
 
 
@@ -221,13 +221,13 @@ void Driver::resetSettings() {
   this->stall  = 0x040;
   this->drive  = 0xA59;
 
-  this->writeReg(StepperRegAddr::CTRL, this->ctrl);
   this->writeReg(StepperRegAddr::TORQUE, this->torque);
   this->writeReg(StepperRegAddr::OFF, this->off);
   this->writeReg(StepperRegAddr::BLANK, this->blank);
   this->writeReg(StepperRegAddr::DECAY, this->decay);
   this->writeReg(StepperRegAddr::STALL, this->stall);
   this->writeReg(StepperRegAddr::DRIVE, this->drive);
+  this->writeReg(StepperRegAddr::CTRL, this->ctrl);
 
   // clear status of motor on driver
   this->writeReg(StepperRegAddr::STATUS, 0);
@@ -246,6 +246,7 @@ void Driver::writeReg(uint8_t address, uint16_t value) {
 // Writes the specified value to a register.
 void Driver::writeReg(StepperRegAddr address, uint16_t value) {
   writeReg((uint8_t)address, value);
+  delayMicroseconds(5); // required to allow time to write to registers
 }
 
 void Driver::selectChip() {
