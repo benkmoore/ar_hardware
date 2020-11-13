@@ -67,6 +67,8 @@ class Driver {
 
         uint16_t readReg(uint8_t address);
 
+        void clearFaults();
+
         // register address identifiers
         uint16_t ctrl, torque, off, blank, decay, stall, drive;
 

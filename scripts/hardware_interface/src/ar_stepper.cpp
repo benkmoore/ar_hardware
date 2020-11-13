@@ -44,6 +44,7 @@ void Stepper::setupDriver(int cs_pin) {
  * Command number of steps (cw/ccw) for stepper
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
+  this->driver.clearFaults();
 
   int steps = this->calculateSteps(enc_pos, phi_des);
   this->controlSpeed(steps);
@@ -245,6 +246,10 @@ void Driver::resetSettings() {
 
   // clear status of motor on driver
   this->writeReg(StepperRegAddr::STATUS, 0);
+}
+
+void Driver::clearFaults() {
+  this->writeReg(StepperRegAddr::STATUS, ~0b00111111);
 }
 
 // Writes the specified value to a register.
