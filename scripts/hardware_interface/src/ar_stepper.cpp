@@ -44,7 +44,7 @@ void Stepper::setupDriver(int cs_pin) {
  * Command number of steps (cw/ccw) for stepper
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
-  this->driver.clearFaults();
+  //this->driver.clearFaults();
 
   int steps = this->calculateSteps(enc_pos, phi_des);
   this->controlSpeed(steps);
@@ -228,7 +228,7 @@ uint16_t Driver::readReg(uint8_t address) {
  * Reset driver setttings.
  */
 void Driver::resetSettings() {
-  this->ctrl   = 0xC10;
+  this->ctrl   = 0xC90;
   this->torque = 0x1FF;
   this->off    = 0x030;
   this->blank  = 0x080;
