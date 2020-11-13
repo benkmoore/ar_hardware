@@ -7,7 +7,7 @@
 #include "Wire.h"
 #include "Adafruit_MCP4728.h"
 #include "RF24.h"
-#include "std_msgs/Float64.h"
+#include "std_msgs/UInt8.h"
 
 
 // ROS Serial constants
@@ -84,8 +84,8 @@ float encoder80 = encoder.checkEncoder(80);
 float encoder84 = encoder.checkEncoder(84);
 float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
-std_msgs::Float64 test;
-// ros::Publisher chatter_pub("chatter", &test);
+std_msgs::UInt8 test;
+ros::Publisher chatter_pub("chatter", &test);
 
 /*
    -------------------------- Controller commands to motor actuation --------------------------
@@ -110,7 +110,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
   if (phi_flag && pwmVal[0] != 0) {
       mcp.fastWrite(0,0,0,0);
-  } 
+  }
   else {
       mcp.fastWrite(pwmVal[0], pwmVal[1], pwmVal[2], pwmVal[3]);
   }
@@ -129,7 +129,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     encoder88 = encoder.checkEncoder(88);
     encTime = millis();
   }
-  // chatter_pub.publish(&test);
+  chatter_pub.publish(&test);
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
@@ -170,7 +170,7 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
-  //hardware_interface.advertise(chatter_pub);
+  hardware_interface.advertise(chatter_pub);
 
   // Setup analog board to use 2.048v as vref
   mcp.begin();
@@ -219,13 +219,15 @@ void loop() {
   int enc84_wrap = wrapToSteps(encoder84);
   int enc88_wrap = wrapToSteps(encoder88);
 
+  test.data = stepper4.readStatus();
+
   if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME)) {
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
     stepper1.commandStepper(enc76_wrap, phi_des1);
     stepper2.commandStepper(enc80_wrap, phi_des2);
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
-  } else { 
+  } else {
     // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);

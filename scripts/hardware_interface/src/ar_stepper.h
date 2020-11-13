@@ -65,6 +65,8 @@ class Driver {
         // reset stepper register settings
         void resetSettings();
 
+        uint16_t readReg(uint8_t address);
+
         // register address identifiers
         uint16_t ctrl, torque, off, blank, decay, stall, drive;
 
@@ -73,6 +75,7 @@ class Driver {
         void selectChip();
         void deselectChip();
         uint16_t transferToSPI(uint16_t value);
+
 
         uint8_t cs_pin;
         SPISettings settings;
@@ -106,6 +109,8 @@ class Stepper {
     // get motor direction of rotation
     bool getDirection();
     void checkDirection(int steps);
+
+    uint8_t readStatus();
 
     // instantiate stepper motor driver
     Driver driver;

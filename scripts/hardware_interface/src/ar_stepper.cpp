@@ -131,7 +131,7 @@ bool Stepper::getDirection() {
 void Stepper::step(int steps_to_move) {
   if (abs(steps_to_move) > 0) {
     long now = micros();
-    
+
     if ((now - this->last_step_time) >= this->step_delay) {
         this->last_step_time = now;
   	this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
@@ -191,6 +191,9 @@ void Stepper::setDecayMode(StepperDecayMode mode) {
   this->driver.writeReg(StepperRegAddr::DECAY, this->driver.decay);
 }
 
+uint8_t Stepper::readStatus() {
+  return this->driver.readReg((uint8_t)StepperRegAddr::STATUS);
+}
 
 
 // ---------- DRIVER FUNCTIONS -----------
@@ -207,6 +210,17 @@ void Driver::setCSPin(uint8_t cs_pin) {
   this->cs_pin = cs_pin;
   digitalWrite(cs_pin, LOW);
   pinMode(cs_pin, OUTPUT);
+}
+
+uint16_t Driver::readReg(uint8_t address) {
+    // Read/write bit and register address are the first 4 bits of the first
+    // byte; data is in the remaining 4 bits of the first byte combined with
+    // the second byte (12 bits total).
+
+    selectChip();
+    uint16_t dataOut = transferToSPI((0x8 | (address & 0b111)) << 12);
+    deselectChip();
+    return dataOut & 0xFFF;
 }
 
 /*
