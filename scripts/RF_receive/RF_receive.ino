@@ -36,10 +36,8 @@ void loop()
 
   if ( myRadio.available()) 
   {
-    while (myRadio.available())
-    {
-      myRadio.read( &data, sizeof(data) );
-    }
+    
+    myRadio.read( &data, sizeof(data) );
     Serial.print("\nPackage Received:");
     Serial.print("\n");
     Serial.println(data.kill);

@@ -41,7 +41,7 @@ void setup()
   pinMode(15, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, INPUT);
-  pinmode(16, INPUT);
+  pinMode(16, INPUT);
 
 
   delay(1000);
@@ -65,7 +65,7 @@ void loop()
     data.throttle = speedMapped;
     //    data.throttle = 1475;
   }
-  if (digitalRead(16){
+  if (digitalRead(16)){
     data.control = !data.control;
     delay(10);
   }
