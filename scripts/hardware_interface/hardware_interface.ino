@@ -19,9 +19,9 @@
 #define MAX_CALLBACK_TIME 1000                        // ms
 
 // DC motor velocity map
-#define MAX_PWM 3200                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
+#define MAX_PWM 2400                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
 #define MIN_PWM 2115                                  // 12 bit value converted to analog voltage
-#define MAX_VEL 2.02                                   // m/s
+#define MAX_VEL 0.7                                   // m/s
 #define MIN_VEL 0.25                                  // m/s
 
 // Stepper motor constants
@@ -146,11 +146,11 @@ void modeCallback(std_msgs::Int8 &msg) {
     {
       unwindFlag = 0;
     }
-    
+
   }
 if (msg.data == 2){
 finishedFlag = 1;
-} 
+}
 }
 
 
@@ -224,7 +224,7 @@ void loop() {
   chatter_pub.publish(&test);
   if (rf_Coms.available()) {
     rf_Coms.read( &rf_data, sizeof(rf_data) );
-//rf_data.kill = 0;	
+//rf_data.kill = 0;
   }
 test.data = rf_data.kill;
   int enc76_wrap = wrapToSteps(encoder76);
@@ -251,7 +251,7 @@ test.data = rf_data.kill;
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
-}  
+}
 // else{
 // stepper1.unwind();
 //     stepper2.unwind();
