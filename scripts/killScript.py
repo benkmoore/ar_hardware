@@ -13,7 +13,7 @@ RATE = 70
 
 rospy.init_node('kill_script')
 
-pub_kill = rospy.Publisher('kill_script', Int8, queue_size=10)
+pub_kill = rospy.Publisher('killScript', Int8, queue_size=10)
 
 def publish():
         msg = Int8()

@@ -155,8 +155,8 @@ finishedFlag = 1;
 }*/
 
 void killCallback(std_msgs::Int8 &msg){
-  rf_data.kill = msg.data
-  killTimer = millis()
+  rf_data.kill = msg.data;
+  killTimer = millis();
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
@@ -233,7 +233,7 @@ void loop() {
   // }
 
   if(millis() - killTimer > MAX_CALLBACK_TIME){
-    rf_data.kill = 0
+    rf_data.kill = 0;
   }
 
   int enc76_wrap = wrapToSteps(encoder76);
