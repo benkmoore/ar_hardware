@@ -59,7 +59,7 @@ Package rf_data;
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 bool phi_flag = false;
-
+int unwindFlag = 0;
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 float VEL_SCALING = 0.94;
@@ -138,6 +138,14 @@ void modeCallback(std_msgs::Int8 &msg) {
     stepper2.unwind();
     stepper3.unwind();
     stepper4.unwind();
+    if (stepper1.totalSteps != 0 or stepper2.totalSteps != 0 or stepper3.totalSteps != 0 stepper4.totalSteps != 0){
+      unwindFlag = 1;
+    }
+    else
+    {
+      unwindFlag = 0;
+    }
+    
   } 
 }
 
@@ -148,19 +156,6 @@ ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
 /*
    -------------------------- Support function --------------------------
 */
-
-// wrap encoder output to [-100, 99] steps = [-pi, pi] rads
-
-// int wrapToSteps(float encoder_data) {
-//   int encoder_pos = int( (encoder_data) * (360.0 / ENC_CPR) * (1.0 / PHI_STEP) ) % int( 360.0 / PHI_STEP );
-//   if (encoder_pos >= int( 180.0 / PHI_STEP )) {
-//     encoder_pos = encoder_pos - int( 360.0 / PHI_STEP );
-//   }
-//   else if (encoder_pos < int( -180.0 / PHI_STEP )) {
-//     encoder_pos = encoder_pos + int( 360.0 / PHI_STEP );
-//   }
-//   return encoder_pos;
-// }
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToSteps(float encoder_data) {
@@ -235,13 +230,13 @@ test.data = rf_data.kill;
 
   //test.data = stepper4.readStatus();
 
-  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME)) {
+  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) {
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
     stepper1.commandStepper(enc76_wrap, phi_des1);
     stepper2.commandStepper(enc80_wrap, phi_des2);
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
-  } else {
+  } else if (unwindFlag == 0){
     // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);
