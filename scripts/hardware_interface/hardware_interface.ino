@@ -79,6 +79,7 @@ Adafruit_MCP4728 mcp;
 int phi_des1 = 25, phi_des2 = 25, phi_des3 = 25, phi_des4 = 25;
 int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
+int killTimer;
 
 float encoder76 = encoder.checkEncoder(76);
 float encoder80 = encoder.checkEncoder(80);
@@ -231,7 +232,7 @@ void loop() {
 //rf_data.kill = 0;
   // }
 
-  if(millis() - killTimer > 1000){
+  if(millis() - killTimer > MAX_CALLBACK_TIME){
     rf_data.kill = 0
   }
 
