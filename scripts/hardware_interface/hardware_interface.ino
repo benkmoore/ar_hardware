@@ -85,8 +85,8 @@ float encoder80 = encoder.checkEncoder(80);
 float encoder84 = encoder.checkEncoder(84);
 float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
-std_msgs::Float64 test;
-ros::Publisher chatter_pub("chatter", &test);
+//std_msgs::Float64 test;
+//ros::Publisher chatter_pub("chatter", &test);
 
 /*
    -------------------------- Controller commands to motor actuation --------------------------
@@ -130,7 +130,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     encoder88 = encoder.checkEncoder(88);
     encTime = millis();
   }
-  chatter_pub.publish(&test);
+  //chatter_pub.publish(&test);
 }
 
 /*void modeCallback(std_msgs::Int8 &msg) {
@@ -181,7 +181,7 @@ void setup() {
   hardware_interface.subscribe(controller_cmds_sub);
   //hardware_interface.subscribe(mode_sub);
 
-  hardware_interface.advertise(chatter_pub);
+  //hardware_interface.advertise(chatter_pub);
 
   // Setup analog board to use 2.048v as vref
   mcp.begin();
@@ -221,12 +221,12 @@ void setup() {
 */
 void loop() {
   hardware_interface.spinOnce();
-  chatter_pub.publish(&test);
+  //chatter_pub.publish(&test);
   if (rf_Coms.available()) {
     rf_Coms.read( &rf_data, sizeof(rf_data) );
 //rf_data.kill = 0;
   }
-test.data = rf_data.kill;
+//test.data = rf_data.kill;
   int enc76_wrap = wrapToSteps(encoder76);
   int enc80_wrap = wrapToSteps(encoder80);
   int enc84_wrap = wrapToSteps(encoder84);
@@ -251,7 +251,7 @@ test.data = rf_data.kill;
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
-}
+  }
 // else{
 // stepper1.unwind();
 //     stepper2.unwind();
