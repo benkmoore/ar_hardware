@@ -151,7 +151,7 @@ void Stepper::step(int steps_to_move) {
     if ((now - this->last_step_time) >= this->step_delay) {
         this->last_step_time = now;
   	this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
-    if(this->direction ==0){
+    if(this->direction == 1){
       this->totalSteps +=1;
     }
     else

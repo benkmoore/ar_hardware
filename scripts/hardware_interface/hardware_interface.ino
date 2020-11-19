@@ -60,6 +60,7 @@ Package rf_data;
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 bool phi_flag = false;
 int unwindFlag = 0;
+int finishedFlag = 0;
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 float VEL_SCALING = 0.94;
@@ -134,19 +135,22 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 
 void modeCallback(std_msgs::Int8 &msg) {
   if (msg.data == 1){
-    stepper1.unwind();
-    stepper2.unwind();
-    stepper3.unwind();
-    stepper4.unwind();
-    if (stepper1.totalSteps != 0 or stepper2.totalSteps != 0 or stepper3.totalSteps != 0 stepper4.totalSteps != 0){
+    if ((abs(stepper1.totalSteps) >= 5 or abs(stepper2.totalSteps) >= 5 or abs(stepper3.totalSteps) >= 5 or abs(stepper4.totalSteps) >= 5) and finishedFlag == 1){
       unwindFlag = 1;
+//stepper1.unwind();
+  //  stepper2.unwind();
+    //stepper3.unwind();
+    //stepper4.unwind();
     }
     else
     {
       unwindFlag = 0;
     }
     
-  } 
+  }
+if (msg.data == 2){
+finishedFlag = 1;
+} 
 }
 
 
@@ -247,5 +251,11 @@ test.data = rf_data.kill;
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
-  }
+}  else{
+stepper1.unwind();
+    stepper2.unwind();
+    stepper3.unwind();
+    stepper4.unwind();
+    }
+
 }
