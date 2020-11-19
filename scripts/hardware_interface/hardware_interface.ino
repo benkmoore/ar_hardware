@@ -234,13 +234,13 @@ test.data = rf_data.kill;
 
   //test.data = stepper4.readStatus();
 
-  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) {
+  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) /*and unwindFlag == 0*/) {
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
     stepper1.commandStepper(enc76_wrap, phi_des1);
     stepper2.commandStepper(enc80_wrap, phi_des2);
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
-  } else if (unwindFlag == 0){
+  } else /*if (unwindFlag == 0)*/{
     // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);
@@ -251,11 +251,12 @@ test.data = rf_data.kill;
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
-}  else{
-stepper1.unwind();
-    stepper2.unwind();
-    stepper3.unwind();
-    stepper4.unwind();
-    }
+}  
+// else{
+// stepper1.unwind();
+//     stepper2.unwind();
+//     stepper3.unwind();
+//     stepper4.unwind();
+//     }
 
 }
