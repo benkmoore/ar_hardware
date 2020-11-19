@@ -153,9 +153,13 @@ finishedFlag = 1;
 }
 }*/
 
+void killCallback(std_msgs::Int8 &msg){
+  rf_data.kill = msg.data
+  killTimer = millis()
+}
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
-//ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
+ros::Subscriber<std_msgs::Int8> kill_sub("killScript", killCallback);
 
 /*
    -------------------------- Support function --------------------------
@@ -179,7 +183,7 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
-  //hardware_interface.subscribe(mode_sub);
+  hardware_interface.subscribe(kill_sub);
 
   //hardware_interface.advertise(chatter_pub);
 
@@ -222,11 +226,15 @@ void setup() {
 void loop() {
   hardware_interface.spinOnce();
   //chatter_pub.publish(&test);
-  if (rf_Coms.available()) {
-    rf_Coms.read( &rf_data, sizeof(rf_data) );
+  //if (rf_Coms.available()) {
+    //rf_Coms.read( &rf_data, sizeof(rf_data) );
 //rf_data.kill = 0;
+  // }
+
+  if(millis() - killTimer > 1000){
+    rf_data.kill = 0
   }
-//test.data = rf_data.kill;
+
   int enc76_wrap = wrapToSteps(encoder76);
   int enc80_wrap = wrapToSteps(encoder80);
   int enc84_wrap = wrapToSteps(encoder84);
