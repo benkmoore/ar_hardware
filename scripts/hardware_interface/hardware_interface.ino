@@ -84,7 +84,7 @@ float encoder80 = encoder.checkEncoder(80);
 float encoder84 = encoder.checkEncoder(84);
 float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
-std_msgs::UInt8 test;
+std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
 
 /*
@@ -210,16 +210,18 @@ void setup() {
 */
 void loop() {
   hardware_interface.spinOnce();
-  // chatter_pub.publish(&test);
+  chatter_pub.publish(&test);
   if (rf_Coms.available()) {
     rf_Coms.read( &rf_data, sizeof(rf_data) );
+//rf_data.kill = 0;	
   }
+test.data = rf_data.kill;
   int enc76_wrap = wrapToSteps(encoder76);
   int enc80_wrap = wrapToSteps(encoder80);
   int enc84_wrap = wrapToSteps(encoder84);
   int enc88_wrap = wrapToSteps(encoder88);
 
-  test.data = stepper4.readStatus();
+  //test.data = stepper4.readStatus();
 
   if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME)) {
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
