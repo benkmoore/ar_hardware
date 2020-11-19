@@ -132,7 +132,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   chatter_pub.publish(&test);
 }
 
-void modeCallback(const ar_commander::int8 &msg) {
+void modeCallback(int &msg) {
   if (msg.data == 1){
     //stepper1.unwind();
     //stepper2.unwind();
@@ -143,7 +143,7 @@ void modeCallback(const ar_commander::int8 &msg) {
 
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
-ros::Subscriber<ar_commander::Int8> mode_sub("state_machine/mode", modeCallback);
+ros::Subscriber<int> mode_sub("state_machine/mode", modeCallback);
 
 /*
    -------------------------- Support function --------------------------
