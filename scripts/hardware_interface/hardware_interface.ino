@@ -19,9 +19,9 @@
 #define MAX_CALLBACK_TIME 1000                        // ms
 
 // DC motor velocity map
-#define MAX_PWM 2400                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
+#define MAX_PWM 2600                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
 #define MIN_PWM 2115                                  // 12 bit value converted to analog voltage
-#define MAX_VEL 0.7                                   // m/s
+#define MAX_VEL 1.04                                   // m/s
 #define MIN_VEL 0.25                                  // m/s
 
 // Stepper motor constants
