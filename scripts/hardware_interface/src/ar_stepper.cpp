@@ -42,16 +42,16 @@ void Stepper::setupDriver(int cs_pin) {
 }
 
 //
-void unwind(){
+void Stepper::unwind(){
   if(this->totalSteps > 0){
     this->setDirection(0);
     this->direction = 0;
-    this->step(totalSteps*-1);
+    this->step(this->totalSteps*-1);
   }
   else if(this->totalSteps < 0){
     this->setDirection(1);
     this->direction = 1;
-    this->step(totalSteps*-1);
+    this->step(this->totalSteps*-1);
   }
 }
 

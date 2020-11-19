@@ -8,7 +8,7 @@
 #include "Adafruit_MCP4728.h"
 #include "RF24.h"
 #include "std_msgs/UInt8.h"
-
+#include "std_msgs/Int8.h"
 
 // ROS Serial constants
 #define NUM_PUBS 2
@@ -132,18 +132,18 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   chatter_pub.publish(&test);
 }
 
-void modeCallback(int &msg) {
+void modeCallback(std_msgs::Int8 &msg) {
   if (msg.data == 1){
-    //stepper1.unwind();
-    //stepper2.unwind();
-    //stepper3.unwind();
-    //stepper4.unwind();
+    stepper1.unwind();
+    stepper2.unwind();
+    stepper3.unwind();
+    stepper4.unwind();
   } 
 }
 
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
-ros::Subscriber<int> mode_sub("state_machine/mode", modeCallback);
+ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
 
 /*
    -------------------------- Support function --------------------------
