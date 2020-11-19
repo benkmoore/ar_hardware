@@ -12,7 +12,7 @@
 
 // ROS Serial constants
 #define NUM_PUBS 2
-#define NUM_SUBS 1
+#define NUM_SUBS 2
 #define BAUD_RATE 57600                               // bits/s
 #define IN_BUFFER_SIZE 512                            // bytes
 #define OUT_BUFFER_SIZE 512                           // bytes
@@ -132,8 +132,18 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   chatter_pub.publish(&test);
 }
 
-ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
+void modeCallback(const ar_commander::int8 &msg) {
+  if (msg.data == 1){
+    //stepper1.unwind();
+    //stepper2.unwind();
+    //stepper3.unwind();
+    //stepper4.unwind();
+  } 
+}
 
+
+ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
+ros::Subscriber<ar_commander::Int8> mode_sub("state_machine/mode", modeCallback);
 
 /*
    -------------------------- Support function --------------------------
@@ -170,6 +180,8 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
+  hardware_interface.subscribe(mode_sub);
+
   hardware_interface.advertise(chatter_pub);
 
   // Setup analog board to use 2.048v as vref

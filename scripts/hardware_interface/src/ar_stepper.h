@@ -93,6 +93,9 @@ class Stepper {
     Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_phi_delta,
             int max_vel, int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode);
 
+     // turn stepper until steps + revolution compared to last IDLE mode = 0.
+    void unwind();
+
     // calculate steps from encoder data pos to desired phi
     int calculateSteps(int encoder_data, int phi_des);
 
@@ -139,6 +142,7 @@ class Stepper {
     int max_vel;                    // max continous veloicty for stepper rotation (steps/s)
     int min_vel;                    // min velocity which stepper will decelerate to (steps/s)
     int max_milliamps;              // max current stepper can draw through driver (mA)
+    int totalSteps;                 // total steps moved by stepper positive or negative since leaving IDLE mode
     StepperDecayMode decay_mode;    // decay mode on PWM signals
 };
 
@@ -155,7 +159,7 @@ class AMTEncoder {
         int checkEncoder(int address);  // checks position of desired encoder
 
     private:
-        long response;
+        long response;                  // output 12 bit number from encoder, goes from 0 to 4095 depending on shaft position
         int byteOut;
         uint8_t byteIn[3];
         int i;

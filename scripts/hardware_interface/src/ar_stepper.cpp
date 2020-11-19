@@ -26,6 +26,7 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ph
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
   this->phi_flag = false;
+  this->totalSteps = 0;
 }
 
 void Stepper::setupDriver(int cs_pin) {
@@ -38,6 +39,20 @@ void Stepper::setupDriver(int cs_pin) {
   this->setMaxCurrent(this->max_milliamps);
   this->setStepMode(this->micro_step_size);
   this->enableDriver();
+}
+
+//
+void unwind(){
+  if(this->totalSteps > 0){
+    this->setDirection(0);
+    this->direction = 0;
+    this->step(totalSteps*-1);
+  }
+  else if(this->totalSteps < 0){
+    this->setDirection(1);
+    this->direction = 1;
+    this->step(totalSteps*-1);
+  }
 }
 
 /*
@@ -136,6 +151,13 @@ void Stepper::step(int steps_to_move) {
     if ((now - this->last_step_time) >= this->step_delay) {
         this->last_step_time = now;
   	this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
+    if(this->direction ==0){
+      this->totalSteps +=1;
+    }
+    else
+    {
+      this->totalSteps -=1;
+    }
     }
   }
 }
