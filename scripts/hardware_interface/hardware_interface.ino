@@ -155,7 +155,7 @@ finishedFlag = 1;
 
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
-ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
+//ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
 
 /*
    -------------------------- Support function --------------------------
@@ -179,7 +179,7 @@ void setup() {
   hardware_interface.getHardware()->setBaud(BAUD_RATE);
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
-  hardware_interface.subscribe(mode_sub);
+  //hardware_interface.subscribe(mode_sub);
 
   hardware_interface.advertise(chatter_pub);
 
