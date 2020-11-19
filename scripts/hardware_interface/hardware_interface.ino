@@ -133,7 +133,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   chatter_pub.publish(&test);
 }
 
-void modeCallback(std_msgs::Int8 &msg) {
+/*void modeCallback(std_msgs::Int8 &msg) {
   if (msg.data == 1){
     if ((abs(stepper1.totalSteps) >= 5 or abs(stepper2.totalSteps) >= 5 or abs(stepper3.totalSteps) >= 5 or abs(stepper4.totalSteps) >= 5) and finishedFlag == 1){
       unwindFlag = 1;
@@ -151,7 +151,7 @@ void modeCallback(std_msgs::Int8 &msg) {
 if (msg.data == 2){
 finishedFlag = 1;
 }
-}
+}*/
 
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
