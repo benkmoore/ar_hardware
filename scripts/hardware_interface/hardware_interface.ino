@@ -114,7 +114,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       mcp.fastWrite(0,0,0,0);
   }
   else {
-      mcp.fastWrite(pwmVal[0], pwmVal[1], pwmVal[2], pwmVal[3]);
+      mcp.fastWrite(pwmVal[0]*1.03, pwmVal[1]*1.03, pwmVal[2]*1.01, pwmVal[3]*0.945);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
@@ -160,7 +160,7 @@ void killCallback(std_msgs::Int8 &msg){
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
-ros::Subscriber<std_msgs::Int8> kill_sub("kill_switch", killCallback);
+ros::Subscriber<std_msgs::Int8> kill_sub("/kill_switch", killCallback);
 
 /*
    -------------------------- Support function --------------------------
