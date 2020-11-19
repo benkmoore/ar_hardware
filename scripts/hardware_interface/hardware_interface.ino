@@ -160,7 +160,7 @@ void killCallback(std_msgs::Int8 &msg){
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
-ros::Subscriber<std_msgs::Int8> kill_sub("killScript", killCallback);
+ros::Subscriber<std_msgs::Int8> kill_sub("kill_switch", killCallback);
 
 /*
    -------------------------- Support function --------------------------
