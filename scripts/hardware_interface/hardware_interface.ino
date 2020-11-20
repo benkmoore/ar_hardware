@@ -87,8 +87,8 @@ float encoder80 = encoder.checkEncoder(80);
 float encoder84 = encoder.checkEncoder(84);
 float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
-//std_msgs::Float64 test;
-//ros::Publisher chatter_pub("chatter", &test);
+std_msgs::Float64 test;
+ros::Publisher chatter_pub("chatter", &test);
 
 /*
    -------------------------- Controller commands to motor actuation --------------------------
@@ -142,6 +142,8 @@ void modeCallback(const std_msgs::Int8 &msg) {
       unwindFlag = 1;
     }
   }
+  test.data = stepper4.totalSteps;
+  chatter_pub.publish(&test);
 }
 
 void killCallback(const std_msgs::Int8 &msg){
@@ -178,7 +180,7 @@ void setup() {
   hardware_interface.subscribe(kill_sub);
   hardware_interface.subscribe(mode_sub);
 
-  //hardware_interface.advertise(chatter_pub);
+  hardware_interface.advertise(chatter_pub);
 
   // Setup analog board to use 2.048v as vref
   mcp.begin();
@@ -251,4 +253,5 @@ void loop() {
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
+  }
 }
