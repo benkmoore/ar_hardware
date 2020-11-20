@@ -96,7 +96,8 @@ class Stepper {
             int max_vel, int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode);
 
      // turn stepper until steps + revolution compared to last IDLE mode = 0.
-    void unwind();
+    void unwind(int encoder_data);
+    void checkRevolutions(int encoder_data);
 
     // calculate steps from encoder data pos to desired phi
     int calculateSteps(int encoder_data, int phi_des);

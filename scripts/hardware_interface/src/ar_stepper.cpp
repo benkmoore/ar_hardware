@@ -42,19 +42,6 @@ void Stepper::setupDriver(int cs_pin) {
   this->enableDriver();
 }
 
-//
-void Stepper::unwind(){
-  if (this->revolutions > 0) {
-    this->setDirection(0); // clockwise
-    this->direction = 0;
-    this->step(this->revolutions * this->stepsIn2pi);
-  } else if (this->revolutions < 0) {
-    this->setDirection(1); // counter-clockwise
-    this->direction = 1;
-    this->step(this->revolutions * this->stepsIn2pi);
-  }
-}
-
 /*
  * Command number of steps (cw/ccw) for stepper
  */
@@ -100,21 +87,25 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
       this->phi_flag = false;
   }
 
-  if (abs(encoder_data) > 95 and this->prev_encoder_data != 0) { // check revolutions about the 0 position
-      int sign_curr = encoder_data/abs(encoder_data);
-      int sign_prev = this->prev_encoder_data/abs(this->prev_encoder_data);
-
-      if (sign_curr != sign_prev) { // compare signs
-        if (sign_curr == 1 and sign_prev == -1) {
-            this->revolutions -= 1; // clockwise
-        } else if (sign_curr == -1 and sign_prev == 1) {
-            this->revolutions += 1; // counter-clockwise
-        }
-      }
-  }
-  this->prev_encoder_data = encoder_data;
+  this->checkRevolutions(encoder_data); // update revolution count
 
   return steps;
+}
+
+void Stepper::checkRevolutions(int encoder_data) {
+    if (abs(encoder_data) > 95 and this->prev_encoder_data != 0) { // check revolutions about the -100, 99 position
+        int sign_curr = encoder_data/abs(encoder_data);
+        int sign_prev = this->prev_encoder_data/abs(this->prev_encoder_data);
+
+        if (sign_curr != sign_prev) { // compare signs
+            if (sign_curr == 1 and sign_prev == -1) {
+                this->revolutions -= 1; // clockwise
+            } else if (sign_curr == -1 and sign_prev == 1) {
+                this->revolutions += 1; // counter-clockwise
+            }
+        }
+    }
+    this->prev_encoder_data = encoder_data;
 }
 
 /*
@@ -167,6 +158,23 @@ void Stepper::step(int steps_to_move) {
   	    this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
     }
   }
+}
+
+/*
+ * Unwind stepper wire and update revolution counter
+ */
+void Stepper::unwind(int encoder_data) {
+  if (this->revolutions > 0) {
+    this->setDirection(0); // clockwise
+    this->direction = 0;
+    this->step(this->revolutions * this->stepsIn2pi);
+  } else if (this->revolutions < 0) {
+    this->setDirection(1); // counter-clockwise
+    this->direction = 1;
+    this->step(this->revolutions * this->stepsIn2pi);
+  }
+
+  this->checkRevolutions(encoder_data); // update during unwind
 }
 
 /*

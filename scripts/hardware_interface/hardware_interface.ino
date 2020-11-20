@@ -143,8 +143,8 @@ void modeCallback(const std_msgs::Int8 &msg) {
         abs(stepper3.revolutions) >= UNWIND_ON or abs(stepper4.revolutions) >= UNWIND_ON)) {
       unwindFlag = 1;
     }
-    if (abs(stepper1.revolutions) == UNWIND_OFF or abs(stepper2.revolutions) == UNWIND_OFF or
-        abs(stepper3.revolutions) == UNWIND_OFF or abs(stepper4.revolutions) == UNWIND_OFF) {
+    if (abs(stepper1.revolutions) == UNWIND_OFF and abs(stepper2.revolutions) == UNWIND_OFF and
+        abs(stepper3.revolutions) == UNWIND_OFF and abs(stepper4.revolutions) == UNWIND_OFF) {
       unwindFlag = 0;
     }
   } else { // turn off in trajectory mode (any other mode)
@@ -247,10 +247,10 @@ void loop() {
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
   } else if (unwindFlag == 1) { // if unwind flag on unwind steppers
-    stepper1.unwind();
-    stepper2.unwind();
-    stepper3.unwind();
-    stepper4.unwind();
+    stepper1.unwind(enc76_wrap);
+    stepper2.unwind(enc80_wrap);
+    stepper3.unwind(enc84_wrap);
+    stepper4.unwind(enc88_wrap);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);
