@@ -126,13 +126,6 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   phi_des4 = (int) ((msg.phi_arr.data[3] * RAD_2_DEG) / PHI_STEP);
 
   callbackTime = millis();
-  if (millis() - encTime > ENCODERWAIT){
-    encoder76 = encoder.checkEncoder(76);
-    encoder80 = encoder.checkEncoder(80);
-    encoder84 = encoder.checkEncoder(84);
-    encoder88 = encoder.checkEncoder(88);
-    encTime = millis();
-  }
   //chatter_pub.publish(&test);
 }
 
@@ -235,10 +228,18 @@ void loop() {
     rf_data.kill = 0;
   }
 
+  if (millis() - encTime > ENCODERWAIT){
+    encoder76 = encoder.checkEncoder(76);
+    encoder80 = encoder.checkEncoder(80);
+    encoder84 = encoder.checkEncoder(84);
+    encoder88 = encoder.checkEncoder(88);
+    encTime = millis();
+  }
   int enc76_wrap = wrapToSteps(encoder76);
   int enc80_wrap = wrapToSteps(encoder80);
   int enc84_wrap = wrapToSteps(encoder84);
   int enc88_wrap = wrapToSteps(encoder88);
+
 
   if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) { // actuate robot if callback is within time window, kill switch is off and not unwinding
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
@@ -251,19 +252,11 @@ void loop() {
     stepper2.unwind(enc80_wrap);
     stepper3.unwind(enc84_wrap);
     stepper4.unwind(enc88_wrap);
-    encoder76 = encoder.checkEncoder(76);
-    encoder80 = encoder.checkEncoder(80);
-    encoder84 = encoder.checkEncoder(84);
-    encoder88 = encoder.checkEncoder(88);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);
     stepper2.commandStepper(enc80_wrap, 25);
     stepper3.commandStepper(enc84_wrap, 25);
     stepper4.commandStepper(enc88_wrap, 25);
-    encoder76 = encoder.checkEncoder(76);
-    encoder80 = encoder.checkEncoder(80);
-    encoder84 = encoder.checkEncoder(84);
-    encoder88 = encoder.checkEncoder(88);
   }
 }

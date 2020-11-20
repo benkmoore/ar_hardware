@@ -93,7 +93,7 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
 }
 
 void Stepper::checkRevolutions(int encoder_data) {
-    if (abs(encoder_data) > 95 and this->prev_encoder_data != 0) { // check revolutions about the -100, 99 position
+    if (abs(encoder_data) > 90 and this->prev_encoder_data != 0) { // check revolutions about the -100, 99 position
         int sign_curr = encoder_data/abs(encoder_data);
         int sign_prev = this->prev_encoder_data/abs(this->prev_encoder_data);
 
