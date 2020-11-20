@@ -11,7 +11,7 @@
 #include "std_msgs/Int8.h"
 
 // ROS Serial constants
-#define NUM_PUBS 2
+#define NUM_PUBS 3
 #define NUM_SUBS 3
 #define BAUD_RATE 57600                               // bits/s
 #define IN_BUFFER_SIZE 512                            // bytes
@@ -94,7 +94,7 @@ float encTime = millis();
    -------------------------- Controller commands to motor actuation --------------------------
 */
 
-ros::NodeHandle_<ArduinoHardware, NUM_PUBS, NUM_SUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
+ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -136,12 +136,11 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 }
 
 void modeCallback(const std_msgs::Int8 &msg) {
+  unwindFlag = 0;
   if (msg.data == 1) { // if in idle mode and wheels are wrapped turn unwind on
     if ((abs(stepper1.totalSteps) >= UNWIND_THRESHOLD or abs(stepper2.totalSteps) >= UNWIND_THRESHOLD or abs(stepper3.totalSteps) >= UNWIND_THRESHOLD or abs(stepper4.totalSteps) >= UNWIND_THRESHOLD)) {
       unwindFlag = 1;
     }
-  } else { // if not in idle turn unwind off
-      unwindFlag = 0;
   }
 }
 
