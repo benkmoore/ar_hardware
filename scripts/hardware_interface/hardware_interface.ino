@@ -21,7 +21,7 @@
 // DC motor velocity map
 #define MAX_PWM 2600                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
 #define MIN_PWM 2115                                  // 12 bit value converted to analog voltage
-#define MAX_VEL 1.04                                   // m/s
+#define MAX_VEL 1.04                                  // m/s
 #define MIN_VEL 0.25                                  // m/s
 
 // Stepper motor constants
@@ -33,7 +33,8 @@
 #define STEPS_THRESHOLD 10                            // steps from target to start stepper decceleration
 #define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
-#define UNWIND_THRESHOLD 50                          // steps
+#define UNWIND_ON 3                                   // revolutions
+#define UNWIND_OFF 0                                  // revolutions
 #define RAD_2_DEG 57.2957795
 
 // Encoder constants
@@ -136,13 +137,20 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 }
 
 void modeCallback(const std_msgs::Int8 &msg) {
-  unwindFlag = 0;
+
   if (msg.data == 1) { // if in idle mode and wheels are wrapped turn unwind on
-    if ((abs(stepper1.totalSteps) >= UNWIND_THRESHOLD or abs(stepper2.totalSteps) >= UNWIND_THRESHOLD or abs(stepper3.totalSteps) >= UNWIND_THRESHOLD or abs(stepper4.totalSteps) >= UNWIND_THRESHOLD)) {
+    if ((abs(stepper1.revolutions) >= UNWIND_ON or abs(stepper2.revolutions) >= UNWIND_ON or
+        abs(stepper3.revolutions) >= UNWIND_ON or abs(stepper4.revolutions) >= UNWIND_ON)) {
       unwindFlag = 1;
     }
+    if (abs(stepper1.revolutions) == UNWIND_OFF or abs(stepper2.revolutions) == UNWIND_OFF or
+        abs(stepper3.revolutions) == UNWIND_OFF or abs(stepper4.revolutions) == UNWIND_OFF) {
+      unwindFlag = 0;
+    }
+  } else { // turn off in trajectory mode (any other mode)
+      unwindFlag = 0;
   }
-  test.data = stepper4.totalSteps;
+  test.data = stepper4.revolutions;
   chatter_pub.publish(&test);
 }
 
