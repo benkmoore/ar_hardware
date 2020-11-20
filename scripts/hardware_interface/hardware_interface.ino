@@ -251,6 +251,10 @@ void loop() {
     stepper2.unwind(enc80_wrap);
     stepper3.unwind(enc84_wrap);
     stepper4.unwind(enc88_wrap);
+    encoder76 = encoder.checkEncoder(76);
+    encoder80 = encoder.checkEncoder(80);
+    encoder84 = encoder.checkEncoder(84);
+    encoder88 = encoder.checkEncoder(88);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);

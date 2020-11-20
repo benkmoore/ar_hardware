@@ -164,6 +164,8 @@ void Stepper::step(int steps_to_move) {
  * Unwind stepper wire and update revolution counter
  */
 void Stepper::unwind(int encoder_data) {
+  this->checkRevolutions(encoder_data); // update during unwind
+
   if (this->revolutions > 0) {
     this->setDirection(0); // clockwise
     this->direction = 0;
@@ -174,7 +176,6 @@ void Stepper::unwind(int encoder_data) {
     this->step(this->revolutions * this->stepsIn2pi);
   }
 
-  this->checkRevolutions(encoder_data); // update during unwind
 }
 
 /*
