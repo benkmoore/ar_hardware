@@ -33,7 +33,7 @@
 #define STEPS_THRESHOLD 10                            // steps from target to start stepper decceleration
 #define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
-#define UNWIND_ON 3                                   // revolutions
+#define UNWIND_ON 2                                   // revolutions
 #define UNWIND_OFF 0                                  // revolutions
 #define RAD_2_DEG 57.2957795
 
