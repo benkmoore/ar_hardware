@@ -12,7 +12,7 @@
 
 // ROS Serial constants
 #define NUM_PUBS 2
-#define NUM_SUBS 2
+#define NUM_SUBS 3
 #define BAUD_RATE 57600                               // bits/s
 #define IN_BUFFER_SIZE 512                            // bytes
 #define OUT_BUFFER_SIZE 512                           // bytes
@@ -33,6 +33,7 @@
 #define STEPS_THRESHOLD 10                            // steps from target to start stepper decceleration
 #define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
+#define UNWIND_THRESHOLD 5                            // steps
 #define RAD_2_DEG 57.2957795
 
 // Encoder constants
@@ -60,7 +61,7 @@ Package rf_data;
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 bool phi_flag = false;
 int unwindFlag = 0;
-int finishedFlag = 0;
+
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 float VEL_SCALING = 0.94;
@@ -134,32 +135,23 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   //chatter_pub.publish(&test);
 }
 
-/*void modeCallback(std_msgs::Int8 &msg) {
-  if (msg.data == 1){
-    if ((abs(stepper1.totalSteps) >= 5 or abs(stepper2.totalSteps) >= 5 or abs(stepper3.totalSteps) >= 5 or abs(stepper4.totalSteps) >= 5) and finishedFlag == 1){
+void modeCallback(const std_msgs::Int8 &msg) {
+  if (msg.data == 1) { // if in idle mode and wheels are wrapped turn unwind on
+    if ((abs(stepper1.totalSteps) >= UNWIND_THRESHOLD or abs(stepper2.totalSteps) >= UNWIND_THRESHOLD or abs(stepper3.totalSteps) >= UNWIND_THRESHOLD or abs(stepper4.totalSteps) >= UNWIND_THRESHOLD)) {
       unwindFlag = 1;
-//stepper1.unwind();
-  //  stepper2.unwind();
-    //stepper3.unwind();
-    //stepper4.unwind();
     }
-    else
-    {
+  } else { // if not in idle turn unwind off
       unwindFlag = 0;
-    }
-
   }
-if (msg.data == 2){
-finishedFlag = 1;
 }
-}*/
 
-void killCallback(std_msgs::Int8 &msg){
+void killCallback(const std_msgs::Int8 &msg){
   rf_data.kill = msg.data;
   killTimer = millis();
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
+ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
 ros::Subscriber<std_msgs::Int8> kill_sub("/kill_switch", killCallback);
 
 /*
@@ -185,6 +177,7 @@ void setup() {
   hardware_interface.initNode();
   hardware_interface.subscribe(controller_cmds_sub);
   hardware_interface.subscribe(kill_sub);
+  hardware_interface.subscribe(mode_sub);
 
   //hardware_interface.advertise(chatter_pub);
 
@@ -227,10 +220,7 @@ void setup() {
 void loop() {
   hardware_interface.spinOnce();
   //chatter_pub.publish(&test);
-  //if (rf_Coms.available()) {
-    //rf_Coms.read( &rf_data, sizeof(rf_data) );
-//rf_data.kill = 0;
-  // }
+  //test.data = stepper4.readStatus();
 
   if(millis() - killTimer > MAX_CALLBACK_TIME){
     rf_data.kill = 0;
@@ -241,16 +231,13 @@ void loop() {
   int enc84_wrap = wrapToSteps(encoder84);
   int enc88_wrap = wrapToSteps(encoder88);
 
-  //test.data = stepper4.readStatus();
-
-  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) /*and unwindFlag == 0*/) {
+  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) { // actuate robot if callback is within time window, kill switch is off and not unwinding
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
     stepper1.commandStepper(enc76_wrap, phi_des1);
     stepper2.commandStepper(enc80_wrap, phi_des2);
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
-  } else /*if (unwindFlag == 0)*/{
-    // shutdown robot if kill switch is on or no cmds recieved within last time window
+  } else if (rf_data.kill == 1) { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
     stepper1.commandStepper(enc76_wrap, 25);
     stepper2.commandStepper(enc80_wrap, 25);
@@ -260,12 +247,10 @@ void loop() {
     encoder80 = encoder.checkEncoder(80);
     encoder84 = encoder.checkEncoder(84);
     encoder88 = encoder.checkEncoder(88);
+  } else if (unwindFlag == 1) { // if unwind flag on unwind steppers
+    stepper1.unwind();
+    stepper2.unwind();
+    stepper3.unwind();
+    stepper4.unwind();
   }
-// else{
-// stepper1.unwind();
-//     stepper2.unwind();
-//     stepper3.unwind();
-//     stepper4.unwind();
-//     }
-
 }
