@@ -9,6 +9,7 @@
 #include "RF24.h"
 #include "std_msgs/UInt8.h"
 #include "std_msgs/Int8.h"
+#include "stdlib.h"
 
 // ROS Serial constants
 #define NUM_PUBS 3
@@ -65,7 +66,6 @@ int unwindFlag = 0;
 
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-float VEL_SCALING = 0.94;
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -91,11 +91,22 @@ float encTime = millis();
 std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
 
+float VEL_SCALES[4][5] = { {1,1,1,1,1},  // robot1
+                           {1,1,1,1,1},  // robot2
+                           {1,1,1,1,1},  // robot3
+                           {1,1,1,1,1} };// robot4
+
 /*
    -------------------------- Controller commands to motor actuation --------------------------
 */
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
+String ns = ros::this_node::getNamespace();
+char ns_idx = ns.charAt(6);
+int ns_int = atoi(ns_idx) - 1;
+
+float wheel_scales = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
+float vel_scale = VEL_SCALES[ns_int][0];
 
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
@@ -105,7 +116,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     float omega = msg.omega_arr.data[i];
 	  msg.omega_arr.data[i] = constrain(omega, 0, MAX_VEL);
     if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
-      pwmVal[i] =  map(VEL_SCALING*msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      pwmVal[i] =  map(vel_scale * msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     } else {
       pwmVal[i] = 0;
     }
@@ -116,7 +127,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       mcp.fastWrite(0,0,0,0);
   }
   else {
-      mcp.fastWrite(pwmVal[0]*1.03, pwmVal[1]*1.03, pwmVal[2]*1.01, pwmVal[3]*0.945);
+      mcp.fastWrite(pwmVal[0]*wheel_scales[0], pwmVal[1]*wheel_scales[1], pwmVal[2]*wheel_scales[2], pwmVal[3]**wheel_scales[3]);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
