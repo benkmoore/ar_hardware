@@ -91,21 +91,20 @@ float encTime = millis();
 std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
 
-float VEL_SCALES[4][5] = { {1,1,1,1,1},  // robot1
-                           {1,1,1,1,1},  // robot2
-                           {1,1,1,1,1},  // robot3
-                           {1,1,1,1,1} };// robot4
+// 0 column = vel scale on robot, 1-4 column = vel scale on wheels
+float VEL_SCALES[4][5] = { {0.94,1,1,1,1},  		 // robot1
+                           {0.94,1,1,0.95,1},  		 // robot2
+                           {0.94,1.06,1.06,1.02,0.945},  // robot3
+                           {0.94,0.94,0.94,1.05,1.05} }; // robot4
 
 /*
    -------------------------- Controller commands to motor actuation --------------------------
 */
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
-String ns = ros::this_node::getNamespace();
-char ns_idx = ns.charAt(6);
-int ns_int = atoi(ns_idx) - 1;
 
-float wheel_scales = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
+int ns_int = 1; // robot1 = 0, ... robot4 = 3 
+float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
 // define ROS node name, rate, subscriber to /controller_cmds
@@ -127,7 +126,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       mcp.fastWrite(0,0,0,0);
   }
   else {
-      mcp.fastWrite(pwmVal[0]*wheel_scales[0], pwmVal[1]*wheel_scales[1], pwmVal[2]*wheel_scales[2], pwmVal[3]**wheel_scales[3]);
+      mcp.fastWrite(pwmVal[0]*wheel_scales[0], pwmVal[1]*wheel_scales[1], pwmVal[2]*wheel_scales[2], pwmVal[3]*wheel_scales[3]);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
