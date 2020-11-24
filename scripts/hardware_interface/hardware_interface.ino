@@ -40,27 +40,26 @@
 
 // Encoder constants
 #define ENC_CPR 4096                                  // Counts Per Revolution
-#define ENCODERWAIT 50
+#define ENCODERWAIT 50                                // wait time in ms to check encoder position
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
-#define DCREVIVE 1000
+#define DCREVIVE 1000                                 // time in ms
+#define KILLTIME 1000                                 // time in ms
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4, N_StepperMotors = 4;
 
-// Define rf radio
-RF24 rf_Coms (5, 6);
 struct package
 {
   int kill = 0;
   float throttle = 0.0;
   float phi = 0.0;
 };
-byte addresses[][6] = {"3"};
 typedef struct package Package;
 Package rf_data;
 
+int kill = 0;
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm
 int StepperMotorPins[N_StepperMotors] = {10, 36, 37, 38};
 bool phi_flag = false;
@@ -83,7 +82,7 @@ Adafruit_MCP4728 mcp;
 int phi_des1 = 25, phi_des2 = 25, phi_des3 = 25, phi_des4 = 25;
 int pwmVal[N_DCMotors] = {0,0,0,0};
 int callbackTime;
-int killTimer;
+int killTime;
 
 float encoder76 = encoder.checkEncoder(76);
 float encoder80 = encoder.checkEncoder(80);
@@ -92,7 +91,8 @@ float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
 float dcTime = millis();
 std_msgs::Float64 test;
-ros::Publisher chatter_pub("chatter", &test);
+
+//ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
 float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
@@ -118,7 +118,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
   for (int i = 0; i < N_DCMotors; i++) {
     float omega = msg.omega_arr.data[i];
 	  msg.omega_arr.data[i] = constrain(omega, 0, MAX_VEL);
-    if (msg.omega_arr.data[i] >= MIN_VEL && rf_data.kill == 0) {
+    if (msg.omega_arr.data[i] >= MIN_VEL && kill == 0) {
       pwmVal[i] =  map(vel_scale * msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     } else {
       pwmVal[i] = 0;
@@ -157,22 +157,19 @@ void modeCallback(const std_msgs::Int8 &msg) {
   } else { // turn off in trajectory mode (any other mode)
       unwindFlag = 0;
   }
-  test.data = stepper4.revolutions;
-  chatter_pub.publish(&test);
+  //test.data = stepper4.revolutions;
+  //chatter_pub.publish(&test);
 }
 
 void killCallback(const std_msgs::Int8 &msg){
-  rf_data.kill = msg.data;
-  killTimer = millis();
+  kill = msg.data;
+  killTime = millis();
 }
 
 ros::Subscriber<ar_commander::ControllerCmd> controller_cmds_sub("controller_cmds", controllerCmdCallback);
 ros::Subscriber<std_msgs::Int8> mode_sub("state_machine/mode", modeCallback);
 ros::Subscriber<std_msgs::Int8> kill_sub("/kill_switch", killCallback);
 
-/*
-   -------------------------- Support function --------------------------
-*/
 
 // wrap encoder output to [-100, 99] steps = [-pi, pi] rads
 int wrapToSteps(float encoder_data) {
@@ -216,14 +213,6 @@ void setup() {
   pinMode(Re, OUTPUT);
   pinMode(De, OUTPUT);
 
-  // Setup rf communication for kill switch
-  rf_Coms.begin();
-  rf_Coms.setChannel(115);
-  rf_Coms.setPALevel(RF24_PA_MAX);
-  rf_Coms.setDataRate( RF24_250KBPS ) ;
-  rf_Coms.openReadingPipe(1, addresses[0]);
-  rf_Coms.startListening();
-
   encoder76 = encoder.checkEncoder(76);
   encoder80 = encoder.checkEncoder(80);
   encoder84 = encoder.checkEncoder(84);
@@ -238,8 +227,9 @@ void loop() {
   //chatter_pub.publish(&test);
   //test.data = stepper4.readStatus();
 
-  if(millis() - killTimer > MAX_CALLBACK_TIME){
-    rf_data.kill = 0;
+  
+  if(millis() - killTime > KILLTIME){ //if kill cmd not received within time window, unkill
+    kill = 0;
   }
 
   if (millis() - encTime > ENCODERWAIT){
@@ -260,7 +250,7 @@ void loop() {
   int enc88_wrap = wrapToSteps(encoder88);
 
 
-  if ((rf_data.kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) { // actuate robot if callback is within time window, kill switch is off and not unwinding
+  if ((kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) { // actuate robot if callback is within time window, kill switch is off and not unwinding
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps
     stepper1.commandStepper(enc76_wrap, phi_des1);
     stepper2.commandStepper(enc80_wrap, phi_des2);
