@@ -96,7 +96,7 @@ ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
 float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
-                           {1.02,1,1,1,1},  		 // robot2
+                           {1.06,1,1,1,1},  		 // robot2
                            {0.92,1.06,1.06,1.02,0.945},  // robot3
                            {0.94,0.94,0.94,1.05,1.05} }; // robot4
 
