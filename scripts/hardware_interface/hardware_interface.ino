@@ -44,6 +44,8 @@
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
+#define DCREVIVE 1000
+
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4, N_StepperMotors = 4;
 
@@ -88,6 +90,7 @@ float encoder80 = encoder.checkEncoder(80);
 float encoder84 = encoder.checkEncoder(84);
 float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
+float dcTime = millis();
 std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
 
@@ -245,6 +248,11 @@ void loop() {
     encoder88 = encoder.checkEncoder(88);
     encTime = millis();
   }
+  if(millis() - dc_time > DCREVIVE){
+    mcp.fastWrite(0,0,0,0);
+    dc_time = millis();
+  }
+
   int enc76_wrap = wrapToSteps(encoder76);
   int enc80_wrap = wrapToSteps(encoder80);
   int enc84_wrap = wrapToSteps(encoder84);
