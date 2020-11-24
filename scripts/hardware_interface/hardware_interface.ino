@@ -106,7 +106,6 @@ float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-<<<<<<< HEAD
 
 int ns_int = 2; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
