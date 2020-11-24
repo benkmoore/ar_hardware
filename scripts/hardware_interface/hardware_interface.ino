@@ -95,9 +95,9 @@ std_msgs::Float64 test;
 ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
-float VEL_SCALES[4][5] = { {0.94,1,1,1,1},  		 // robot1
+float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
                            {0.94,1,1,0.95,1},  		 // robot2
-                           {0.94,1.06,1.06,1.02,0.945},  // robot3
+                           {0.92,1.06,1.06,1.02,0.945},  // robot3
                            {0.94,0.94,0.94,1.05,1.05} }; // robot4
 
 /*
@@ -106,7 +106,7 @@ float VEL_SCALES[4][5] = { {0.94,1,1,1,1},  		 // robot1
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-int ns_int = 1; // robot1 = 0, ... robot4 = 3 
+int ns_int = 0; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
@@ -248,9 +248,9 @@ void loop() {
     encoder88 = encoder.checkEncoder(88);
     encTime = millis();
   }
-  if(millis() - dc_time > DCREVIVE){
+  if(millis() - dcTime > DCREVIVE){
     mcp.fastWrite(0,0,0,0);
-    dc_time = millis();
+    dcTime = millis();
   }
 
   int enc76_wrap = wrapToSteps(encoder76);
