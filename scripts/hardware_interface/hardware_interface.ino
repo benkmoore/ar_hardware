@@ -44,7 +44,7 @@
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
-#define DCREVIVE 1000                                 // time in ms
+#define DCREVIVE 2000                                 // time in ms
 #define KILLTIME 1000                                 // time in ms
 
 // Input number of DC motors, stepper motors in use
@@ -106,8 +106,7 @@ float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-
-int ns_int = 2; // robot1 = 0, ... robot4 = 3 
+int ns_int = 1; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
@@ -192,7 +191,7 @@ void setup() {
   hardware_interface.subscribe(kill_sub);
   hardware_interface.subscribe(mode_sub);
 
-  hardware_interface.advertise(chatter_pub);
+  //hardware_interface.advertise(chatter_pub);
 
   // Setup analog board to use 2.048v as vref
   mcp.begin();
