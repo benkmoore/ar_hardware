@@ -21,16 +21,16 @@
 
 // DC motor velocity map
 #define MAX_PWM 2600                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
-#define MIN_PWM 2115                                  // 12 bit value converted to analog voltage
+#define MIN_PWM 2200                                  // 12 bit value converted to analog voltage
 #define MAX_VEL 1.04                                  // m/s
-#define MIN_VEL 0.25                                  // m/s
+#define MIN_VEL 0.35                                  // m/s
 
 // Stepper motor constants
 #define MAX_MILLIAMPS 2800                            // mA
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
 #define DECAY_MODE StepperDecayMode::AutoMixed        // PWM decay mode (recommended default)
 #define MAX_STEPPER_VEL 200                           // step/s
-#define MIN_STEPPER_VEL 40                            // step/s
+#define MIN_STEPPER_VEL 60                            // step/s
 #define STEPS_THRESHOLD 10                            // steps from target to start stepper decceleration
 #define MAX_PHI_DELTA 10                              // steps
 #define PHI_STEP 1.8                                  // deg/step
@@ -97,7 +97,7 @@ std_msgs::Float64 test;
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
 float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
                            {1.06,1,1,1,1},  		 // robot2
-                           {0.92,1.06,1.06,1.02,0.945},  // robot3
+                           {1,1.06,1.06,1.02,1},  // robot3
                            {0.94,0.94,0.94,1.05,1.05} }; // robot4
 
 /*
@@ -106,7 +106,7 @@ float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-int ns_int = 1; // robot1 = 0, ... robot4 = 3 
+int ns_int = 2; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
