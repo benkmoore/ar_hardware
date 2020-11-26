@@ -95,10 +95,17 @@ std_msgs::Float64 test;
 //ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
-float VEL_SCALES[4][5] = { {180,0,0,0,0},  		 // robot1
-                           {0,190,200,-40,130},  		 // robot2
+
+float VEL_SCALES[4][5] = { {180,0,0,0,0},                // robot1
+                           {0,190,200,-40,130},                  // robot2
                            {0,220,210,15,-80},                 // robot3
                            {0,0,200,200,0} }; // robot4
+
+int VEL_ANALOG[4][4] = { {0.5,1.09,2380,2680},                // robot1
+                           {0.25,0.98,2200,2700},                  // robot2
+                           {0.31,1.08,2200,2700},                 // robot3
+                           {0.42,2200,1.05,2600} }; // robot4
+
 
 /*
    -------------------------- Controller commands to motor actuation --------------------------
