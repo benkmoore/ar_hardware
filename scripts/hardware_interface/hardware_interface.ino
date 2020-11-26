@@ -95,10 +95,10 @@ std_msgs::Float64 test;
 //ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
-float VEL_SCALES[4][5] = { {220,0,0,0,0},  		 // robot1
+float VEL_SCALES[4][5] = { {180,0,0,0,0},  		 // robot1
                            {0,190,200,-40,130},  		 // robot2
-                           {0,115,95,65,-80},                 // robot3
-                           {0.94,0.94,0.94,1.05,1.05} }; // robot4
+                           {0,220,210,15,-80},                 // robot3
+                           {0,0,200,200,0} }; // robot4
 
 /*
    -------------------------- Controller commands to motor actuation --------------------------
@@ -106,7 +106,7 @@ float VEL_SCALES[4][5] = { {220,0,0,0,0},  		 // robot1
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-int ns_int = 0; // robot1 = 0, ... robot4 = 3 
+int ns_int = 3; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
