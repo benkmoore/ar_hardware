@@ -106,10 +106,10 @@ int VEL_ANALOG[4][4] = { {0.5,1.09,2380,2680},                // robot1
    -------------------------- Controller commands to motor actuation --------------------------
 */
 
-float min_vel  = VEL_ANALOG[ns_int][0]
-float max_vel  = VEL_ANALOG[ns_int][1]
-int min_pwm  = VEL_ANALOG[ns_int][2]
-int max_pwm  = VEL_ANALOG[ns_int][3] // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
+float min_vel  = VEL_ANALOG[ns_int][0];
+float max_vel  = VEL_ANALOG[ns_int][1];
+int min_pwm  = VEL_ANALOG[ns_int][2];
+int max_pwm  = VEL_ANALOG[ns_int][3]; // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
 
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
