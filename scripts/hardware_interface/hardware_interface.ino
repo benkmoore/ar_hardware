@@ -19,12 +19,6 @@
 #define OUT_BUFFER_SIZE 512                           // bytes
 #define MAX_CALLBACK_TIME 1000                        // ms
 
-// DC motor velocity map
-#define MAX_PWM 2600                                  // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
-#define MIN_PWM 2200                                  // 12 bit value converted to analog voltage
-#define MAX_VEL 1.04                                  // m/s
-#define MIN_VEL 0.35                                  // m/s
-
 // Stepper motor constants
 #define MAX_MILLIAMPS 2800                            // mA
 #define MICRO_STEP_SIZE 1                             // 1 step = 1/MICRO_STEP_SIZE
@@ -95,6 +89,7 @@ std_msgs::Float64 test;
 //ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
+int ns_int = 3; // robot1 = 0, ... robot4 = 3 
 
 float VEL_SCALES[4][5] = { {180,0,0,0,0},                // robot1
                            {0,190,200,-40,130},                  // robot2
@@ -111,9 +106,14 @@ int VEL_ANALOG[4][4] = { {0.5,1.09,2380,2680},                // robot1
    -------------------------- Controller commands to motor actuation --------------------------
 */
 
+float min_vel  = VEL_ANALOG[ns_int][0]
+float max_vel  = VEL_ANALOG[ns_int][1]
+int min_pwm  = VEL_ANALOG[ns_int][2]
+int max_pwm  = VEL_ANALOG[ns_int][3] // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
+
+
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-int ns_int = 3; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
@@ -123,9 +123,9 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 
   for (int i = 0; i < N_DCMotors; i++) {
     float omega = msg.omega_arr.data[i];
-	  msg.omega_arr.data[i] = constrain(omega, 0, MAX_VEL);
-    if (msg.omega_arr.data[i] >= MIN_VEL && kill == 0) {
-      pwmVal[i] =  vel_scale+map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+	  msg.omega_arr.data[i] = constrain(omega, 0, max_vel);
+    if (msg.omega_arr.data[i] >= min_vel && kill == 0) {
+      pwmVal[i] =  map(msg.omega_arr.data[i], min_vel, max_vel, min_pwm, max_pwm);
     } else {
       pwmVal[i] = 0;
     }
