@@ -95,9 +95,9 @@ std_msgs::Float64 test;
 //ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
-float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
-                           {1,1,1,1,1},  		 // robot2
-                           {1,115,95,65,-80},                 // robot3
+float VEL_SCALES[4][5] = { {220,0,0,0,0},  		 // robot1
+                           {0,190,200,-40,130},  		 // robot2
+                           {0,115,95,65,-80},                 // robot3
                            {0.94,0.94,0.94,1.05,1.05} }; // robot4
 
 /*
@@ -106,7 +106,7 @@ float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
-int ns_int = 2; // robot1 = 0, ... robot4 = 3 
+int ns_int = 0; // robot1 = 0, ... robot4 = 3 
 float wheel_scales[4] = {VEL_SCALES[ns_int][1], VEL_SCALES[ns_int][2], VEL_SCALES[ns_int][3], VEL_SCALES[ns_int][4]};
 float vel_scale = VEL_SCALES[ns_int][0];
 
@@ -118,7 +118,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
     float omega = msg.omega_arr.data[i];
 	  msg.omega_arr.data[i] = constrain(omega, 0, MAX_VEL);
     if (msg.omega_arr.data[i] >= MIN_VEL && kill == 0) {
-      pwmVal[i] =  map(vel_scale * msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
+      pwmVal[i] =  vel_scale+map(msg.omega_arr.data[i], MIN_VEL, MAX_VEL, MIN_PWM, MAX_PWM);
     } else {
       pwmVal[i] = 0;
     }
