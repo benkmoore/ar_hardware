@@ -96,8 +96,8 @@ std_msgs::Float64 test;
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
 float VEL_SCALES[4][5] = { {1.12,1,1,1,1},  		 // robot1
-                           {1.06,1,1,1,1},  		 // robot2
-                           {1,1.06,1.06,1.02,1},  // robot3
+                           {1,1,1,1,1},  		 // robot2
+                           {1,115,95,65,-80},                 // robot3
                            {0.94,0.94,0.94,1.05,1.05} }; // robot4
 
 /*
@@ -129,7 +129,7 @@ void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
       mcp.fastWrite(0,0,0,0);
   }
   else {
-      mcp.fastWrite(pwmVal[0]*wheel_scales[0], pwmVal[1]*wheel_scales[1], pwmVal[2]*wheel_scales[2], pwmVal[3]*wheel_scales[3]);
+      mcp.fastWrite(pwmVal[0]+wheel_scales[0], pwmVal[1]+wheel_scales[1], pwmVal[2]+wheel_scales[2], pwmVal[3]+wheel_scales[3]);
   }
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
