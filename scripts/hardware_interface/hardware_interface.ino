@@ -4,6 +4,7 @@
 #include "Encoder.h"
 #include "SPI.h"
 #include "src/ar_stepper.h"
+#include "src/ar_bldc.h"
 #include "Wire.h"
 #include "Adafruit_MCP4728.h"
 #include "RF24.h"
@@ -70,11 +71,10 @@ Stepper stepper4(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA
 
 // Define encoders and PWM to analog board
 AMTEncoder encoder(Re, De);
-Adafruit_MCP4728 mcp;
 
 // Variables for controller callback
 int phi_des1 = 25, phi_des2 = 25, phi_des3 = 25, phi_des4 = 25;
-int pwmVal[N_DCMotors] = {0,0,0,0};
+int omega_cmd[N_DCMotors] = {0,0,0,0};
 int callbackTime;
 int killTime;
 
@@ -89,7 +89,7 @@ std_msgs::Float64 test;
 //ros::Publisher chatter_pub("chatter", &test);
 
 // 0 column = vel scale on robot, 1-4 column = vel scale on wheels
-int ns_int = 3; // robot1 = 0, ... robot4 = 3 
+int ns_int = 3; // robot1 = 0, ... robot4 = 3
 
 float VEL_SCALES[4][5] = { {180,0,0,0,0},                // robot1
                            {0,190,200,-40,130},                  // robot2
@@ -121,23 +121,16 @@ float vel_scale = VEL_SCALES[ns_int][0];
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 // test.data = 1.0;
 
-  for (int i = 0; i < N_DCMotors; i++) {
+  for (int i = 0; i < N_DCMotors; i++) { // saturate cmds
     float omega = msg.omega_arr.data[i];
-	  msg.omega_arr.data[i] = constrain(omega, 0, max_vel);
-    if (msg.omega_arr.data[i] >= min_vel && kill == 0) {
-      pwmVal[i] =  map(msg.omega_arr.data[i], min_vel, max_vel, min_pwm, max_pwm);
-    } else {
-      pwmVal[i] = 0;
-    }
+	omega_cmd[i] = constrain(omega, 0, max_vel);
   }
 
   phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
-  if (phi_flag && pwmVal[0] != 0) {
-      mcp.fastWrite(0,0,0,0);
+  if (phi_flag || kill != 0) { // write all BLDCs to 0 if phi flag or kill switch is on
+      omega_cmd = {0, 0, 0, 0};
   }
-  else {
-      mcp.fastWrite(pwmVal[0]+wheel_scales[0], pwmVal[1]+wheel_scales[1], pwmVal[2]+wheel_scales[2], pwmVal[3]+wheel_scales[3]);
-  }
+  commandBLDCS();
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ((msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP);
@@ -186,6 +179,13 @@ int wrapToSteps(float encoder_data) {
   return encoder_pos;
 }
 
+void commandBLDCS() {
+  bldc_1.commandBLDC(omega_cmd[0]);
+  bldc_2.commandBLDC(omega_cmd[1]);
+  bldc_3.commandBLDC(omega_cmd[2]);
+  bldc_4.commandBLDC(omega_cmd[3]);
+}
+
 /*
    -------------------------- Setup Interface --------------------------
 */
@@ -199,14 +199,6 @@ void setup() {
   hardware_interface.subscribe(mode_sub);
 
   //hardware_interface.advertise(chatter_pub);
-
-  // Setup analog board to use 2.048v as vref
-  mcp.begin();
-  mcp.setChannelValue(MCP4728_CHANNEL_A, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
-  mcp.setChannelValue(MCP4728_CHANNEL_B, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
-  mcp.setChannelValue(MCP4728_CHANNEL_C, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
-  mcp.setChannelValue(MCP4728_CHANNEL_D, 0, MCP4728_VREF_INTERNAL, MCP4728_GAIN_1X);
-  mcp.saveToEEPROM();
 
   // Setup stepper motors
   SPI.begin();
@@ -223,6 +215,43 @@ void setup() {
   encoder80 = encoder.checkEncoder(80);
   encoder84 = encoder.checkEncoder(84);
   encoder88 = encoder.checkEncoder(88);
+
+  // Setup BLDCs
+  int NUM_PULSES_2PI = 20;
+  float controller_gains = {1, 0, 0}; // P, I, D
+
+  int hall_pins_1 = {1};
+  int hall_pins_2 = {2};
+  int hall_pins_3 = {3};
+  int hall_pins_4 = {4};
+  BLDC bldc_1( 5,  6, halls_1, controller_gains, NUM_PULSES_2PI);
+  BLDC bldc_2( 7,  8, halls_1, controller_gains, NUM_PULSES_2PI);
+  BLDC bldc_3( 9, 10, halls_1, controller_gains, NUM_PULSES_2PI);
+  BLDC bldc_4(11, 12, halls_1, controller_gains, NUM_PULSES_2PI);
+
+  // Setup hall sensor interrupts
+  pinMode(halls_1[0], INPUT);
+  pinMode(halls_1[1], INPUT);
+  pinMode(halls_1[2], INPUT);
+  pinMode(halls_1[3], INPUT);
+  attachInterrupt(digitalPinToInterrupt(halls_1[0]), updatePulseTime1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(halls_1[1]), updatePulseTime2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(halls_1[2]), updatePulseTime3, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(halls_1[3]), updatePulseTime4, CHANGE);
+}
+
+// TODO: move away from arduino intterupts - require static member functions forcing this duplication
+void updatePulseTime1() {
+    bldc_1->hall_arr[0].updatePulseTime();
+}
+void updatePulseTime2() {
+    bldc_2->hall_arr[0].updatePulseTime();
+}
+void updatePulseTime3() {
+    bldc_3->hall_arr[0].updatePulseTime();
+}
+void updatePulseTime4() {
+    bldc_4->hall_arr[0].updatePulseTime();
 }
 
 /*
@@ -233,7 +262,7 @@ void loop() {
   //chatter_pub.publish(&test);
   //test.data = stepper4.readStatus();
 
-  
+
   if(millis() - killTime > KILLTIME){ //if kill cmd not received within time window, unkill
     kill = 0;
   }
@@ -246,7 +275,7 @@ void loop() {
     encTime = millis();
   }
   if(millis() - dcTime > DCREVIVE){
-    mcp.fastWrite(0,0,0,0);
+    //mcp.fastWrite(0,0,0,0);
     dcTime = millis();
   }
 
@@ -268,7 +297,8 @@ void loop() {
     stepper3.unwind(enc84_wrap);
     stepper4.unwind(enc88_wrap);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
-    mcp.fastWrite(0,0,0,0);
+    omega_cmd = {0, 0, 0, 0};
+    commandBLDCS();
     stepper1.commandStepper(enc76_wrap, 25);
     stepper2.commandStepper(enc80_wrap, 25);
     stepper3.commandStepper(enc84_wrap, 25);
