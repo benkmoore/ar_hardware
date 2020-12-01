@@ -65,6 +65,10 @@ class Driver {
         // reset stepper register settings
         void resetSettings();
 
+        uint16_t readReg(uint8_t address);
+
+        void clearFaults();
+
         // register address identifiers
         uint16_t ctrl, torque, off, blank, decay, stall, drive;
 
@@ -73,6 +77,7 @@ class Driver {
         void selectChip();
         void deselectChip();
         uint16_t transferToSPI(uint16_t value);
+
 
         uint8_t cs_pin;
         SPISettings settings;
@@ -85,8 +90,14 @@ class Driver {
  */
 class Stepper {
   public:
+    int revolutions;                 // total revolutions moved by stepper positive or negative since leaving IDLE mode
+
     Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_phi_delta,
             int max_vel, int min_vel, int max_milliamps, int micro_step_size, StepperDecayMode decay_mode);
+
+     // turn stepper until steps + revolution compared to last IDLE mode = 0.
+    void unwind(int encoder_data);
+    void checkRevolutions(int encoder_data);
 
     // calculate steps from encoder data pos to desired phi
     int calculateSteps(int encoder_data, int phi_des);
@@ -107,6 +118,8 @@ class Stepper {
     bool getDirection();
     void checkDirection(int steps);
 
+    uint8_t readStatus();
+
     // instantiate stepper motor driver
     Driver driver;
 
@@ -122,8 +135,8 @@ class Stepper {
     void enableDriver();
 
     int direction;                  // tracks motor rotation direction
-    unsigned long step_delay;       // delay between steps, in us, based on speed
-    unsigned long last_step_time;   // time stamp in us of when the last step was taken
+    long step_delay;       // delay between steps, in us, based on speed
+    long last_step_time;   // time stamp in us of when the last step was taken
     int stepsIn2pi;                 // total number of steps this motor can take
     int micro_step_size;            // micro step size: 1,2,4,...,256
     float phi_step;                 // degrees per stepper step (deg/step)
@@ -132,6 +145,7 @@ class Stepper {
     int max_vel;                    // max continous veloicty for stepper rotation (steps/s)
     int min_vel;                    // min velocity which stepper will decelerate to (steps/s)
     int max_milliamps;              // max current stepper can draw through driver (mA)
+    int prev_encoder_data;
     StepperDecayMode decay_mode;    // decay mode on PWM signals
 };
 
@@ -148,11 +162,10 @@ class AMTEncoder {
         int checkEncoder(int address);  // checks position of desired encoder
 
     private:
-        long response;
+        long response;                  // output 12 bit number from encoder, goes from 0 to 4095 depending on shaft position
         int byteOut;
         uint8_t byteIn[3];
         int i;
-        bool flipflag;
         int Re, De;                      // Data and Receive enable pins
 };
 

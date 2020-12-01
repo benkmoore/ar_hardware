@@ -1,8 +1,6 @@
-
 #include "SPI.h"
 #include "Arduino.h"
 #include "ar_stepper.h"
-
 
 
 // ---------- STEPPER FUNCTIONS -----------
@@ -27,6 +25,8 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ph
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
   this->phi_flag = false;
+  this->revolutions = 0;
+  this->prev_encoder_data = 0;
 }
 
 void Stepper::setupDriver(int cs_pin) {
@@ -45,14 +45,15 @@ void Stepper::setupDriver(int cs_pin) {
  * Command number of steps (cw/ccw) for stepper
  */
 void Stepper::commandStepper(int enc_pos, int phi_des) {
+  //this->driver.clearFaults();
 
   int steps = this->calculateSteps(enc_pos, phi_des);
   this->controlSpeed(steps);
 
-  if (steps > 0) {
+  if (steps > 0) { // counter-clockwise
     this->direction = 1;
     this->setDirection(1);
-  } else if (steps < 0) {
+  } else if (steps < 0) { // clockwise
     this->direction = 0;
     this->setDirection(0);
   }
@@ -85,7 +86,25 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
       this->phi_flag = false;
   }
 
+  this->checkRevolutions(encoder_data); // update revolution count
+
   return steps;
+}
+
+void Stepper::checkRevolutions(int encoder_data) {
+    if (abs(encoder_data) > 90 and this->prev_encoder_data != 0) { // check revolutions about the -100, 99 position
+        int sign_curr = encoder_data/abs(encoder_data);
+        int sign_prev = this->prev_encoder_data/abs(this->prev_encoder_data);
+
+        if (sign_curr != sign_prev) { // compare signs
+            if (sign_curr == 1 and sign_prev == -1) {
+                this->revolutions -= 1; // clockwise
+            } else if (sign_curr == -1 and sign_prev == 1) {
+                this->revolutions += 1; // counter-clockwise
+            }
+        }
+    }
+    this->prev_encoder_data = encoder_data;
 }
 
 /*
@@ -94,12 +113,11 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
  * below MIN_VEL.
  */
 void Stepper::controlSpeed(int steps) {
-  if (abs(steps) > this->steps_threshold) {
+  if ((abs(steps) > this->steps_threshold) or steps == 0) {
     this->setSpeedRPM(this->max_vel);
   } else {
     this->setSpeedRPM(max(this->min_vel,int(this->max_vel/this->steps_threshold)*abs(steps)));
   }
-
 
 }
 
@@ -107,7 +125,7 @@ void Stepper::controlSpeed(int steps) {
  * Sets the speed in steps per sec
  */
 void Stepper::setSpeedRPM(long whatSpeed) {
-  this->step_delay = 1000L * 1000L /  whatSpeed;
+  this->step_delay = abs(1000L * 1000L /  whatSpeed);
 }
 
 /*
@@ -132,12 +150,31 @@ bool Stepper::getDirection() {
  */
 void Stepper::step(int steps_to_move) {
   if (abs(steps_to_move) > 0) {
-    unsigned long now = micros();
-    if (now - this->last_step_time >= this->step_delay) {
-      this->last_step_time = now;
-      this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
+    long now = micros();
+
+    if ((now - this->last_step_time) >= this->step_delay) {
+        this->last_step_time = now;
+  	    this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
     }
   }
+}
+
+/*
+ * Unwind stepper wire and update revolution counter
+ */
+void Stepper::unwind(int encoder_data) {
+  this->checkRevolutions(encoder_data); // update during unwind
+
+  if (this->revolutions > 0) {
+    this->setDirection(0); // clockwise
+    this->direction = 0;
+    this->step(this->revolutions * this->stepsIn2pi);
+  } else if (this->revolutions < 0) {
+    this->setDirection(1); // counter-clockwise
+    this->direction = 1;
+    this->step(this->revolutions * this->stepsIn2pi);
+  }
+
 }
 
 /*
@@ -192,12 +229,15 @@ void Stepper::setDecayMode(StepperDecayMode mode) {
   this->driver.writeReg(StepperRegAddr::DECAY, this->driver.decay);
 }
 
+uint8_t Stepper::readStatus() {
+  return this->driver.readReg((uint8_t)StepperRegAddr::STATUS);
+}
 
 
 // ---------- DRIVER FUNCTIONS -----------
 
 Driver::Driver() {
-  this->settings = SPISettings(2000000, MSBFIRST, SPI_MODE0);
+  this->settings = SPISettings(500000, MSBFIRST, SPI_MODE0);
 }
 
 
@@ -210,11 +250,22 @@ void Driver::setCSPin(uint8_t cs_pin) {
   pinMode(cs_pin, OUTPUT);
 }
 
+uint16_t Driver::readReg(uint8_t address) {
+    // Read/write bit and register address are the first 4 bits of the first
+    // byte; data is in the remaining 4 bits of the first byte combined with
+    // the second byte (12 bits total).
+
+    selectChip();
+    uint16_t dataOut = transferToSPI((0x8 | (address & 0b111)) << 12);
+    deselectChip();
+    return dataOut & 0xFFF;
+}
+
 /*
  * Reset driver setttings.
  */
 void Driver::resetSettings() {
-  this->ctrl   = 0xC10;
+  this->ctrl   = 0xC90;
   this->torque = 0x1FF;
   this->off    = 0x030;
   this->blank  = 0x080;
@@ -222,16 +273,20 @@ void Driver::resetSettings() {
   this->stall  = 0x040;
   this->drive  = 0xA59;
 
-  this->writeReg(StepperRegAddr::CTRL, this->ctrl);
   this->writeReg(StepperRegAddr::TORQUE, this->torque);
   this->writeReg(StepperRegAddr::OFF, this->off);
   this->writeReg(StepperRegAddr::BLANK, this->blank);
   this->writeReg(StepperRegAddr::DECAY, this->decay);
   this->writeReg(StepperRegAddr::STALL, this->stall);
   this->writeReg(StepperRegAddr::DRIVE, this->drive);
+  this->writeReg(StepperRegAddr::CTRL, this->ctrl);
 
   // clear status of motor on driver
   this->writeReg(StepperRegAddr::STATUS, 0);
+}
+
+void Driver::clearFaults() {
+  this->writeReg(StepperRegAddr::STATUS, ~0b00111111);
 }
 
 // Writes the specified value to a register.
@@ -247,6 +302,7 @@ void Driver::writeReg(uint8_t address, uint16_t value) {
 // Writes the specified value to a register.
 void Driver::writeReg(StepperRegAddr address, uint16_t value) {
   writeReg((uint8_t)address, value);
+  delayMicroseconds(5); // required to allow time to write to registers
 }
 
 void Driver::selectChip() {
@@ -268,7 +324,6 @@ uint16_t Driver::transferToSPI(uint16_t value) {
 
 AMTEncoder::AMTEncoder(int Re, int De){
   this->response = 0;
-  this->flipflag = false;
   this->Re = Re;
   this->De = De;
   Serial2.begin(115200);
@@ -286,7 +341,7 @@ int AMTEncoder::checkEncoder(int address) {
   Serial2.write(byteOut);
    //available = Serial2.availableForWrite();
    //Serial.println(available);
-   delayMicroseconds(400);
+   delayMicroseconds(1000);
   Serial2.flush();
   //available = Serial2.availableForWrite();
 //Serial.println(available);
