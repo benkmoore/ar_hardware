@@ -19,6 +19,8 @@ class HallSensor {
 
 class BLDC {
     public:
+        HallSensor *hall_arr;   // array of hall sensors for bldc motor
+
         BLDC(int output_pin, int *hall_sensors, float *controller_gains, int num_pulses_2pi); // constructor
 
         void commandBLDC(float omega_des); // command omega to motor
@@ -32,7 +34,6 @@ class BLDC {
         int output_pin;         // output pwm throttle pin
         int *hall_sensor_pins;  // hall sensor pins
         int num_halls;          // number of halls sensors
-        HallSensor *hall_arr;   // array of hall sensors for bldc motor
 
         int calculateCommand(float omega_des); // calculate pwm out based on omega error
         float getOmega(); // retrieve average of estiamte of omega from hall sensors

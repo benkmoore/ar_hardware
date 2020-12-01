@@ -45,6 +45,9 @@
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4, N_StepperMotors = 4;
 
+// Number of hall sensors in use
+const int NUM_HALLS = 1;
+
 struct package
 {
   int kill = 0;
@@ -63,6 +66,19 @@ int unwindFlag = 0;
 // DC Motor pins
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
 
+// Setup BLDCs
+int NUM_PULSES_2PI = 20;
+float controller_gains[3] = {1, 0, 0}; // P, I, D
+
+int hall_pins_1[NUM_HALLS] = {1};
+int hall_pins_2[NUM_HALLS] = {2};
+int hall_pins_3[NUM_HALLS] = {3};
+int hall_pins_4[NUM_HALLS] = {4};
+BLDC bldc_1( 5, hall_pins_1, controller_gains, NUM_PULSES_2PI);
+BLDC bldc_2( 7, hall_pins_2, controller_gains, NUM_PULSES_2PI);
+BLDC bldc_3( 9, hall_pins_3, controller_gains, NUM_PULSES_2PI);
+BLDC bldc_4(11, hall_pins_4, controller_gains, NUM_PULSES_2PI);
+
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
 Stepper stepper2(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -74,7 +90,7 @@ AMTEncoder encoder(Re, De);
 
 // Variables for controller callback
 int phi_des1 = 25, phi_des2 = 25, phi_des3 = 25, phi_des4 = 25;
-int omega_cmd[N_DCMotors] = {0,0,0,0};
+float omega_cmd[N_DCMotors] = {0, 0, 0, 0};
 int callbackTime;
 int killTime;
 
@@ -101,16 +117,15 @@ float VEL_ANALOG[4][4] = { {0.5,1.09,2380,2680},                // robot1
                            {0.31,1.08,2200,2700},                 // robot3
                            {0.42,1.05,2200,2600} }; // robot4
 
-
-/*
-   -------------------------- Controller commands to motor actuation --------------------------
-*/
-
 float min_vel  = VEL_ANALOG[ns_int][0];
 float max_vel  = VEL_ANALOG[ns_int][1];
 int min_pwm  = VEL_ANALOG[ns_int][2];
 int max_pwm  = VEL_ANALOG[ns_int][3]; // 12 bit value (0 -> 4095) converted to analog voltage (0v -> 2.048v)
 
+
+/*
+   -------------------------- Controller commands to motor actuation --------------------------
+*/
 
 ros::NodeHandle_<ArduinoHardware, NUM_SUBS, NUM_PUBS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE> hardware_interface;
 
@@ -120,17 +135,16 @@ float vel_scale = VEL_SCALES[ns_int][0];
 // define ROS node name, rate, subscriber to /controller_cmds
 void controllerCmdCallback(const ar_commander::ControllerCmd &msg) {
 // test.data = 1.0;
+  phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
 
   for (int i = 0; i < N_DCMotors; i++) { // saturate cmds
     float omega = msg.omega_arr.data[i];
 	omega_cmd[i] = constrain(omega, 0, max_vel);
+    if (phi_flag || kill != 0) { // write all BLDCs to 0 if phi flag or kill switch is on
+      omega_cmd[i] = 0;
+    }
   }
-
-  phi_flag = (stepper1.phi_flag or stepper2.phi_flag or stepper3.phi_flag or stepper4.phi_flag);
-  if (phi_flag || kill != 0) { // write all BLDCs to 0 if phi flag or kill switch is on
-      omega_cmd = {0, 0, 0, 0};
-  }
-  commandBLDCS();
+  commandBLDCS(omega_cmd);
 
   // rads to degrees to int steps: (rad*(deg/rad) / (deg/step) = step
   phi_des1 = (int) ((msg.phi_arr.data[0] * RAD_2_DEG) / PHI_STEP);
@@ -179,7 +193,7 @@ int wrapToSteps(float encoder_data) {
   return encoder_pos;
 }
 
-void commandBLDCS() {
+void commandBLDCS(float omega_cmd[N_DCMotors]) {
   bldc_1.commandBLDC(omega_cmd[0]);
   bldc_2.commandBLDC(omega_cmd[1]);
   bldc_3.commandBLDC(omega_cmd[2]);
@@ -216,42 +230,29 @@ void setup() {
   encoder84 = encoder.checkEncoder(84);
   encoder88 = encoder.checkEncoder(88);
 
-  // Setup BLDCs
-  int NUM_PULSES_2PI = 20;
-  float controller_gains = {1, 0, 0}; // P, I, D
-
-  int hall_pins_1 = {1};
-  int hall_pins_2 = {2};
-  int hall_pins_3 = {3};
-  int hall_pins_4 = {4};
-  BLDC bldc_1( 5,  6, halls_1, controller_gains, NUM_PULSES_2PI);
-  BLDC bldc_2( 7,  8, halls_1, controller_gains, NUM_PULSES_2PI);
-  BLDC bldc_3( 9, 10, halls_1, controller_gains, NUM_PULSES_2PI);
-  BLDC bldc_4(11, 12, halls_1, controller_gains, NUM_PULSES_2PI);
-
   // Setup hall sensor interrupts
-  pinMode(halls_1[0], INPUT);
-  pinMode(halls_1[1], INPUT);
-  pinMode(halls_1[2], INPUT);
-  pinMode(halls_1[3], INPUT);
-  attachInterrupt(digitalPinToInterrupt(halls_1[0]), updatePulseTime1, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(halls_1[1]), updatePulseTime2, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(halls_1[2]), updatePulseTime3, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(halls_1[3]), updatePulseTime4, CHANGE);
+  pinMode(hall_pins_1[0], INPUT);
+  pinMode(hall_pins_2[0], INPUT);
+  pinMode(hall_pins_3[0], INPUT);
+  pinMode(hall_pins_4[0], INPUT);
+  attachInterrupt(digitalPinToInterrupt(hall_pins_1[0]), updatePulseTime1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(hall_pins_2[0]), updatePulseTime2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(hall_pins_3[0]), updatePulseTime3, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(hall_pins_4[0]), updatePulseTime4, CHANGE);
 }
 
 // TODO: move away from arduino intterupts - require static member functions forcing this duplication
 void updatePulseTime1() {
-    bldc_1->hall_arr[0].updatePulseTime();
+    bldc_1.hall_arr[0].updatePulseTime();
 }
 void updatePulseTime2() {
-    bldc_2->hall_arr[0].updatePulseTime();
+    bldc_2.hall_arr[0].updatePulseTime();
 }
 void updatePulseTime3() {
-    bldc_3->hall_arr[0].updatePulseTime();
+    bldc_3.hall_arr[0].updatePulseTime();
 }
 void updatePulseTime4() {
-    bldc_4->hall_arr[0].updatePulseTime();
+    bldc_4.hall_arr[0].updatePulseTime();
 }
 
 /*
@@ -261,7 +262,6 @@ void loop() {
   hardware_interface.spinOnce();
   //chatter_pub.publish(&test);
   //test.data = stepper4.readStatus();
-
 
   if(millis() - killTime > KILLTIME){ //if kill cmd not received within time window, unkill
     kill = 0;
@@ -297,8 +297,8 @@ void loop() {
     stepper3.unwind(enc84_wrap);
     stepper4.unwind(enc88_wrap);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
-    omega_cmd = {0, 0, 0, 0};
-    commandBLDCS();
+    float omega_cmd[N_DCMotors] = {0, 0, 0, 0};
+    commandBLDCS(omega_cmd);
     stepper1.commandStepper(enc76_wrap, 25);
     stepper2.commandStepper(enc80_wrap, 25);
     stepper3.commandStepper(enc84_wrap, 25);
