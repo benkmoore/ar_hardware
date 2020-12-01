@@ -1,0 +1,35 @@
+<!-- 
+Launch multiple robots on hardware
+
+Each robot's namespace (ns) must match the namespace defined on the robot 
+itself. This can be changed using 'setup_master.sh'.
+-->
+
+<launch>
+    <!-- robot IDs (namespaces) -->
+    <arg name="robot1_ID" value="robot_1" />
+    <arg name="robot2_ID" value="robot_2" />
+    <arg name="robot3_ID" value="robot_3" />
+    <arg name="robot4_ID" value="robot_4" />
+
+    <!-- Create Robot 1 -->
+	<group ns="$(arg robot1_ID)">
+		<include file="$(find ar_hardware)/launch/ar_robot.launch" />
+    </group>
+
+	<!-- Create robot 2 -->
+	<group ns="$(arg robot2_ID)">
+		<include file="$(find ar_hardware)/launch/ar_robot.launch" />
+	</group>
+
+	<!-- Create Robot 3 -->
+	<group ns="$(arg robot3_ID)">
+		<include file="$(find ar_hardware)/launch/ar_robot.launch" />
+    </group>
+
+	<!-- Create robot 4 -->
+	<group ns="$(arg robot4_ID)">
+		<include file="$(find ar_hardware)/launch/ar_robot.launch" />
+	</group>
+
+</launch>
