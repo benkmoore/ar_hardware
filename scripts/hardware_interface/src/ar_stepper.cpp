@@ -1,4 +1,3 @@
-
 #include "SPI.h"
 #include "Arduino.h"
 #include "ar_stepper.h"
@@ -26,7 +25,8 @@ Stepper::Stepper(int stepsIn2pi, float phi_step, int steps_threshold, int max_ph
   this->last_step_time = 0; // time stamp in us of the last step taken
   this->stepsIn2pi = stepsIn2pi; // total number of steps for this motor
   this->phi_flag = false;
-  this->totalSteps = 0;
+  this->revolutions = 0;
+  this->prev_encoder_data = 0;
 }
 
 void Stepper::setupDriver(int cs_pin) {
@@ -41,20 +41,6 @@ void Stepper::setupDriver(int cs_pin) {
   this->enableDriver();
 }
 
-//
-void Stepper::unwind(){
-  if(this->totalSteps > 0){
-    this->setDirection(0);
-    this->direction = 0;
-    this->step(this->totalSteps*-1);
-  }
-  else if(this->totalSteps < 0){
-    this->setDirection(1);
-    this->direction = 1;
-    this->step(this->totalSteps*-1);
-  }
-}
-
 /*
  * Command number of steps (cw/ccw) for stepper
  */
@@ -64,10 +50,10 @@ void Stepper::commandStepper(int enc_pos, int phi_des) {
   int steps = this->calculateSteps(enc_pos, phi_des);
   this->controlSpeed(steps);
 
-  if (steps > 0) {
+  if (steps > 0) { // counter-clockwise
     this->direction = 1;
     this->setDirection(1);
-  } else if (steps < 0) {
+  } else if (steps < 0) { // clockwise
     this->direction = 0;
     this->setDirection(0);
   }
@@ -100,7 +86,25 @@ int Stepper::calculateSteps(int encoder_data, int phi_des) {
       this->phi_flag = false;
   }
 
+  this->checkRevolutions(encoder_data); // update revolution count
+
   return steps;
+}
+
+void Stepper::checkRevolutions(int encoder_data) {
+    if (abs(encoder_data) > 90 and this->prev_encoder_data != 0) { // check revolutions about the -100, 99 position
+        int sign_curr = encoder_data/abs(encoder_data);
+        int sign_prev = this->prev_encoder_data/abs(this->prev_encoder_data);
+
+        if (sign_curr != sign_prev) { // compare signs
+            if (sign_curr == 1 and sign_prev == -1) {
+                this->revolutions -= 1; // clockwise
+            } else if (sign_curr == -1 and sign_prev == 1) {
+                this->revolutions += 1; // counter-clockwise
+            }
+        }
+    }
+    this->prev_encoder_data = encoder_data;
 }
 
 /*
@@ -150,16 +154,27 @@ void Stepper::step(int steps_to_move) {
 
     if ((now - this->last_step_time) >= this->step_delay) {
         this->last_step_time = now;
-  	this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
-    if(this->direction == 1){
-      this->totalSteps +=1;
-    }
-    else
-    {
-      this->totalSteps -=1;
-    }
+  	    this->driver.writeReg(StepperRegAddr::CTRL, this->driver.ctrl | (1 << 2));
     }
   }
+}
+
+/*
+ * Unwind stepper wire and update revolution counter
+ */
+void Stepper::unwind(int encoder_data) {
+  this->checkRevolutions(encoder_data); // update during unwind
+
+  if (this->revolutions > 0) {
+    this->setDirection(0); // clockwise
+    this->direction = 0;
+    this->step(this->revolutions * this->stepsIn2pi);
+  } else if (this->revolutions < 0) {
+    this->setDirection(1); // counter-clockwise
+    this->direction = 1;
+    this->step(this->revolutions * this->stepsIn2pi);
+  }
+
 }
 
 /*
@@ -309,7 +324,6 @@ uint16_t Driver::transferToSPI(uint16_t value) {
 
 AMTEncoder::AMTEncoder(int Re, int De){
   this->response = 0;
-  this->flipflag = false;
   this->Re = Re;
   this->De = De;
   Serial2.begin(115200);
