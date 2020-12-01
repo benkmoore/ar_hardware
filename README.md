@@ -19,8 +19,6 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 
 7. Setup port for teensy in ArudinoIDE Tools -> Port, select Teensy. Tools -> Serial Monitor, outputs console of teensy programs. Good way to check program is running correctly on teensy.
 
-8. NOTE: For stepper motors adjust voltage across motor driver, DRV8825: see video at this link: https://youtu.be/89BHS9hfSUk, more info on DRV8825: [https://www.pololu.com/product/2133]. Aim for 0.5V or less (rotation appears smoothest at 0.35V)
-
 
 -----------------------------------------------------------------------------------------------------
 
@@ -56,9 +54,12 @@ Code to append: `defined(__IMXRT1062__)`
 Line 44 should now look like:
 `#if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__MKL26Z64__) || defined(__IMXRT1062__)`
 
-3. Add custom AR messages to arduino ros_lib: [http://wiki.ros.org/rosserial_arduino/Tutorials/Adding%20Custom%20Messages], using this command
+3. Add custom AR messages to arduino ros_lib: http://wiki.ros.org/rosserial_arduino/Tutorials/Adding%20Custom%20Messages, using this command
 
-`rosrun rosserial_client make_library.py /home/ben/Arduino/ /home/ben/catkin_ws/src/ar_commander/msg`
+`rosrun rosserial_arduino make_libraries.py /home/ben/Arduino/libraries /home/ben/catkin_ws/src/ar_commander/msg`
+
+
+NOTE: Always delete the existing ros_lib folder in `~/Arduino/libraries` before rebuilding headers for msgs otherwise no updates will be made.
 
 
 ------------------------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ Line 44 should now look like:
 
 2. Check teensy port on AarduinoIDe -> Tools -> Port. Check that the port exists: `ls /dev/ttyACM0`. Check port has read and write permissions: `sudo chmod 777 /dev/ttyACM0`
 
-3. (a) Make changes to SerialClient.py as per issue at: [https://github.com/zprihoda/ar_commander/issues/16]
+3. (a) Make changes to SerialClient.py as per issue at: https://analyticalrobotics.atlassian.net/browse/AR1-40
 
 3. (b) Compile arduino file using load script: `./load_arduino_file.sh motor_interface.ino`
 
@@ -86,21 +87,102 @@ make sure the correct port and baud rate is used. If connection succesful will s
 4. Test with controller msg: `rostopic pub -r 10 /controller_cmds ar_commander/ControllerCmd "{velocity_arr:ta: [0,0,0,0]}, phi_arr: {data:[1.5, 1.5, 1.5, 1.5]}}"`
 
 
-5. Check that the teensy is receiving the messages by monitorin the /chatter topic which is published within the controller_cmds callback from the teensy. See Teensy Setup Notes for more debug info on this.
+5. Check that the teensy is receiving the messages by monitoring the `/chatter` (may need to add this manually to `hardware_interface.ino`) topic which is published within the controller_cmds callback from the teensy. See [Teensy Setup Notes](#setup-for-ros-msgs-over-teensy) for more debug info on this.
 
 #### Debugging notes:
 
-A. Make sure you have serial monitor closed and no serial print lines in your code. Cant use both the serial usb and serial monitor at the same time. If you do you'll get this error: "Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino"
+A. Make sure you have serial monitor closed and no serial print lines in your code. Cant use both the serial usb and serial monitor at the same time. If you do you'll get this error: `"Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino"`
 
 B. Make sure the buffer size is big enough for a backlog of your msgs:
 
 `ros::NodeHandle_<HardwareType, MAX_PUBLISHERS=25, MAX_SUBSCRIBERS=25, IN_BUFFER_SIZE=512, OUT_BUFFER_SIZE=512> nh;`
 
-More info: [http://wiki.ros.org/rosserial/Overview/Initialization]
+More info: http://wiki.ros.org/rosserial/Overview/Initialization
 
 C. Unplug and replug teensy to clear port if needed (last resort)
 
 D. Compile code and reboot teensy
 
-E. Increase time out if error is  `"lost sync..."` see: [https://github.com/zprihoda/ar_commander/issues/16]
+E. Increase time out if error is  `"lost sync..."` see: https://analyticalrobotics.atlassian.net/browse/AR1-39
 
+F. Check that correct ports are being called for the teensy and other decawave boards see [localization notes](#localization-notes).
+
+G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and built correctly for the msg version in ar_commander in `~/Arduio/libbraries/ros_lib` remake if not see [teensy msg setup](#setup-for-ros-msgs-over-teensy) for details. 2) Check that the hardware interface is accessed the msg in the correct format. 3) Check you are  njot overflowing the buffer by publishing in the loop/over publishing.
+
+
+---------------------------------------------------------------------------------------------------
+
+### Decawave dev board setup:
+
+1. Download J-Link Software and Documentation pack [here](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
+
+2. Download the firmware image and all the documentation and install android app [here](https://www.decawave.com/product/dwm1001-development-board/)
+
+3. Flash the boards with the firmware image from above using j-flash lite and following the instructions on page 14 of the DWM1001 Firmware User Guide -Version 1.0 from 2017. Note: this is different to the firmware API guide.
+
+4. Connect to boards using android app & follow instructions to configure as anchor or tag. NB: This step isn't necessary, it can all be done through minicom or python but the app has a simple gui and is the fastest method especially if you're not sure what you're doing. Make sure to increase the update rate for the tags to 10Hz (also in app).
+
+5. Download minicom using `sudo apt-get install minicom`.
+
+6. To connect to a board over USB, make sure that the correct port is being opened. To check this, before plugging the board in, use `dmesg | grep tty`. Then plug in the board and use `dmesg | grep tty` again. There should be a new entry that looks something like `ttyACM0`, where the last number may be different.
+
+7. Use `sudo minicom -D /dev/ttyACM0` using the correct port found above in place of `ttyACM0`. `Welcome to minicom` screen should show up.
+
+8. Press enter/return on the keyboard twice within 1 second to enter shell mode. If the port is correct and the USB cable is good and the firmware is good, you should see `DWM1001 TWR Real Time Location System`, and `dwm>`. Type `apg` and hit enter to get current tag pose. Type `?` followed by enter to see possible commands.
+
+9. When installing on robot, after robot startup plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow our decawave interface to use the boards correctly.
+
+
+#### Debugging notes:
+
+A. Check port numbers are correct for each usb connection - NB. Decawave/teensy will appear to hang but is trying to send signals acorrs the wrong port or a decawave port. Decawaves may also be trying to send signals to a "teensy" port. Check the ports using `dmesg | grep tty` while removing/plugging in usbs. It appears that port numbering is selected at startup and once first inserted and doesnt change if you unplug after that.
+
+B. Anytime you connect to the board via USB make sure you use a good, reliable data cable or you will have a bad time.
+
+C. The boards should all be perpendicular to the ground, ie. the antenna should be the furthest point from the ground. If the boards are horizontal they won't be able to communicate properly.
+
+D. If the update rate of the tag isn't at 10Hz (highest) there will be issues with delayed info. This should be done from the android app or using minicom.
+
+E. Make sure that the position of the anchors is as accurate as possible or the location engine will be very unreliable or will just constantly fail. This can be entered using the android app or using mnicom. The auto positioning feature in the app can be used, however clear lines of sight between boards is a must for the auto positioning to work properly - follow instructions on the app.
+
+NOTE: [Drive](https://drive.google.com/drive/u/0/folders/1xLlcln9ASHMiTpSai7nGg3Y6ZoaNCo-Q) folder with documentation.
+
+
+---------------------------------------------------------------------------------------------------
+
+### Setup Time-Of-Flight (TOF) sensors - VL53L1X
+
+1. Setup wiring of multiple TOFs as in wiring digram (here)[/home/ben/Arduino/test_TOF]. Note use 3.3V source, some articles suggest 5V but that didnt work.
+
+2. Install VL53L1X arduino package: ArduinoIDE -> Sketch -> Include Libraries -> Manage Libraries -> VL53L1X.
+
+3. Upload the `catkin_ws/src/ar_hardware/scripts/tof_tests/test_TOF3` script to the teensy: `./load_arduino_file.sh test_TOF3_VL53L1X.ino` and view serial monitor to check outputted distances.
+
+NOTE: VL53L1X [docs](https://github.com/pololu/vl53l1x-arduino) and [library](https://www.pololu.com/product/3415).
+
+---------------------------------------------------------------------------------------------------
+
+
+### AMT21 encoder setup:
+
+1. Download and run AMT viewpoint [here](https://www.cuidevices.com/amt-viewpoint). (Windows only).
+
+2. Connect to encoder using usb adapter.
+
+3. Set desired address using GUI (default is `0x54`). The addresses used by our hardware interface are `0x4C`, `0x50`, `0x54`, `0x58`. These correspond to 76, 80, 84, 88 in decimal and L, P, T, X. These correspond to wheel position: furthest from centre on the Y-arm, closest to centre Y-arm, closest to centre X-arm, furthest from centre X-arm.
+
+4. Install encoder onto motor shaft as per instructions [here](https://www.cuidevices.com/amt-mounting) from CUI website.
+
+5. Connect RS485 board to teensy.
+
+6. Connect the encoders to the RS485 bus A to A and B to B using schematic from [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
+
+7. Align the wheels to the desired 0 position with the encoders attatched. Run the encoderReset.ino program on the teensy to set the encoder 0 position. This will persist after shutdown.
+
+NOTE: AMT21 encoder [datasheet](https://www.cuidevices.com/product/resource/amt21.pdf).
+
+---------------------------------------------------------------------------------------------------
+
+### Stepper Motors & Drivers
+
+1. NOTE: For stepper motors adjust voltage across motor driver, DRV8825: see video at this link: https://youtu.be/89BHS9hfSUk, more info on DRV8825: [https://www.pololu.com/product/2133]. Aim for 0.5V or less (rotation appears smoothest at 0.35V)

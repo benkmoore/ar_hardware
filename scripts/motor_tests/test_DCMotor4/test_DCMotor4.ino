@@ -1,19 +1,19 @@
 //Teensy PWM pins
-#define In1pin1 15 
-#define In2pin1 14 
-#define En1pin1 13
+#define In1pin1 38 
+#define In2pin1 37 
+#define En1pin1 36
 
-#define In1pin2 17 
-#define In2pin2 16 
-#define En1pin2 18
+#define In1pin2 35 
+#define In2pin2 34 
+#define En1pin2 33
 
-#define In1pin3 20 
-#define In2pin3 21 
-#define En1pin3 19
+#define In1pin3 13 
+#define In2pin3 14 
+#define En1pin3 15
 
 #define In1pin4 22 
-#define In2pin4 23 
-#define En1pin4 12
+#define In2pin4 21 
+#define En1pin4 23 
 
 void setup() {
   // Set pins to Output
@@ -47,6 +47,6 @@ void Reverse_DCMotor(int PWMspeed, byte in1 , byte in2 , byte en) {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  Forward_DCMotor(200, In1pin1, In2pin1, En1pin1);
-  Forward_DCMotor(200, In1pin2, In2pin2, En1pin2);
+  Forward_DCMotor(200, In1pin3, In2pin3, En1pin3);
+  Forward_DCMotor(200, In1pin4, In2pin4, En1pin4);
 }
