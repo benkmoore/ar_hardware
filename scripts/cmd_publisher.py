@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+"""
+Script publish the same cmd to multiple robots
+"""
+
+import numpy as np
+import rospy
+import rosnode
+from std_msgs.msg import Int8, Bool
+from ar_commander.msg import ControllerCmd
+
+
+RATE = 70
+
+Omega = np.ones(4)*0
+Phi = np.ones(4)*0.8
+
+rospy.init_node('cmd_publisher')
+
+pub_cmds_1 = rospy.Publisher('robot1/controller_cmds', ControllerCmd, queue_size=10)
+pub_cmds_2 = rospy.Publisher('robot2/controller_cmds', ControllerCmd, queue_size=10)
+pub_cmds_3 = rospy.Publisher('robot3/controller_cmds', ControllerCmd, queue_size=10)
+pub_cmds_4 = rospy.Publisher('robot4/controller_cmds', ControllerCmd, queue_size=10)
+
+def publish():
+        cmd = ControllerCmd()
+        cmd.omega_arr.data = Omega
+        cmd.phi_arr.data = Phi
+        pub_cmds_1.publish(cmd)
+        pub_cmds_2.publish(cmd)
+        pub_cmds_3.publish(cmd)
+        pub_cmds_4.publish(cmd)
+
+
+def run():
+    rate = rospy.Rate(RATE) # 10 Hz
+    while not rospy.is_shutdown():
+        publish()
+        rate.sleep()
+
+
+if __name__ == '__main__':
+    run()
