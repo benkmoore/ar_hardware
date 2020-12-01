@@ -13,8 +13,8 @@ from ar_commander.msg import ControllerCmd
 
 RATE = 70
 
-Omega = np.ones(4)*0.5
-Phi = np.ones(4)*0.8
+Omega = np.ones(4)*0.4
+Phi = np.ones(4)*0#.15
 
 rospy.init_node('cmd_publisher')
 
@@ -30,7 +30,7 @@ def publish():
         cmd4 = ControllerCmd()
 
         cmd1.omega_arr.data = Omega
-        cmd1.phi_arr.data = Phi+np.pi/2
+        cmd1.phi_arr.data = Phi+np.pi/2# - 2*Phi
         cmd2.omega_arr.data = Omega
         cmd2.phi_arr.data = Phi
         cmd3.omega_arr.data = Omega
