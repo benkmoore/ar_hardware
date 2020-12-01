@@ -59,6 +59,7 @@ void BLDC::commandBLDC(float omega_des) {
 
 HallSensor::HallSensor(int hall_pin, int num_pulses_2pi) {
     // init sensor io data
+    this->pulse_time = -1;
     this->prev_pulse_time = -1;
     this->omega = 0;
 
@@ -72,8 +73,7 @@ void HallSensor::updatePulseTime() {
 }
 
 void HallSensor::updateOmega() {
-    if (this->prev_pulse_time == -1) {
-        this->prev_pulse_time = millis();
+    if ((this->prev_pulse_time == -1) or (this->pulse_time == -1)) {
         this->omega = 0;
     } else {
         long delta_time = (this->pulse_time - this->prev_pulse_time) * 1000; // convert millis to seconds
