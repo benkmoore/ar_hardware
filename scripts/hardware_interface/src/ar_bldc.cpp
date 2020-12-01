@@ -67,15 +67,16 @@ HallSensor::HallSensor(int hall_pin, int num_pulses_2pi) {
 }
 
 void HallSensor::updatePulseTime() {
+    this->prev_pulse_time = this->pulse_time;
     this->pulse_time = millis();
 }
 
 void HallSensor::updateOmega() {
     if (this->prev_pulse_time == -1) {
+        this->prev_pulse_time = millis();
         this->omega = 0;
     } else {
         long delta_time = (this->pulse_time - this->prev_pulse_time) * 1000; // convert millis to seconds
         this->omega = (2 * PI) / (delta_time * this->num_pulses_2pi); // rad/s
     }
-    this->prev_pulse_time = millis();
 }
