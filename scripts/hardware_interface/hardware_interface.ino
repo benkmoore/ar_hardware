@@ -9,6 +9,8 @@
 #include "std_msgs/UInt8.h"
 #include "std_msgs/Int8.h"
 #include "stdlib.h"
+#include "RF24.h"
+
 
 // ROS Serial constants
 #define NUM_PUBS 3
