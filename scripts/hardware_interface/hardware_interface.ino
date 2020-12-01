@@ -6,7 +6,6 @@
 #include "src/ar_stepper.h"
 #include "Wire.h"
 #include "Adafruit_MCP4728.h"
-#include "RF24.h"
 #include "std_msgs/UInt8.h"
 #include "std_msgs/Int8.h"
 #include "stdlib.h"
@@ -43,15 +42,6 @@
 
 // Input number of DC motors, stepper motors in use
 const int N_DCMotors = 4, N_StepperMotors = 4;
-
-struct package
-{
-  int kill = 0;
-  float throttle = 0.0;
-  float phi = 0.0;
-};
-typedef struct package Package;
-Package rf_data;
 
 int kill = 0;
 // Step Motor pins: outer Y axis arm, inner Y axis arm, inner X axis arm, outer X axis arm

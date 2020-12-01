@@ -1,4 +1,3 @@
-
 #include "SPI.h"
 #include "Arduino.h"
 #include "ar_stepper.h"
@@ -325,7 +324,6 @@ uint16_t Driver::transferToSPI(uint16_t value) {
 
 AMTEncoder::AMTEncoder(int Re, int De){
   this->response = 0;
-  this->flipflag = false;
   this->Re = Re;
   this->De = De;
   Serial2.begin(115200);

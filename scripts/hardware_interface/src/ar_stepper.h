@@ -166,7 +166,6 @@ class AMTEncoder {
         int byteOut;
         uint8_t byteIn[3];
         int i;
-        bool flipflag;
         int Re, De;                      // Data and Receive enable pins
 };
 
