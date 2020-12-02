@@ -39,14 +39,18 @@
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
+// BLDC motor settings and constants
 #define DCREVIVE 2000                                 // time in ms
 #define KILLTIME 1000                                 // time in ms
+#define NUM_PULSES_2PI 20                             // number of outer magnets in hub motor = number of pulses per revolution per hall sensor
+#define MAX_PWM 255                                   // max duty cycle
+#define MIN_PWM 0                                     // min duty cycle
+#define MAX_OMEGA 102.86                              // max v=7.2 m/s; r=0.07 m; w = v/r = 102.86 (rad/s)
 
-// Input number of DC motors, stepper motors in use
-const int N_DCMotors = 4, N_StepperMotors = 4;
-
-// Number of hall sensors in use
-const int NUM_HALLS = 1;
+// Sensor and motor counts
+const int N_DCMotors = 4; // number of DC motors in use
+const int NUM_HALLS = 1; // Number of hall sensors in use
+const int N_StepperMotors = 4; // number of stepper motors in use
 
 struct package
 {
@@ -64,20 +68,19 @@ bool phi_flag = false;
 int unwindFlag = 0;
 
 // DC Motor pins
+int DC_throttle[N_DCMotors] = {1, 2, 3, 4}; //TODO update these
 int DC_reverse[N_DCMotors] = {20, 21, 22, 23};
-
-// Setup BLDCs
-int NUM_PULSES_2PI = 20;
 float controller_gains[3] = {1, 0, 0}; // P, I, D
 
+// Setup BLDCs
 int hall_pins_1[NUM_HALLS] = {1};
 int hall_pins_2[NUM_HALLS] = {2};
 int hall_pins_3[NUM_HALLS] = {3};
 int hall_pins_4[NUM_HALLS] = {4};
-BLDC bldc_1( 5, hall_pins_1, controller_gains, NUM_PULSES_2PI);
-BLDC bldc_2( 7, hall_pins_2, controller_gains, NUM_PULSES_2PI);
-BLDC bldc_3( 9, hall_pins_3, controller_gains, NUM_PULSES_2PI);
-BLDC bldc_4(11, hall_pins_4, controller_gains, NUM_PULSES_2PI);
+BLDC bldc_1(DC_throttle[0], hall_pins_1, controller_gains, NUM_PULSES_2PI, MAX_OMEGA, MAX_PWM, MIN_PWM);
+BLDC bldc_2(DC_throttle[1], hall_pins_2, controller_gains, NUM_PULSES_2PI, MAX_OMEGA, MAX_PWM, MIN_PWM);
+BLDC bldc_3(DC_throttle[2], hall_pins_3, controller_gains, NUM_PULSES_2PI, MAX_OMEGA, MAX_PWM, MIN_PWM);
+BLDC bldc_4(DC_throttle[3], hall_pins_4, controller_gains, NUM_PULSES_2PI, MAX_OMEGA, MAX_PWM, MIN_PWM);
 
 // Define steppers
 Stepper stepper1(int(360.0 / PHI_STEP), PHI_STEP, STEPS_THRESHOLD, MAX_PHI_DELTA, MAX_STEPPER_VEL, MIN_STEPPER_VEL, MAX_MILLIAMPS, MICRO_STEP_SIZE, DECAY_MODE);
@@ -266,7 +269,6 @@ void loop() {
   if(millis() - killTime > KILLTIME){ //if kill cmd not received within time window, unkill
     kill = 0;
   }
-
   if (millis() - encTime > ENCODERWAIT){
     encoder76 = encoder.checkEncoder(76);
     encoder80 = encoder.checkEncoder(80);
@@ -283,7 +285,6 @@ void loop() {
   int enc80_wrap = wrapToSteps(encoder80);
   int enc84_wrap = wrapToSteps(encoder84);
   int enc88_wrap = wrapToSteps(encoder88);
-
 
   if ((kill == 0) and (millis()-callbackTime < MAX_CALLBACK_TIME) and unwindFlag == 0) { // actuate robot if callback is within time window, kill switch is off and not unwinding
     // Feedback encoder data & wrap to [-pi, pi] = [-100, 99] steps

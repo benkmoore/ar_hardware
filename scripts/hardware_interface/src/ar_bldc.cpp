@@ -1,17 +1,23 @@
 
 #include "Arduino.h"
 #include "ar_bldc.h"
+#include "math.h"
 
 // ------------- BLDC MOTOR FUNCTIONS -------------
 
-BLDC::BLDC(int output_pin, int hall_sensors_pins[3], float controller_gains[3], int num_pulses_2pi) {
-    // controller gains
+BLDC::BLDC(int output_pin, int hall_sensors_pins[3], float controller_gains[3], int num_pulses_2pi, float max_omega, int MAX_PWM, int MIN_PWM) {
+    // controller gains and time tracking
     this->k_p = controller_gains[0];
     this->k_i = controller_gains[1];
     this->k_d = controller_gains[2];
+    this->prev_cmd_time = -1;
+    this->integral_error = 0;
 
     // motor constants
     this->num_pulses_2pi = num_pulses_2pi;
+    this->max_omega = max_omega;
+    this->MIN_PWM = MIN_PWM;
+    this->MAX_PWM = MAX_PWM;
 
     // data io pins & init
     this->prev_pulse_time = millis();
@@ -41,11 +47,24 @@ float BLDC::getOmega() {
 }
 
 int BLDC::calculateCommand(float omega_des) {
-    float omega = this->getOmega();
+    long cmd_time = millis();
+    long dt = 0.0;
+    if (this->prev_cmd_time != -1) { // check time is initialized
+        dt = (cmd_time - this->prev_cmd_time) * 1000; // convertt millis to seconds
+    }
 
+    // retrieve controller inputs
+    float omega = this->getOmega();
     float error = omega_des - omega;
-    int pwm = this->k_p * error;
-    pwm = constrain(pwm, 0, 255); // constrain pwm to min and max pwm
+    float u_bias = this->MAX_PWM * omega_des / this->max_omega;
+
+    // calculate controller output
+    int pwm = u_bias + (this->k_p * error) + this->k_i * (this->integral_error + (error * dt));
+    pwm = round(constrain(pwm, this->MIN_PWM, this->MAX_PWM)); // constrain pwm to min and max pwm and round to int
+    if (pwm != this->MIN_PWM and pwm != this->MAX_PWM) { // anti-reset windup: only add to integral term if not saturated
+        this->integral_error += error * dt;
+    }
+    this->prev_cmd_time = cmd_time;
 
     return pwm;
 }
