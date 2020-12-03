@@ -1,11 +1,10 @@
 
 #include "Arduino.h"
 #include "ar_bldc.h"
-#include "math.h"
 
 // ------------- BLDC MOTOR FUNCTIONS -------------
 
-BLDC::BLDC(int output_pin, int hall_sensors_pins[3], int NUM_HALLS, float controller_gains[3], int num_pulses_2pi, float max_omega, int MAX_PWM, int MIN_PWM) {
+BLDC::BLDC(int output_pin, int hall_sensors_pins[3], int NUM_HALLS, float controller_gains[3], int num_pulses_2pi, float max_omega, int MAX_PWM, int MIN_PWM, float ZERO_OMEGA_TIME) {
     // controller gains and time tracking
     this->k_p = controller_gains[0];
     this->k_i = controller_gains[1];
@@ -26,9 +25,9 @@ BLDC::BLDC(int output_pin, int hall_sensors_pins[3], int NUM_HALLS, float contro
     this->output_pin = output_pin;
 
     // setup hall sensors
-    for (int i = 0; i < this->num_halls; i++) {
-        this->hall_arr[i] = HallSensor(this->hall_sensor_pins[i], this->num_pulses_2pi);
-    }
+    this->hall_arr[0] = new HallSensor(this->num_pulses_2pi, ZERO_OMEGA_TIME);
+    this->hall_arr[1] = new HallSensor(this->num_pulses_2pi, ZERO_OMEGA_TIME);
+    this->hall_arr[2] = new HallSensor(this->num_pulses_2pi, ZERO_OMEGA_TIME);
 
     // setup output pin
     pinMode(output_pin, OUTPUT);
@@ -38,8 +37,8 @@ float BLDC::getOmega() {
     float avg_omega = 0.0;
 
     for (int i = 0; i < this->num_halls; i++) {
-        this->hall_arr[i].updateOmega();
-        avg_omega += this->hall_arr[i].omega;
+        this->hall_arr[i]->updateOmega();
+        avg_omega += this->hall_arr[i]->omega;
     }
     avg_omega = avg_omega / this->num_halls;
 
@@ -48,9 +47,9 @@ float BLDC::getOmega() {
 
 int BLDC::calculateCommand(float omega_des) {
     long cmd_time = millis();
-    long dt = 0.0;
+    double dt = 0.0;
     if (this->prev_cmd_time != -1) { // check time is initialized
-        dt = (cmd_time - this->prev_cmd_time) * 1000; // convertt millis to seconds
+        dt = (cmd_time - this->prev_cmd_time) / 1000.0; // convertt millis to seconds
     }
 
     // retrieve controller inputs
@@ -76,11 +75,12 @@ void BLDC::commandBLDC(float omega_des) {
 
 // -------------- HALL SENSOR FUNCTIONS --------------
 
-HallSensor::HallSensor(int hall_pin, int num_pulses_2pi) {
+HallSensor::HallSensor(int num_pulses_2pi, float ZERO_OMEGA_TIME) {
     // init sensor io data
     this->pulse_time = -1;
     this->prev_pulse_time = -1;
     this->omega = 0;
+    this->ZERO_OMEGA_TIME = ZERO_OMEGA_TIME;
 
     // motor constants
     this->num_pulses_2pi = num_pulses_2pi;
@@ -92,10 +92,12 @@ void HallSensor::updatePulseTime() {
 }
 
 void HallSensor::updateOmega() {
-    if ((this->prev_pulse_time == -1) or (this->pulse_time == -1)) {
+    if ((this->prev_pulse_time != -1) and (this->pulse_time != -1)) {
+        double dt = (this->pulse_time - this->prev_pulse_time) / 1000.0; // convert millis to seconds
+        this->omega = (2 * PI) / (dt * this->num_pulses_2pi); // rad/s
+    }
+
+    if ( ((millis() - this->pulse_time) / 1000.0) > this->ZERO_OMEGA_TIME ) { // reset omega to zero if no ticks recieved in time window
         this->omega = 0;
-    } else {
-        long delta_time = (this->pulse_time - this->prev_pulse_time) * 1000; // convert millis to seconds
-        this->omega = (2 * PI) / (delta_time * this->num_pulses_2pi); // rad/s
     }
 }

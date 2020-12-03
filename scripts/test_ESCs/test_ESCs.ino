@@ -3,6 +3,7 @@
 #define MAX_PWM 255
 #define MIN_PWM 0
 #define NUM_PULSES_2PI 20
+#define ZERO_OMEGA_TIME 5
 
 int HALL_0 = 25;
 int HALL_1 = 26;
@@ -14,7 +15,14 @@ int hall_pins_1[3] = {HALL_0, HALL_1, HALL_2};
 float controller_gains[3] = {1, 0, 0};
 float omega_des = 1; // rad/s
 
-BLDC bldc_1(OUT_PIN, hall_pins_1, NUM_HALLS, controller_gains, NUM_PULSES_2PI, MAX_OMEGA, MAX_PWM, MIN_PWM);
+float omega2 = 0.0;
+float omega1 = 0.0;
+float omega = 0.0;
+float om_avg = 0.0;
+
+int pwm_out = 0.0;
+
+BLDC bldc_1(OUT_PIN, hall_pins_1, NUM_HALLS, controller_gains, NUM_PULSES_2PI, MAX_OMEGA, MAX_PWM, MIN_PWM, ZERO_OMEGA_TIME);
 
 void setup() {
   Serial.begin(9600);
@@ -27,10 +35,33 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(HALL_1), updatePulseTime1, CHANGE);
   attachInterrupt(digitalPinToInterrupt(HALL_2), updatePulseTime2, CHANGE);
 }
-
+int i = 0;
 void loop() {
-  float omega = bldc_1.getOmega();
-  Serial.println(omega);
+    bldc_1.hall_arr[0]->updateOmega();
+    bldc_1.hall_arr[1]->updateOmega();
+    bldc_1.hall_arr[2]->updateOmega();
+    omega = bldc_1.hall_arr[0]->omega;
+    omega1 = bldc_1.hall_arr[1]->omega;
+    omega2 = bldc_1.hall_arr[2]->omega;
+
+    om_avg = bldc_1.getOmega();
+
+    pwm_out = bldc_1.calculateCommand(10);
+
+    if (i % 1000 == 0) {
+      Serial.print(omega);
+      Serial.print(' ');
+      Serial.print(omega1);
+      Serial.print(' ');
+      Serial.print(omega2);
+      Serial.print(": ");
+      Serial.print(om_avg);
+      Serial.print("-> ");
+      Serial.println(pwm_out);
+    }
+//    float omega = bldc_1.getOmega();
+    //Serial.println(omega);//inf
+//  Serial.println(omega);
 //  Serial.print(' ');
 //  int cmd = bldc_1.calculateCommand(omega_des);
 //  Serial.print(cmd);
@@ -40,14 +71,26 @@ void loop() {
 }
 
 void updatePulseTime0() {
-    //bldc_1.hall_arr[0].updatePulseTime();
-//    Serial.println(analogRead(HALL_0));
+    //Serial.println("**0**");
+    bldc_1.hall_arr[0]->updatePulseTime();
+//    Serial.println(bldc_1.hall_arr[0]->pulse_time);
+//    Serial.println(bldc_1.hall_arr[0]->prev_pulse_time);
+//    omega = bldc_1.hall_arr[0]->omega;
+    //Serial.println(omega);
 }
 void updatePulseTime1() {
-   // bldc_1.hall_arr[1].updatePulseTime();
-//   Serial.println(analogRead(HALL_1));
+    //Serial.println("**1**");
+    bldc_1.hall_arr[1]->updatePulseTime();
+//    Serial.println(bldc_1.hall_arr[1]->pulse_time);
+//    Serial.println(bldc_1.hall_arr[1]->prev_pulse_time);
+//    omega1 = bldc_1.hall_arr[1]->omega;
+    //Serial.println(omega1);
 }
 void updatePulseTime2() {
-    //bldc_1.hall_arr[2].updatePulseTime();
-    Serial.println(analogRead(HALL_2));
+    //Serial.println("**2**");
+    bldc_1.hall_arr[2]->updatePulseTime();
+//    Serial.println(bldc_1.hall_arr[2]->pulse_time);
+//    Serial.println(bldc_1.hall_arr[2]->prev_pulse_time);
+//    omega2 = bldc_1.hall_arr[2]->omega;
+
 }
