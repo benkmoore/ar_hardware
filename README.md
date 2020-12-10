@@ -1,5 +1,32 @@
 # ar_hardware
 
+## Jetson setup & configure
+
+### Hardware required
+1. Jeston nano
+2. Micro SD card
+3. USB wifi dongle
+4. HDMI cable
+5. Mouse
+6. Keyboard
+7. Jetson power cord
+
+
+### Flash the SD card & boot
+https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#intro
+
+### Install requirements & repos
+
+1. Install tabutale & scipy: `sudo apt-get install python-tabulate` `sudo apt-get install python scipy`
+
+2. Install arduino IDE from here [here](https://www.arduino.cc/en/software). Do not use the 'ubuntu software store' to download. 
+
+3. Install teensyduino using instructions [here](https://www.pjrc.com/teensy/td_download.html). Don't forget the udev rules, if the recommender `cp` command doesn't work, just touch the file `49-teensy.rule` here: `/etc/udev/rules.d/` and copy paste in the text from file on the teensyduino site.
+
+4. Add the Adafruit_MCP4728 library: From the arduino IDE in tools -> manage libraries search for mcp4728 by adafruit + install.
+
+------------------------------------------------------------------------------
+
 ## Teensy Notes
 
 ### Setup
@@ -120,17 +147,22 @@ G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and bui
 
 3. Flash the boards with the firmware image from above using j-flash lite and following the instructions on page 14 of the DWM1001 Firmware User Guide -Version 1.0 from 2017. Note: this is different to the firmware API guide.
 
-4. Connect to boards using android app & follow instructions to configure as anchor or tag. NB: This step isn't necessary, it can all be done through minicom or python but the app has a simple gui and is the fastest method especially if you're not sure what you're doing. Make sure to increase the update rate for the tags to 10Hz (also in app).
+4. Connect to boards using android app add the boards to a network & follow instructions to configure as anchor or tag. Set one of the anchors to be the initiator. Set the location of the anchors. 
 
-5. Download minicom using `sudo apt-get install minicom`.
+5. Increase the update rate for the tags to 10Hz (highest allowed) for normal and stationary. Set UWB to active.
 
-6. To connect to a board over USB, make sure that the correct port is being opened. To check this, before plugging the board in, use `dmesg | grep tty`. Then plug in the board and use `dmesg | grep tty` again. There should be a new entry that looks something like `ttyACM0`, where the last number may be different.
+5. When installing on robot, after robot startup plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow our decawave interface to use the boards correctly.
 
-7. Use `sudo minicom -D /dev/ttyACM0` using the correct port found above in place of `ttyACM0`. `Welcome to minicom` screen should show up.
 
-8. Press enter/return on the keyboard twice within 1 second to enter shell mode. If the port is correct and the USB cable is good and the firmware is good, you should see `DWM1001 TWR Real Time Location System`, and `dwm>`. Type `apg` and hit enter to get current tag pose. Type `?` followed by enter to see possible commands.
+#### To interface using minicom:
 
-9. When installing on robot, after robot startup plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow our decawave interface to use the boards correctly.
+1. Download minicom using `sudo apt-get install minicom`.
+
+2. To connect to a board over USB, make sure that the correct port is being opened. To check this, before plugging the board in, use `dmesg | grep tty`. Then plug in the board and use `dmesg | grep tty` again. There should be a new entry that looks something like `ttyACM0`, where the last number may be different.
+
+3. Use `sudo minicom -D /dev/ttyACM0` using the correct port found above in place of `ttyACM0`. `Welcome to minicom` screen should show up.
+
+4. Press enter/return on the keyboard twice within 1 second to enter shell mode. If the port is correct and the USB cable is good and the firmware is good, you should see `DWM1001 TWR Real Time Location System`, and `dwm>`. Type `?` followed by enter to see possible commands.
 
 
 #### Debugging notes:
