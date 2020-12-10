@@ -17,6 +17,14 @@ https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#intro
 
 ### Install requirements & repos
 
+1. Install tabutale & scipy: `sudo apt-get install python-tabulate` `sudo apt-get install python scipy`
+
+2. Install arduino IDE from here [here](https://www.arduino.cc/en/software)
+
+3. Install teensyduino using instructions [here](https://www.pjrc.com/teensy/td_download.html). Don't forget the udev rules, if the recommender `cp` command doesn't work, just touch the file `49-teensy.rule` here: `/etc/udev/rules.d/` and copy paste in the text from file on the teensyduino site.
+
+4. Add the Adafruit_MCP4728 library: From the arduino IDE in tools -> manage libraries search for mcp4728 by adafruit + install.
+
 ------------------------------------------------------------------------------
 
 ## Teensy Notes
