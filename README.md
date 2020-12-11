@@ -23,7 +23,7 @@ https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#intro
 
 3. Install teensyduino using instructions [here](https://www.pjrc.com/teensy/td_download.html). Don't forget the udev rules, if the recommender `cp` command doesn't work, just touch the file `49-teensy.rule` here: `/etc/udev/rules.d/` and copy paste in the text from file on the teensyduino site.
 
-4. At the end of the line, add `, SYMLINK="ttyTeensy"`.
+4. At the end of the line, add `, SYMLINK="ttyTeensy"`, then use `sudo /etc/init.d/udev restart`, then physically disconnect and reconnect the teensy.
 
 5. Add the Adafruit_MCP4728 library: From the arduino IDE in tools -> manage libraries search for mcp4728 by adafruit + install.
  
@@ -156,12 +156,14 @@ G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and bui
 
 5. When installing on robot, after robot startup plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow our decawave interface to use the boards correctly.
 
-6. In `/etc/udev/rules.d/` `sudo touch 48-decawave.rules` paste in : `#symbolic link for decawaves
-KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="", SYMLINK="tty-Y"
-KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="", SYMLINK="tty-X"
-`.
+6. In `/etc/udev/rules.d/` `sudo touch 48-decawave.rules` paste in : 
+`#symbolic link for decawaves`
+`KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="", SYMLINK="tty-Y"`
+`KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="", SYMLINK="tty-X"`.
 
-7. Use the command `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM1)`, copy the number after `ATTRS{serial}==` into the 48-decawave.rules file in the first line (for symlink tty-Y). Do the same for `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM2)` and the symlink for tty-X.
+7. Use the command `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM1)`, copy the serial number from  `ATTRS{serial}==` into the 48-decawave.rules file in the first line (for symlink tty-Y). Do the same for `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM2)` on the second line in 48-decawave.rules to create the symlink for tty-X.
+
+8. Use `sudo /etc/init.d/udev restart` and then physically disconnect and reconnect the decawave boards.
 
 #### To interface using minicom:
 
