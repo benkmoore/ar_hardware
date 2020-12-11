@@ -54,7 +54,7 @@ Follow instructions. Note: Download Arduino 1.8.12/latest tested support. (We ne
 
 ### Setup for ROS msgs over Teensy
 
-1. Install ROS serial communication package for arduino. For more details o the isntall commands below see: [http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup]
+1. Install ROS serial communication package for arduino. For more details on the install commands below see: [http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup]
 
 To install ROS serial pkgs run the following commands:
 `sudo apt-get install ros-melodic-rosserial-arduino `
