@@ -154,16 +154,20 @@ G. `check sum error` or `wrong msg id`. 1) Check that the msg is updated and bui
 
 5. Increase the update rate for the tags to 10Hz (highest allowed) for normal and stationary. Set UWB to active.
 
-5. When installing on robot, after robot startup plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow our decawave interface to use the boards correctly.
+5. When installing on robot, after robot startup & teensy connected, plug in to usb from the board on the Y arm of the robot, then plug in the board on the X arm. This ensures that the address used by the board on the Y arm is `ttyACM1` and the X arm uses `ttyACM2`. This will allow you to correctly find the serial number for each board in the next steps.
 
-6. In `/etc/udev/rules.d/` `sudo touch 48-decawave.rules` paste in : 
+6. In `/etc/udev/rules.d/` use `sudo touch 48-decawave.rules` and paste in: 
 `#symbolic link for decawaves`
 `KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="", SYMLINK="tty-Y"`
 `KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="", SYMLINK="tty-X"`.
 
-7. Use the command `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM1)`, copy the serial number from  `ATTRS{serial}==` into the 48-decawave.rules file in the first line (for symlink tty-Y). Do the same for `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM2)` on the second line in 48-decawave.rules to create the symlink for tty-X.
+7a. Use the command `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM1)`, copy the serial number from  `ATTRS{serial}==` into the 48-decawave.rules file in the first line (for symlink tty-Y). Do the same for `udevadm info -a -p $(udevadm info -q path -n /dev/ttyACM2)` on the second line in 48-decawave.rules to create the symlink for tty-X.
+
+7b. The `udevadm....` command above will produce a lot of text, with several different serial numbers. Use the serial number from the block of text with the attributes `ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105"`.
 
 8. Use `sudo /etc/init.d/udev restart` and then physically disconnect and reconnect the decawave boards.
+
+9. to check if the above steps worked `ls -lF /dev | grep  tty-Y` `ls -lF /dev | grep  tty-Y` should both return with the `ttyACM*` that the symlink is pointing to. 
 
 #### To interface using minicom:
 
