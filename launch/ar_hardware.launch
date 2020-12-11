@@ -1,7 +1,9 @@
 <launch>
-    <!-- load configuration params -->
-    <rosparam command="load" file="$(find ar_commander)/configs/software_params.yaml"/>
-    <rosparam command="load" file="$(find ar_commander)/configs/hardware_params.yaml"/>
+    <!-- Set enviroment variable to sim -->
+    <param name="ENV" value="hardware" />
+
+    <!-- Set path to ar_commander repo -->
+    <param name="AR_COMMANDER_DIR" value="$(find ar_commander)" />
 
     <!-- launch ar_commander autonomy stack -->
     <include file="$(find ar_commander)/launch/autonomy_stack.launch" />
