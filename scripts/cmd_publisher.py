@@ -66,25 +66,26 @@ class Commander():
         self.cmd4.omega_arr.data = self.Omega
         self.cmd4.phi_arr.data = self.Phi #+ np.pi/2
 
-    def straight(self):
-        self.Phi = np.ones(4)*0#.15
+    def straight(self, angle):
+        self.Phi = np.ones(4)*angle#.15
         self.cmd1.omega_arr.data = self.Omega
         self.cmd1.phi_arr.data = self.Phi + np.pi/2# - 2*Phi
         self.cmd2.omega_arr.data = self.Omega
         self.cmd2.phi_arr.data = self.Phi 
-        self.cmd3.omega_arr.data = self.Omega
-        self.cmd3.phi_arr.data = self.Phi + np.pi
+
+        self.cmd3.omega_arr.data = self.Omega - angle
+        self.cmd3.phi_arr.data = self.Phi + np.pi + angle
         self.cmd4.omega_arr.data = self.Omega
         self.cmd4.phi_arr.data = self.Phi 
 
-    def reverse(self):
-        self.straight()
-        self.Phi -= np.pi
+    def reverse(self, angle):
+        self.straight(angle)
+        self.Phi -= np.pi + angle
 
     def U(self):
-        self.straight()
+        self.straight(np.pi/4)
         if(time.time() - self.start) > 4:
-            self.reverse()
+            self.reverse(np.pi/4)
         elif(time.time() - self.start) > 2:
             self.Omega -= np.pi/2
         
