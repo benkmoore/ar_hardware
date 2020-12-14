@@ -2,7 +2,7 @@
 
 board="$1"
 file="$2"
-port="ttyACM0"
+port="ttyTeensy"
 
 if [ -z "$1" ]; then echo Must specify a teensy board and file to compile and upload e.g. ./load_arduino_file.sh [teensy40, teensy41] [file_name.ino]; exit 1; fi
 
