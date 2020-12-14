@@ -6,7 +6,7 @@
     <param name="AR_COMMANDER_DIR" value="$(find ar_commander)" />
 
     <!-- launch ROS usb serial connection -->
-    <node pkg="rosserial_python" type="serial_node.py" name="rosserial_usb" args="_port:=/dev/ttyACM0 _baud:=57600" output="screen"/>
+    <node pkg="rosserial_python" type="serial_node.py" name="rosserial_usb" args="_port:=/dev/ttyTeensy _baud:=57600" output="screen"/>
 
     <!-- node pkg="ar_commander" type="decawaveInterface.py" name="decawave" output="screen"/ -->
 </launch>
