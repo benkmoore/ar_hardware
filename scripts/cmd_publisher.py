@@ -36,7 +36,7 @@ def publish():
         cmd3.omega_arr.data = Omega
         cmd3.phi_arr.data = Phi
         cmd4.omega_arr.data = Omega
-        cmd4.phi_arr.data = Phi + np.pi/2
+        cmd4.phi_arr.data = Phi #+ np.pi/2
 
         pub_cmds_1.publish(cmd1)
         pub_cmds_2.publish(cmd2)
