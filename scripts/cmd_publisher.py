@@ -67,28 +67,33 @@ class Commander():
         self.cmd4.phi_arr.data = self.Phi #+ np.pi/2
 
     def straight(self, angle):
-        self.Phi = np.ones(4)*angle#.15
+        self.Phi = np.ones(4)*0#.15
         self.cmd1.omega_arr.data = self.Omega
         self.cmd1.phi_arr.data = self.Phi + np.pi/2# - 2*Phi
         self.cmd2.omega_arr.data = self.Omega
         self.cmd2.phi_arr.data = self.Phi 
 
-        self.cmd3.omega_arr.data = self.Omega - angle
-        self.cmd3.phi_arr.data = self.Phi + np.pi + angle
+        self.cmd3.omega_arr.data = self.Omega 
+        self.cmd3.phi_arr.data = self.Phi -angle
         self.cmd4.omega_arr.data = self.Omega
-        self.cmd4.phi_arr.data = self.Phi 
+        self.cmd4.phi_arr.data = self.cmd3.phi_arr.data + np.pi
 
     def reverse(self, angle):
-        self.straight(angle)
-        self.Phi -= np.pi + angle
-
-    def U(self):
-        self.straight(np.pi/4)
-        if(time.time() - self.start) > 4:
-            self.reverse(np.pi/4)
-        elif(time.time() - self.start) > 2:
-            self.Omega -= np.pi/2
+        self.straight(-np.pi+angle)
+        #self.Phi -= np.pi
         
+    def U(self):
+        #self.straight(np.pi/4)
+        #print(time.time())
+        if(time.time() - self.start) > 8:
+            self.reverse(np.pi/4)
+            print("reversing")
+        elif(time.time() - self.start) > 4:
+            self.straight(np.pi*3/4)
+            print("turning")
+        else:
+            self.straight(np.pi/4)
+            print("straight")
 
     def run(self):
         rate = rospy.Rate(RATE) 
