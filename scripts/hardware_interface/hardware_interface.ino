@@ -253,6 +253,7 @@ void loop() {
     stepper2.commandStepper(enc80_wrap, phi_des2);
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
+    timeOff = millis();
   } else if (unwindFlag == 1) { // if unwind flag on unwind steppers
     stepper1.unwind(enc76_wrap);
     stepper2.unwind(enc80_wrap);
@@ -260,8 +261,7 @@ void loop() {
     stepper4.unwind(enc88_wrap);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
-    timeOff = millis();
-    if(millis() - timeOff > 2000){
+    if(millis() - timeOff > 3000){
       stepper1.commandStepper(enc76_wrap, 25);
       stepper2.commandStepper(enc80_wrap, 25);
       stepper3.commandStepper(enc84_wrap, 25);
