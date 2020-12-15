@@ -74,6 +74,7 @@ float encoder84 = encoder.checkEncoder(84);
 float encoder88 = encoder.checkEncoder(88);
 float encTime = millis();
 float dcTime = millis();
+float timeOff;    //check whether its safe to turn wheels (robot slowed down enough to not damage shafts)
 std_msgs::Float64 test;
 
 //ros::Publisher chatter_pub("chatter", &test);
@@ -84,7 +85,7 @@ int ns_int = 3; // robot1 = 0, ... robot4 = 3
 float VEL_SCALES[4][5] = { {180,0,0,0,0},                // robot1
                            {0,190,200,-40,130},                  // robot2
                            {0,220,210,15,-80},                 // robot3
-                           {0,0,200,200,0} }; // robot4
+                           {50,0,200,200,0} }; // robot4
 
 float VEL_ANALOG[4][4] = { {0.3,1.09,2250,2700},                // robot1
                            {0.25,0.98,2200,2700},                  // robot2
@@ -252,6 +253,7 @@ void loop() {
     stepper2.commandStepper(enc80_wrap, phi_des2);
     stepper3.commandStepper(enc84_wrap, phi_des3);
     stepper4.commandStepper(enc88_wrap, phi_des4);
+    timeOff = millis();
   } else if (unwindFlag == 1) { // if unwind flag on unwind steppers
     stepper1.unwind(enc76_wrap);
     stepper2.unwind(enc80_wrap);
@@ -259,9 +261,11 @@ void loop() {
     stepper4.unwind(enc88_wrap);
   } else { // shutdown robot if kill switch is on or no cmds recieved within last time window
     mcp.fastWrite(0,0,0,0);
-    stepper1.commandStepper(enc76_wrap, 25);
-    stepper2.commandStepper(enc80_wrap, 25);
-    stepper3.commandStepper(enc84_wrap, 25);
-    stepper4.commandStepper(enc88_wrap, 25);
+    if(millis() - timeOff > 3000){
+      stepper1.commandStepper(enc76_wrap, 25);
+      stepper2.commandStepper(enc80_wrap, 25);
+      stepper3.commandStepper(enc84_wrap, 25);
+      stepper4.commandStepper(enc88_wrap, 25);
+    }
   }
 }
