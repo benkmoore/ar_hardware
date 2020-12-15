@@ -37,7 +37,7 @@
 #define Re    3                                       // serial data read/write enable pins
 #define De    4
 
-#define DCREVIVE 20000                                 // time in ms
+#define DCREVIVE 2000                                 // time in ms
 #define KILLTIME 1000                                 // time in ms
 
 // Input number of DC motors, stepper motors in use
