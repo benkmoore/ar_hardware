@@ -14,7 +14,8 @@ from ar_commander.msg import ControllerCmd
 
 
 RATE = 70
-OMEGA = 0.4
+OMEGA = 0.35
+OFFSET = np.pi/4 #angle required to make robot in leftmost/ bottom left position align with x & y axis (0 degrees)
 
 
 class Commander():
@@ -34,71 +35,102 @@ class Commander():
 
         self.start = time.time()
 
-        self.Omega = np.ones(4)*OMEGA
-        self.Phi = np.ones(4)*0#.15
+        self.Omega = np.ones(4) * OMEGA
+        self.phi = np.ones(4) * 0#.15
 
         self.cmd1.omega_arr.data = self.Omega
-        self.cmd1.phi_arr.data = self.Phi #+ np.pi/2# - 2*Phi
+        self.cmd1.phi_arr.data = self.phi #+ np.pi/2# - 2*phi
         self.cmd2.omega_arr.data = self.Omega
-        self.cmd2.phi_arr.data = self.Phi
+        self.cmd2.phi_arr.data = self.phi
         self.cmd3.omega_arr.data = self.Omega
-        self.cmd3.phi_arr.data = self.Phi
-        self.cmd4.omega_arr.data = self.Omega
-        self.cmd4.phi_arr.data = self.Phi
+        self.cmd3.phi_arr.data = self.phi
+        self.cmd4.omega_arr.data = self.Omega + 0.05
+        self.cmd4.phi_arr.data = self.phi
 
 
     def publish(self):
+        self.cmd4.omega_arr.data = self.Omega + 0.05
+
         self.pub_cmds_1.publish(self.cmd1)
         self.pub_cmds_2.publish(self.cmd2)
         self.pub_cmds_3.publish(self.cmd3)
         self.pub_cmds_4.publish(self.cmd4)
 
     def spin(self):
-        self.Omega = np.ones(4)*OMEGA
-        self.Phi = np.ones(4)*(-np.pi/6)#.15
+        self.Omega = np.ones(4) * OMEGA
+        self.phi = np.ones(4) * (-np.pi/6)#.15
 
         self.cmd1.omega_arr.data = self.Omega
-        self.cmd1.phi_arr.data = self.Phi #+ np.pi/2# - 2*Phi
+        self.cmd1.phi_arr.data = self.phi #+ np.pi/2# - 2*phi
         self.cmd2.omega_arr.data = self.Omega
-        self.cmd2.phi_arr.data = self.Phi
+        self.cmd2.phi_arr.data = self.phi
         self.cmd3.omega_arr.data = self.Omega
-        self.cmd3.phi_arr.data = self.Phi
+        self.cmd3.phi_arr.data = self.phi
         self.cmd4.omega_arr.data = self.Omega
-        self.cmd4.phi_arr.data = self.Phi #+ np.pi/2
+        self.cmd4.phi_arr.data = self.phi #+ np.pi/2
 
-    def straight(self, angle):
-        self.Phi = np.ones(4)*0#.15
+    def move(self, angle):
+        self.phi = np.ones(4) * 0#.15
         self.cmd1.omega_arr.data = self.Omega
-        self.cmd1.phi_arr.data = self.Phi + np.pi/2# - 2*Phi
+        self.cmd1.phi_arr.data = self.phi + np.pi/2# - 2*phi
+
         self.cmd2.omega_arr.data = self.Omega
-        self.cmd2.phi_arr.data = self.Phi 
+        self.cmd2.phi_arr.data = self.phi 
+
+        #currently robot4 is in left pos (pos 1), r3 in right pos 
+        self.cmd4.omega_arr.data = self.Omega
+        self.cmd4.phi_arr.data = self.phi + angle
 
         self.cmd3.omega_arr.data = self.Omega 
-        self.cmd3.phi_arr.data = self.Phi -angle
-        self.cmd4.omega_arr.data = self.Omega
-        self.cmd4.phi_arr.data = self.cmd3.phi_arr.data + np.pi
-
-    def reverse(self, angle):
-        self.straight(-np.pi+angle)
-        #self.Phi -= np.pi
+        self.cmd3.phi_arr.data = self.cmd4.phi_arr.data + np.pi
         
+
+    def up(self):
+        self.move(OFFSET + np.pi/2)
+
+    def down(self):
+        self.move(OFFSET - np.pi/2)
+
+    def right(self):
+        self.move(OFFSET)
+        
+    def left(self):
+        self.move(OFFSET - np.pi*1.1)
+
+
     def U(self):
-        #self.straight(np.pi/4)
-        #print(time.time())
         if(time.time() - self.start) > 8:
-            self.reverse(np.pi/4)
+            self.down()
             print("reversing")
         elif(time.time() - self.start) > 4:
-            self.straight(np.pi*3/4)
+            self.right()
             print("turning")
         else:
-            self.straight(np.pi/4)
-            print("straight")
+            self.up()
+            print("move")
+
+    def longU(self):
+        if(time.time() - self.start) > 25:
+            self.Omega *= 0
+        elif(time.time() - self.start) > 18.5:
+            self.up()
+        elif(time.time() - self.start) > 14:
+            self.right()
+        elif(time.time() - self.start) > 10:
+            self.up()
+        elif(time.time() - self.start) > 6:
+            self.left()
+            print("turning")
+        else:
+            self.up()
+            print("move")
+
 
     def run(self):
         rate = rospy.Rate(RATE) 
         while not rospy.is_shutdown():
-            self.U()
+            self.down()
+            # self.longU()
             self.publish()
             rate.sleep()
 
