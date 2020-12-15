@@ -44,13 +44,11 @@ class Commander():
         self.cmd2.phi_arr.data = self.phi
         self.cmd3.omega_arr.data = self.Omega
         self.cmd3.phi_arr.data = self.phi
-        self.cmd4.omega_arr.data = self.Omega + 0.05
+        self.cmd4.omega_arr.data = self.Omega 
         self.cmd4.phi_arr.data = self.phi
 
 
     def publish(self):
-        self.cmd4.omega_arr.data = self.Omega + 0.05
-
         self.pub_cmds_1.publish(self.cmd1)
         self.pub_cmds_2.publish(self.cmd2)
         self.pub_cmds_3.publish(self.cmd3)
@@ -129,7 +127,7 @@ class Commander():
     def run(self):
         rate = rospy.Rate(RATE) 
         while not rospy.is_shutdown():
-            self.down()
+            self.up()
             # self.longU()
             self.publish()
             rate.sleep()
