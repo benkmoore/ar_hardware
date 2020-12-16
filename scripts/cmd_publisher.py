@@ -14,7 +14,7 @@ from ar_commander.msg import ControllerCmd
 
 
 RATE = 70
-OMEGA = 0.32
+OMEGA = np.ones(4)*0.32
 OFFSET = np.pi/4 #angle required to make robot in leftmost/ bottom left position align with x & y axis (0 degrees)
 
 
@@ -33,17 +33,25 @@ class Commander():
         self.cmd3 = ControllerCmd()
         self.cmd4 = ControllerCmd()
 
+        self.Omega1 = OMEGA
+        self.Omega2 = OMEGA
+        self.Omega3 = OMEGA
+        self.Omega4 = OMEGA
+
         self.start = time.time()
 
-        self.Omega = np.ones(4) * OMEGA
+        self.Omega = OMEGA
         self.phi = np.ones(4) * 0#.15
 
         self.cmd1.omega_arr.data = self.Omega
         self.cmd1.phi_arr.data = self.phi #+ np.pi/2# - 2*phi
+
         self.cmd2.omega_arr.data = self.Omega
         self.cmd2.phi_arr.data = self.phi
+
         self.cmd3.omega_arr.data = self.Omega
         self.cmd3.phi_arr.data = self.phi
+
         self.cmd4.omega_arr.data = self.Omega 
         self.cmd4.phi_arr.data = self.phi
 
@@ -55,7 +63,7 @@ class Commander():
         self.pub_cmds_4.publish(self.cmd4)
 
     def spin(self):
-        self.Omega = np.ones(4) * OMEGA
+        self.Omega = OMEGA
         self.phi = np.ones(4) * (-np.pi/6)#.15
 
         self.cmd1.omega_arr.data = self.Omega
@@ -69,31 +77,47 @@ class Commander():
 
     def move(self, angle):
         self.phi = np.ones(4) * 0#.15
-        self.cmd1.omega_arr.data = self.Omega
+        self.cmd1.omega_arr.data = self.Omega1
         self.cmd1.phi_arr.data = self.phi + np.pi/2# - 2*phi
 
-        self.cmd2.omega_arr.data = self.Omega
+        self.cmd2.omega_arr.data = self.Omega2
         self.cmd2.phi_arr.data = self.phi 
 
         #currently robot4 is in left pos (pos 1), r3 in right pos 
-        self.cmd4.omega_arr.data = self.Omega
+        self.cmd4.omega_arr.data = self.Omega4
         self.cmd4.phi_arr.data = self.phi + angle
 
-        self.cmd3.omega_arr.data = self.Omega 
+        self.cmd3.omega_arr.data = self.Omega3
         self.cmd3.phi_arr.data = self.cmd4.phi_arr.data + np.pi
         
 
     def up(self):
         self.move(OFFSET + np.pi/2)
+        self.Omega1 = OMEGA
+        self.Omega2 = np.zeros(4)
+        self.Omega3 = OMEGA
+        self.Omega4 = OMEGA
 
     def down(self):
         self.move(OFFSET - np.pi/2)
+        self.Omega1 = np.zeros(4)
+        self.Omega2 = OMEGA
+        self.Omega3 = OMEGA
+        self.Omega4 = OMEGA
 
     def right(self):
         self.move(OFFSET)
+        self.Omega1 = OMEGA + 0.4
+        self.Omega2 = OMEGA + 0.4
+        self.Omega3 = np.zeros(4)
+        self.Omega4 = OMEGA + 0.4
         
     def left(self):
-        self.move(OFFSET - np.pi*1.1)
+        self.move(OFFSET - np.pi)
+        self.Omega1 = OMEGA + 0.4
+        self.Omega2 = OMEGA + 0.4
+        self.Omega3 = OMEGA + 0.4
+        self.Omega4 = np.zeros(4)
 
     def square(self):
         if(time.time() - self.start) > 16:
@@ -104,7 +128,6 @@ class Commander():
             self.down()
         elif(time.time() - self.start) > 6:
             self.right()
-            print("turning")
         else:
             self.up()
             print("move")        
@@ -140,8 +163,8 @@ class Commander():
     def run(self):
         rate = rospy.Rate(RATE) 
         while not rospy.is_shutdown():
-            self.up()
-            # self.longU()
+            # self.down()
+            self.square()
             self.publish()
             rate.sleep()
 
