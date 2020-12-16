@@ -14,7 +14,7 @@ from ar_commander.msg import ControllerCmd
 
 
 RATE = 70
-OMEGA = np.ones(4)*0.32
+OMEGA = np.ones(4)*0.35
 OFFSET = np.pi/4 #angle required to make robot in leftmost/ bottom left position align with x & y axis (0 degrees)
 
 
@@ -68,10 +68,13 @@ class Commander():
 
         self.cmd1.omega_arr.data = self.Omega
         self.cmd1.phi_arr.data = self.phi #+ np.pi/2# - 2*phi
+
         self.cmd2.omega_arr.data = self.Omega
         self.cmd2.phi_arr.data = self.phi
+
         self.cmd3.omega_arr.data = self.Omega
         self.cmd3.phi_arr.data = self.phi
+
         self.cmd4.omega_arr.data = self.Omega
         self.cmd4.phi_arr.data = self.phi #+ np.pi/2
 
@@ -91,6 +94,13 @@ class Commander():
         self.cmd3.phi_arr.data = self.cmd4.phi_arr.data + np.pi
         
 
+    def attach(self):
+        self.cmd4.omega_arr.data = np.ones(4)*0.31
+        self.cmd4.phi_arr.data = np.ones(4)*OFFSET
+
+        self.cmd3.omega_arr.data = np.ones(4)*0.31
+        self.cmd3.phi_arr.data = np.ones(4)*OFFSET
+
     def up(self):
         self.move(OFFSET + np.pi/2)
         self.Omega1 = OMEGA
@@ -107,16 +117,16 @@ class Commander():
 
     def right(self):
         self.move(OFFSET)
-        self.Omega1 = OMEGA + 0.4
-        self.Omega2 = OMEGA + 0.4
+        self.Omega1 = OMEGA + 0.3
+        self.Omega2 = OMEGA + 0.3
         self.Omega3 = np.zeros(4)
-        self.Omega4 = OMEGA + 0.4
+        self.Omega4 = OMEGA + 0.3
         
     def left(self):
         self.move(OFFSET - np.pi)
-        self.Omega1 = OMEGA + 0.4
-        self.Omega2 = OMEGA + 0.4
-        self.Omega3 = OMEGA + 0.4
+        self.Omega1 = OMEGA + 0.3
+        self.Omega2 = OMEGA + 0.3
+        self.Omega3 = OMEGA + 0.3
         self.Omega4 = np.zeros(4)
 
     def square(self):
@@ -130,7 +140,22 @@ class Commander():
             self.right()
         else:
             self.up()
-            print("move")        
+            print("move")      
+
+    def aSquare(self):
+        if(time.time() - self.start) > 16:
+            self.Omega *= 0
+        elif(time.time() - self.start) > 14:
+            self.left()
+        elif(time.time() - self.start) > 10:
+            self.down()
+        elif(time.time() - self.start) > 6:
+            self.right()
+        elif(time.time() - self.start) > 2 :
+            self.up()
+        else: 
+            self.attach()
+            print("move")
 
     def U(self):
         if(time.time() - self.start) > 8:
@@ -164,7 +189,7 @@ class Commander():
         rate = rospy.Rate(RATE) 
         while not rospy.is_shutdown():
             # self.down()
-            self.square()
+            self.aSquare()
             self.publish()
             rate.sleep()
 
