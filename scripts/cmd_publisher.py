@@ -14,7 +14,7 @@ from ar_commander.msg import ControllerCmd
 
 
 RATE = 70
-OMEGA = 0.35
+OMEGA = 0.32
 OFFSET = np.pi/4 #angle required to make robot in leftmost/ bottom left position align with x & y axis (0 degrees)
 
 
@@ -95,6 +95,19 @@ class Commander():
     def left(self):
         self.move(OFFSET - np.pi*1.1)
 
+    def square(self):
+        if(time.time() - self.start) > 16:
+            self.Omega *= 0
+        elif(time.time() - self.start) > 14:
+            self.left()
+        elif(time.time() - self.start) > 10:
+            self.down()
+        elif(time.time() - self.start) > 6:
+            self.right()
+            print("turning")
+        else:
+            self.up()
+            print("move")        
 
     def U(self):
         if(time.time() - self.start) > 8:
